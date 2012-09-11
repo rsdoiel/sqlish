@@ -2,9 +2,10 @@
 // shim.js - A shim for JavaScript shells that are missing various features
 // (e.g. Mongo's JavaScript shell is missing Object.keys())
 //
-// This code is derived from the doccumentation at the Mozilla Project
-// See: 
-//  * [Object.keys()](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Object/keys)
+// This code is derived from the documentation at the Mozilla Project
+// It is included/covered under Mozilla's documentation license.
+//
+// See: [Object.keys()](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Object/keys)
 //
 
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */

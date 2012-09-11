@@ -5,7 +5,7 @@
 // @author: R. S. Doiel, <rsdoiel@gmail.com>
 // copyright (c) 2012 all rights reserved
 //
-// Released under New the BSD License.
+// Released under Simplified the BSD License.
 // See: http://opensource.org/licenses/bsd-license.php
 //
 // revision: 0.0.1
@@ -15,7 +15,7 @@ var test_groups = [];
 
 // Push a test batch into harness
 exports.push = function (test) {
-    if (test.func === undefined) {
+    if (test.callback === undefined) {
         throw "missing function definition.";
     }
     if (test.label === undefined) {
@@ -35,10 +35,10 @@ exports.RunIt = function (module_name, test_delay) {
     int_id = setInterval(function () {
         var group_test = test_groups.shift();
     
-        if (group_test && typeof group_test.func === "function" &&
+        if (group_test && typeof group_test.callback === "function" &&
             typeof group_test.label === "string") {
             process.stdout.write("\tstarting " + group_test.label + " ...");
-            group_test.func();
+            group_test.callback();
             process.stdout.write(" OK\n");
         } else if (group_test === undefined) {
             process.stdout.write(module_name.trim() + " Success!\n");

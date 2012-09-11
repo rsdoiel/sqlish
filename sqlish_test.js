@@ -4,7 +4,7 @@
 // @author: R. S. Doiel, <rsdoiel@gmail.com>
 // copyright (c) 2012 all rights reserved
 //
-// Released under the Simplified BSD License.
+// Released under Simplified the BSD License.
 // See: http://opensource.org/licenses/bsd-license.php
 //
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
@@ -18,7 +18,7 @@ var path = require("path"),
 
 
 // Basic SQL assembly
-TestHarness.push({func: function () {
+TestHarness.push({callback: function () {
     var Sql = new sqlish.Sql(),
         s,
         expected_s;
@@ -87,7 +87,7 @@ TestHarness.push({func: function () {
 }, label: "Basic SQL assemble tests."});
 
 // Setup some basic tests for SQLite support
-TestHarness.push({ func: function () {
+TestHarness.push({ callback: function () {
     var wasThrown = false,
         s,
         expected_s,
