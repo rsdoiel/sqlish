@@ -23,11 +23,19 @@ There are several advantages two taking this approach
 * it works as a loadable script in MongoDB's shell
 
 
-# A simple case insert, select and replace
+## installation
+
+To use with NodeJS install via npm.
+
+```
+	npm install sqlish
+```
+
+# A NodeJS example
 
 ```JavaScript
-	var sql = require("sql"),
-		Sql = new sql.Sql({dialect: sql.MySQL, use_UTC: false}),
+	var sqlish = require("sqlish"),
+		Sql = new sqlish.Sql({dialect: sqlish.MySQL, use_UTC: false}),
 		message = {
 			id: 0,
 			name: "fred",
@@ -41,7 +49,7 @@ There are several advantages two taking this approach
 	//	"fred", "fred@example.com", "He siad, \"Hello World\"", 
 	//	"2012-09-01 14:15:00")
 	console.log(Sql.insert("test", message).toString());
-
+	
 	// Output:
 	// SELECT id, name, email, msg, sent FROM messages 
 	//	WHERE email LIKE "%@example.com"
@@ -60,14 +68,33 @@ There are several advantages two taking this approach
 	console.log(Sql.replace("test", message).toString());
 ```
 
-## MongoDB shell example
 
-You can use sqlish in the MongoDB shell.
+# MongoDB shell example
+
+Copy _sqlish.js_ and _load-sqlish.js_ to your working directory. Then use
+MongoDB's shell's _load()_ function to include it. See mongo-example.js:
+
+```javascript
+    load("load-sqlish.js");
+    sql = new Sql();
+    print(sql.select(["id", "name", "email", "modified"]).from("myTable").toString());
+    item = {id:1, name: "fred", email: "fred@example.com", modified: new Date()};
+    print(sql.replace("myTable", item).toString());
+```
+
+Run under MongoDB's shell-
 
 ```shell
-    >load("load-sqlish.js");
-    >sql = new Sql();
-    >print(sql.select("COUNT()").from("myTable").toString());
+	mongo mongo-example.js
+```
+
+Output should look something like-
+
+```shell
+	MongoDB shell version: 2.2.0
+	connecting to: test
+	SELECT id, name, email, modified FROM myTable
+	REPLACE INTO myTable (id, name, email, modified) VALUES (1, "fred", "fred@example.com", "2012-09-11 10:21:14")
 ```
 
 # Alternatives?

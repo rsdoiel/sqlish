@@ -19,7 +19,17 @@ var path = require("path"),
 TestHarness.push({callback: function () {
     var Sql = new sqlish.Sql(),
         s,
-        expected_s;
+        expected_s,
+        now = new Date();
+    
+    expected_s = now.getFullYear() + '-' + 
+    	("0" + (now.getMonth() + 1)).substr(-2) + '-' +
+    	("0" + now.getDate()).substr(-2) + " " +
+		("0" + now.getHours()).substr(-2) + ':' +
+		("0" + now.getMinutes()).substr(-2) + ':' +
+		("0" + now.getSeconds()).substr(-2);
+    s = Sql.sqlDate(now);
+    assert.equal(s, expected_s);
     
     s = Sql.insert("test1", {id: 1, name: "Fred", email: "fred@example.com"});
     

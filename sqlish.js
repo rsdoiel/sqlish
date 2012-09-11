@@ -16,18 +16,20 @@
         SQLite = "sqlite",
         Sql;
 
-
     Sql = function (config) {
         var sql = {
             dialect: MySQL,
             use_UTC: false,
             sql: ""
-        };
+        }, key;
     
         if (config !== undefined) {
-            Object.keys(config).forEach(function (key) {
-                sql[key] = config[key];
-            });
+        	// Mongo 2.2's shell doesn't support Object.keys()
+        	for (key in config) {
+        		if (typeof config[key] !== "function") {
+					sql[key] = config[key];
+        		}
+        	}
         }
     
     
@@ -84,11 +86,11 @@
                 "-",
                 ("0" + d.getDate()).substr(-2),
                 " ",
-                d.getHours(),
+                ("0" + d.getHours()).substr(-2),
                 ":",
-                d.getMinutes(),
+                ("0" + d.getMinutes()).substr(-2),
                 ":",
-                d.getSeconds()
+                ("0" + d.getSeconds()).substr(-2)
             ].join("");
         };
     
@@ -111,7 +113,7 @@
             }
         
             if (s instanceof Date) {
-                return sqlDate(s);
+                return '"' + sqlDate(s) + '"';
             }
         
             if (String(s).trim().substr(0, 1) === '@') {
@@ -150,28 +152,32 @@
         sql.safely = safely;
     
         sql.insert = function (tableName, obj) {
-            var fields = [], values = [];
-            Object.keys(obj).forEach(function (item) {
-                var key, value;
-                
-                // FIXME, I need to skip arrays, non-Date objects and
-                // functions
-                fields.push(item.replace(/![a-zA-Z0-9_]/g, ""));
-                values.push(safely(obj[item]));
-            });
+            var fields = [], values = [], ky;
+            
+			// Mongo 2.2's shell doesn't support Object.keys()
+            for (ky in obj) {
+            	if (typeof ky === "string") {
+            		ky = ky.replace(/![a-zA-Z0-9_]/g, "");
+	                fields.push(ky);
+	                values.push(safely(obj[ky]));
+            	}
+            }
             this.sql = ["INSERT INTO ", tableName, " (", fields.join(", "),
                     ") VALUES (", values.join(", "), ")"].join("");
             return this;
         };
     
         sql.replace = function (tableName, obj) {
-            var fields = [], values = [];
-            Object.keys(obj).forEach(function (item) {
-                var key, value;
-                
-                fields.push(item.replace(/![a-zA-Z0-9_]/g, ""));
-                values.push(safely(obj[item]));
-            });
+            var fields = [], values = [], ky;
+
+			// Mongo 2.2's shell doesn't support Object.keys()
+            for (ky in obj) {
+            	if (typeof ky === "string") {
+            		ky = ky.replace(/![a-zA-Z0-9_]/g, "");
+	                fields.push(ky);
+	                values.push(safely(obj[ky]));
+            	}
+            }
             this.sql = ["REPLACE INTO ", tableName, " (", fields.join(", "),
                     ") VALUES (", values.join(", "), ")"].join("");
             return this;
