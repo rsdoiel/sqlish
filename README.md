@@ -6,11 +6,15 @@ A small SQL generator
 # Overview
 
 It occurred to me that JavaScript's chaining function calls would
-make it pretty easy to generate valid SQL statements. It offers the 
-possibility for handling SQL dialect differences cleanly (e.g. MySQL versus 
-SQLite quote escaping). I recently tried this approach in another project and 
-it worked well.  After doing a checking npmjs.org for other SQL generators I
-found I liked my approach best and thought others might too.
+make it pretty easy to generate valid SQL statements. It offers
+the possibility for handling SQL dialect differences cleanly (e.g.
+MySQL versus SQLite quote escaping). I recently tried this
+approach in another project and it worked well.  After doing a
+checking npmjs.org for other SQL generators I found I liked my
+approach best and thought others might too. sqlish is work as
+a NodeJS module as well as in web browser supporting SQLite
+and the MongoDB shell.
+
 
 ## Advantages?
 
@@ -61,10 +65,9 @@ There are several advantages two taking this approach
 
 # Alternatives?
 
-While I like my approach there are others SQL generators at npmjs.org. Two 
-in particularly I found very promising-
+If you don't need web browser or MongoDB shell support two SQL generators at npmjs.org 
+look very promising-
 
-* [bloom-sql](https://npmjs.org/package/bloom-sql) <-- I stumbled on a similar approach
+* [bloom-sql](https://npmjs.org/package/bloom-sql)
 * [sql-generator](https://npmjs.org/package/sql-generator)
 
- 

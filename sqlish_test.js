@@ -12,9 +12,7 @@
 var path = require("path"),
     assert = require("assert"),
     sqlish = require("./sqlish"),
-    TestHarness = require("./harness"),
-    run_group = TestHarness.run_group,
-    test_delay = 10;
+    TestHarness = require("./harness");
 
 
 // Basic SQL assembly
