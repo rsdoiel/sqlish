@@ -30,8 +30,8 @@ There are several advantages two taking this approach
 		message = {
 			id: 0,
 			name: "fred",
-			email: "fred@gmail.com"
-			messages: 'He Said, "Hello World"
+			email: "fred@gmail.com",
+			messages: 'He Said, "Hello World",
 			sent: new Date("09/01/2012 14:15:00")
 		};
 	
