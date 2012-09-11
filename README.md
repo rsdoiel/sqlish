@@ -60,6 +60,16 @@ There are several advantages two taking this approach
 	console.log(Sql.replace("test", message).toString());
 ```
 
+## MongoDB shell example
+
+You can use sqlish in the MongoDB shell.
+
+```shell
+    >load("load-sqlish.js");
+    >sql = new Sql();
+    >print(sql.select("COUNT()").from("myTable").toString());
+```
+
 # Alternatives?
 
 If you don't need web browser or MongoDB shell support two SQL generators at npmjs.org 
