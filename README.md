@@ -5,15 +5,9 @@ A small SQL generator
 
 # Overview
 
-It occurred to me that JavaScript's chaining function calls would
-make it pretty easy to generate valid SQL statements. It offers
-the possibility for handling SQL dialect differences cleanly (e.g.
-MySQL versus SQLite quote escaping). I recently tried this
-approach in another project and it worked well.  After doing a
-checking npmjs.org for other SQL generators I found I liked my
-approach best and thought others might too. sqlish is work as
-a NodeJS module as well as in web browser supporting SQLite
-and the MongoDB shell.
+JavaScript's ability to chaining function calls provides an nice semantic
+for generating SQL statments. sqlish takes this approach and attempts
+to be portable as well as simple to use.
 
 
 ## Advantages?
@@ -23,7 +17,10 @@ There are several advantages two taking this approach
 * lower cognitive noise (you're programming in one language not two)
 * your JS tools (e.g. jslint) now cover your assembled SQL statements
 * assembling complex SQL is just a matter of chaining functions
-* sqlish is very small without dependancies (e.g. web browser, mongo shell friendly)
+* sqlish is very small without dependancies 
+* it works as a NodeJS module
+* it works in web browsers supporting SQLite
+* it works as a loadable script in MongoDB's shell
 
 
 # A simple case insert, select and replace
