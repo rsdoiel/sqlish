@@ -64,7 +64,7 @@ There are several advantages two taking this approach
 While I like my approach there are others SQL generators at npmjs.org. Two 
 in particularly I found very promising-
 
-* "bloom-sql":https://npmjs.org/package/bloom-sql <-- most similar
-* "sql-generator":https://npmjs.org/package/sql-generator
+* [bloom-sql](https://npmjs.org/package/bloom-sql) <-- I stumbled on a similar approach
+* [sql-generator](https://npmjs.org/package/sql-generator)
 
  
