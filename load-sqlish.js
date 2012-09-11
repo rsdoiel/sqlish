@@ -9,11 +9,6 @@
 //
 
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
-/*properties
-    call, exports, hasOwnProperty, keys, length, load, propertyIsEnumerable, 
-    prototype, push, toString
-*/
-
 if (load === undefined) {
     (function (self) {
         self.load = null;
