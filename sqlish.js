@@ -138,8 +138,13 @@
                         return "\\t";
                     case "\x1a":
                         return "\\Z";
+                    case "'":
+                    	if (this.dialect === SQLite) {
+	                        // SQLite single-quote escaping.
+	                    	return "''";
+                    	}
+                        return "\\" + c;    					        	
                     default:
-                        // FIXME: Need to add SQLite style escaping here.
                         return "\\" + c;
                     }
                 }).trim(),
