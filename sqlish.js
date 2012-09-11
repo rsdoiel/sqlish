@@ -9,13 +9,15 @@
 //
 // revision: 0.0.1
 //
+var exports;
 
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 (function (self) {
     var MySQL = "mysql", Sql;
     // FIXME: Need to add support for SQLite next
     // SQLite = "sqlite";
-    
+
+
     Sql = function (config) {
         var sql = {
             dialect: MySQL,
@@ -158,7 +160,7 @@
                 fields.push(item.replace(/![a-zA-Z0-9_]/g, ""));
                 values.push(safely(obj[item]));
             });
-            sql = ["INSERT INTO ", tableName, " (", fields.join(", "),
+            this.sql = ["INSERT INTO ", tableName, " (", fields.join(", "),
                     ") VALUES (", values.join(", "), ")"].join("");
             return this;
         };
@@ -171,7 +173,7 @@
                 fields.push(item.replace(/![a-zA-Z0-9_]/g, ""));
                 values.push(safely(obj[item]));
             });
-            sql = ["REPLACE INTO ", tableName, " (", fields.join(", "),
+            this.sql = ["REPLACE INTO ", tableName, " (", fields.join(", "),
                     ") VALUES (", values.join(", "), ")"].join("");
             return this;
         };
@@ -188,64 +190,64 @@
                 }
                 s = "SELECT " + fields.join(", ");
             }
-            sql = s;
+            this.sql = s;
             return this;
         };
     
         sql.from = function (tables) {
             if (typeof tables === "string") {
-                sql += " FROM " + tables;
+                this.sql += " FROM " + tables;
             } else {
-                sql += " FROM " + tables.join(", ");
+                this.sql += " FROM " + tables.join(", ");
             }
             return this;
         };
     
         sql.joinOn = function (tables, expr) {
             if (typeof tables === "string") {
-                sql += " JOIN " + tables;
+                this.sql += " JOIN " + tables;
             } else {
-                sql += " JOIN " + tables.join(", ");
+                this.sql += " JOIN " + tables.join(", ");
             }
-            sql += " ON " + expr;
+            this.sql += " ON " + expr;
             return this;
         };
     
         sql.where = function (expr) {
-            sql += " WHERE " + expr;
+            this.sql += " WHERE " + expr;
             return this;
         };
     
         sql.limit = function (index, count) {
             if (count === undefined || count === null) {
-                sql += " LIMIT " + index;
+                this.sql += " LIMIT " + index;
             } else {
-                sql += " LIMIT " + index + "," + count;
+                this.sql += " LIMIT " + index + "," + count;
             }
             return this;
         };
         
         sql.orderBy = function (fields, direction) {
             if (typeof fields === "string") {
-                sql += " ORDER BY " + fields;
+                this.sql += " ORDER BY " + fields;
             } else {
-                sql += " ORDER BY " + fields.join(", ");
+                this.sql += " ORDER BY " + fields.join(", ");
             }
             if (direction === undefined || direction === null) {
                 return this;
             } else if (direction.toUpperCase() === "ASC" || direction >= 0) {
-                sql += " ASC";
+                this.sql += " ASC";
             } else if (direction.toUpperCase() === "DESC" || direction < 0) {
-                sql += " DESC";
+                this.sql += " DESC";
             }
             return this;
         };
     
         sql.groupBy = function (fields) {
             if (typeof fields === "string") {
-                sql += " GROUP BY " + fields;
+                this.sql += " GROUP BY " + fields;
             } else {
-                sql += " GROUP BY " + fields.join(", ");
+                this.sql += " GROUP BY " + fields.join(", ");
             }
             return this;
         };
@@ -253,10 +255,10 @@
         // Do a MySQL SET, e.g. SET @my_count = 0;
         sql.set = function (varName, value) {
             if (String(value).trim() === "LAST_INSERT_ID()") {
-                sql = "SET " + varName.replace(/![a-zA-Z0-9_]/g, '') +
+                this.sql = "SET " + varName.replace(/![a-zA-Z0-9_]/g, '') +
                     " = LAST_INSERT_ID()";
             } else {
-                sql = "SET " + varName.replace(/![a-zA-Z0-9_]/g, '') +
+                this.sql = "SET " + varName.replace(/![a-zA-Z0-9_]/g, '') +
                     " = " + safely(value);
             }
             return this;
@@ -264,32 +266,33 @@
         
         sql.into = function (fields) {
             if (typeof fields === "string") {
-                sql += " INTO " + fields;
+                this.sql += " INTO " + fields;
             } else {
-                sql += " INTO " + fields.join(", ");
+                this.sql += " INTO " + fields.join(", ");
             }
             return this;
         };
         
         sql.valueOf = function () {
-            return sql;
+            return this.sql;
         };
     
         sql.toString = function () {
-            return sql;
+            return this.sql;
         };
         
         return sql;
     };
 
     // If we're running under NodeJS then export objects
+    self.MySQL = MySQL;
+    self.Sql = Sql;
     if (exports !== undefined) {
         exports.MySQL = MySQL;
         exports.Sql = Sql;
         //exports.SQLite = SQLite;
-    } else {
-        self.MySQL = MySQL;
-        self.Sql = Sql;
     }
+
+    return self;
 }(this));
 
