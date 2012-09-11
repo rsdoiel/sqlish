@@ -4,7 +4,7 @@
 // @author: R. S. Doiel, <rsdoiel@gmail.com>
 // copyright (c) 2012 all rights reserved
 //
-// Released under New the BSD License.
+// Released under the Simplified BSD License.
 // See: http://opensource.org/licenses/bsd-license.php
 //
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
@@ -81,11 +81,34 @@ TestHarness.push({func: function () {
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 INTO @id, @name, @email";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.set("@my_count", 1);
+    s = Sql.set("my_count", 1);
     expected_s = "SET @my_count = 1";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 }, label: "Basic SQL assemble tests."});
 
+// Setup some basic tests for SQLite support
+TestHarness.push({ func: function () {
+    var wasThrown = false,
+        s,
+        expected_s,
+        Sql = new sqlish.Sql({dialect: sqlish.SQLite});
+    
+    wasThrown = false;
+    try {
+        Sql.set("myvar", 1);
+    } catch (err1) {
+        wasThrown = true;
+    }
+    assert.ok(wasThrown, "Should have thrown an error for Sql.set()");
+    
+    wasThrown = false;
+    try {
+        Sql.into("@myvar");
+    } catch (err2) {
+        wasThrown = true;
+    }
+    assert.ok(wasThrown, "Should have thrown an error for Sql.into(\"@myId\")");
+}, label: "SQLite specific tests."});
 
 if (require.main === module) {
     TestHarness.RunIt(path.basename(module.filename), 10, true);

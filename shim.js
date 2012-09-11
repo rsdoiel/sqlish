@@ -1,15 +1,10 @@
 //
 // shim.js - A shim for JavaScript shells that are missing various features
-// (e.g. Mongo's JavaScript shell)
+// (e.g. Mongo's JavaScript shell is missing Object.keys())
 //
-//
-// @author: R. S. Doiel, <rsdoiel@gmail.com>
-// copyright (c) 2012 all rights reserved
-//
-// Released under New the BSD License.
-// See: http://opensource.org/licenses/bsd-license.php
-//
-// revision: 0.0.1
+// This code is derived from the doccumentation at the Mozilla Project
+// See: 
+//  * [Object.keys()](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Object/keys)
 //
 
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
@@ -25,7 +20,7 @@ if (exports === undefined) {
 }
 
 // Mongo's shell doesn't have a keys function on object.
-if (!Object.keys) {
+if (Object.keys === undefined) {
     Object.keys = (function () {
         var hasOwnProperty = Object.prototype.hasOwnProperty,
             hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
@@ -65,9 +60,9 @@ if (!Object.keys) {
     }());
 }
 
+// Now that we have the objects methods we need, load sqlish
 if (typeof load === "function") {
     load("./sqlish.js");
 } else {
-    throw "load not a function.";
+    throw "load() not a function.";
 }
-

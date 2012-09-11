@@ -4,18 +4,17 @@
 // @author: R. S. Doiel, <rsdoiel@gmail.com>
 // copyright (c) 2012 all rights reserved
 //
-// Released under New the BSD License.
+// Released under the Simplified BSD License.
 // See: http://opensource.org/licenses/bsd-license.php
 //
 // revision: 0.0.1
 //
-var exports;
-
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
+
 (function (self) {
-    var MySQL = "mysql", Sql;
-    // FIXME: Need to add support for SQLite next
-    // SQLite = "sqlite";
+    var MySQL = "mysql",
+        SQLite = "sqlite",
+        Sql;
 
 
     Sql = function (config) {
@@ -96,7 +95,6 @@ var exports;
         // Return s as a double quoted string
         // safely escaped.
         var safely = function (s) {
-            // FIXME add support for generating SQLite dialect quoting
             if (s === undefined || s === null) {
                 return 'NULL';
             }
@@ -254,17 +252,24 @@ var exports;
         
         // Do a MySQL SET, e.g. SET @my_count = 0;
         sql.set = function (varName, value) {
+            if (this.dialect === SQLite) {
+                throw "SQLite does not support SET and @varname constructs";
+            }
             if (String(value).trim() === "LAST_INSERT_ID()") {
-                this.sql = "SET " + varName.replace(/![a-zA-Z0-9_]/g, '') +
+                this.sql = "SET @" + varName.replace(/![a-zA-Z0-9_]/g, '') +
                     " = LAST_INSERT_ID()";
             } else {
-                this.sql = "SET " + varName.replace(/![a-zA-Z0-9_]/g, '') +
+                this.sql = "SET @" + varName.replace(/![a-zA-Z0-9_]/g, '') +
                     " = " + safely(value);
             }
             return this;
         };
         
         sql.into = function (fields) {
+            // support for generating SQLite dialect quoting
+            if (this.dialect === SQLite) {
+                throw "INTO not supported in SQLite.";
+            }
             if (typeof fields === "string") {
                 this.sql += " INTO " + fields;
             } else {
@@ -286,11 +291,12 @@ var exports;
 
     // If we're running under NodeJS then export objects
     self.MySQL = MySQL;
+    self.SQLite = SQLite;
     self.Sql = Sql;
     if (exports !== undefined) {
         exports.MySQL = MySQL;
         exports.Sql = Sql;
-        //exports.SQLite = SQLite;
+        exports.SQLite = SQLite;
     }
 
     return self;
