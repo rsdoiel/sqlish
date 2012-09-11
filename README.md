@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/rsdoiel/sqlish.png)](http://travis-ci.org/rsdoiel/sqlish)
 sqlish
 ======
 
