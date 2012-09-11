@@ -137,6 +137,7 @@
                     case "\x1a":
                         return "\\Z";
                     default:
+                        // FIXME: Need to add SQLite style escaping here.
                         return "\\" + c;
                     }
                 }).trim(),
