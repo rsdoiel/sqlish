@@ -294,8 +294,11 @@
             return this.sql;
         };
     
-        sql.toString = function () {
-            return this.sql;
+        sql.toString = function (eol) {
+            if (eol === undefined) {
+                eol = ';';
+            }
+            return this.sql + eol;
         };
         
         return sql;
