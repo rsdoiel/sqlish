@@ -22,14 +22,14 @@
             use_UTC: false,
             sql: ""
         }, key;
-    
+
         if (config !== undefined) {
-        	// Mongo 2.2's shell doesn't support Object.keys()
-        	for (key in config) {
-        		if (typeof config[key] !== "function") {
+            // Mongo 2.2's shell doesn't support Object.keys()
+            for (key in config) {
+                if (typeof config[key] !== "function") {
 					sql[key] = config[key];
-        		}
-        	}
+                }
+            }
         }
     
     
@@ -139,11 +139,11 @@
                     case "\x1a":
                         return "\\Z";
                     case "'":
-                    	if (this.dialect === SQLite) {
-	                        // SQLite single-quote escaping.
-	                    	return "''";
-                    	}
-                        return "\\" + c;    					        	
+                        if (this.dialect === SQLite) {
+                            // SQLite single-quote escaping.
+                            return "''";
+                        }
+                        return "\\" + c;
                     default:
                         return "\\" + c;
                     }
@@ -161,11 +161,11 @@
             
 			// Mongo 2.2's shell doesn't support Object.keys()
             for (ky in obj) {
-            	if (typeof ky === "string") {
-            		ky = ky.replace(/![a-zA-Z0-9_]/g, "");
-	                fields.push(ky);
+                if (obj.hasOwnProperty(ky) && typeof ky === "string") {
+                    ky = ky.replace(/![a-zA-Z0-9_]/g, "");
+                    fields.push(ky);
 	                values.push(safely(obj[ky]));
-            	}
+                }
             }
             this.sql = ["INSERT INTO ", tableName, " (", fields.join(", "),
                     ") VALUES (", values.join(", "), ")"].join("");
@@ -177,11 +177,11 @@
 
 			// Mongo 2.2's shell doesn't support Object.keys()
             for (ky in obj) {
-            	if (typeof ky === "string") {
-            		ky = ky.replace(/![a-zA-Z0-9_]/g, "");
-	                fields.push(ky);
+                if (obj.hasOwnProperty(ky) && typeof ky === "string") {
+                    ky = ky.replace(/![a-zA-Z0-9_]/g, "");
+                    fields.push(ky);
 	                values.push(safely(obj[ky]));
-            	}
+                }
             }
             this.sql = ["REPLACE INTO ", tableName, " (", fields.join(", "),
                     ") VALUES (", values.join(", "), ")"].join("");

@@ -22,9 +22,9 @@ TestHarness.push({callback: function () {
         expected_s,
         now = new Date();
     
-    expected_s = now.getFullYear() + '-' + 
-    	("0" + (now.getMonth() + 1)).substr(-2) + '-' +
-    	("0" + now.getDate()).substr(-2) + " " +
+    expected_s = now.getFullYear() + '-' +
+        ("0" + (now.getMonth() + 1)).substr(-2) + '-' +
+        ("0" + now.getDate()).substr(-2) + " " +
 		("0" + now.getHours()).substr(-2) + ':' +
 		("0" + now.getMinutes()).substr(-2) + ':' +
 		("0" + now.getSeconds()).substr(-2);
