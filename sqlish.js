@@ -267,19 +267,25 @@
         // Or add a SET pharse to an UPDATE statement.
         sql.set = function (varNameOrObject, value) {
             var ky, i;
-            
             if (this.sql.indexOf("UPDATE") === 0) {
                 if (typeof (varNameOrObject) === "string") {
                     this.sql += "SET " + varNameOrObject.replace(/![a-zA-Z0-9_]/g, '') +
-                        " = " this.safely(value);
+                        " = " + safely(value);
                 } else if (typeof varNameOrObject === "object") {
-                    for(ky in varNameObject) {
-                        if (varNameObject.hasOwnProperty(ky)) {
-                            this.sql
+                    i = 0;
+                    this.sql += "SET ";
+                    for (ky in varNameOrObject) {
+                        if (varNameOrObject.hasOwnProperty(ky)) {
+                            if (i > 1) {
+                                this.sql += ", ";
+                            }
+                            this.sql += varNameOrObject[ky].replace(/![a-zA-Z0-9_]/g, '') +
+                                " = " + safely(varNameOrObject[ky]);
+                            i += 1;
                         }
                     }
                 } else {
-                        throw "Can not add " + varNameOrObject + " to " + this.sql;
+                    throw "Cannot add " + varNameOrObject + " to " + this.sql;
                 }
             } else {
                 if (this.dialect === SQLite) {
