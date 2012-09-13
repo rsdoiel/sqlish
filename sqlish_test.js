@@ -121,9 +121,25 @@ TestHarness.push({ callback: function () {
 TestHarness.push({callback: function () {
     var sql = new sqlish.Sql();
     
+    assert.equal(sql.eol, ";", "Should have eol equal to ;");
     assert.equal(sql.select("count()").toString(), "SELECT count();");
     assert.equal(sql.select("count()").toString(""), "SELECT count()");
 }, label: "Testing toString() terminiations"});
+
+TestHarness.push({callback: function () {
+    var sql = new sqlish.Sql(),
+        s,
+        expected_s;
+    
+    s = sql.deleteTable("test").toString();
+    expected_s = "DELETE FROM test;";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.update("test").toString();
+    expected_s = "UPDATE test;";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+}, label: "Test 0.0.3 freatures."});
 
 if (require.main === module) {
     TestHarness.RunIt(path.basename(module.filename), 10, true);

@@ -264,16 +264,34 @@
         };
         
         // Do a MySQL SET, e.g. SET @my_count = 0;
-        sql.set = function (varName, value) {
-            if (this.dialect === SQLite) {
-                throw "SQLite does not support SET and @varname constructs";
-            }
-            if (String(value).trim() === "LAST_INSERT_ID()") {
-                this.sql = "SET @" + varName.replace(/![a-zA-Z0-9_]/g, '') +
-                    " = LAST_INSERT_ID()";
+        // Or add a SET pharse to an UPDATE statement.
+        sql.set = function (varNameOrObject, value) {
+            var ky, i;
+            
+            if (this.sql.indexOf("UPDATE") === 0) {
+                if (typeof (varNameOrObject) === "string") {
+                    this.sql += "SET " + varNameOrObject.replace(/![a-zA-Z0-9_]/g, '') +
+                        " = " this.safely(value);
+                } else if (typeof varNameOrObject === "object") {
+                    for(ky in varNameObject) {
+                        if (varNameObject.hasOwnProperty(ky)) {
+                            this.sql
+                        }
+                    }
+                } else {
+                        throw "Can not add " + varNameOrObject + " to " + this.sql;
+                }
             } else {
-                this.sql = "SET @" + varName.replace(/![a-zA-Z0-9_]/g, '') +
-                    " = " + safely(value);
+                if (this.dialect === SQLite) {
+                    throw "SQLite does not support SET and @varname constructs";
+                }
+                if (String(value).trim() === "LAST_INSERT_ID()") {
+                    this.sql = "SET @" + varNameOrObject.replace(/![a-zA-Z0-9_]/g, '') +
+                        " = LAST_INSERT_ID()";
+                } else {
+                    this.sql = "SET @" + varNameOrObject.replace(/![a-zA-Z0-9_]/g, '') +
+                        " = " + safely(value);
+                }
             }
             return this;
         };
@@ -297,11 +315,21 @@
     
         sql.toString = function (eol) {
             if (eol === undefined) {
-                eol = this.eol;
+                return this.sql + this.eol;
             }
             return this.sql + eol;
         };
         
+        sql.deleteTable = function (tableName) {
+            this.sql = "DELETE FROM " + tableName;
+            return this;
+        };
+
+        sql.update = function (tableName) {
+            this.sql = "UPDATE " + tableName;
+            return this;
+        };
+
         return sql;
     };
 
