@@ -20,13 +20,14 @@
         var sql = {
             dialect: MySQL,
             use_UTC: false,
-            sql: ""
+            sql: "",
+            eol: ";"
         }, key;
 
         if (config !== undefined) {
             // Mongo 2.2's shell doesn't support Object.keys()
             for (key in config) {
-                if (typeof config[key] !== "function") {
+                if (config.hasOwnProperty(key) && typeof config[key] !== "function") {
 					sql[key] = config[key];
                 }
             }
@@ -296,7 +297,7 @@
     
         sql.toString = function (eol) {
             if (eol === undefined) {
-                eol = ';';
+                eol = this.eol;
             }
             return this.sql + eol;
         };

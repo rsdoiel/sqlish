@@ -48,12 +48,12 @@ To use with NodeJS install via npm.
 	// Output:
 	// INSERT INTO messages (name, email, msg, sent) VALUES (
 	//	"fred", "fred@example.com", "He siad, \"Hello World\"", 
-	//	"2012-09-01 14:15:00")
+	//	"2012-09-01 14:15:00");
 	console.log(Sql.insert("test", message).toString());
 	
 	// Output:
 	// SELECT id, name, email, msg, sent FROM messages 
-	//	WHERE email LIKE "%@example.com"
+	//	WHERE email LIKE "%@example.com";
 	console.log(Sql.select(Object.keys(message))
 			.from("messages")
 			.where('email LIKE "%@example.com"').toString());
@@ -61,7 +61,7 @@ To use with NodeJS install via npm.
 	// Output:
 	// REPLACE INTO messages (id, name, email, msg, sent) VALUES (
 	//	10123, "George", "george@example.com", "He siad, \"Hello World\"", 
-	//	"2012-07-01")
+	//	"2012-07-01");
 	message.id = 10123;
 	message.name = "George";
 	message.email = "george@example.com";
@@ -69,6 +69,55 @@ To use with NodeJS install via npm.
 	console.log(Sql.replace("test", message).toString());
 ```
 
+## a word about sqlish's toString()
+
+Normally you want SQL statements to end with a semi-colon and by default this
+is what the toString() at the end of the function chain will do.  However their
+are cases where you may want to render complex SQL statements by parts.  In
+that case you can overwrite the default semi-colon by passing the terminating
+string (including the empty string) as a paramater to toString().
+
+```JavaScript
+	var sqlish = require("sqlish"),
+		Sql = new sqlish.Sql();
+    
+    // No trailing semi-colon
+    console.log(sql.select("count()").toString(""));
+    // Trailing semi-colon
+    console.log(sql.select("count()").toString());
+```
+Running the above will yeald something like-
+
+```shell
+    > console.log(sql.select("count()").toString(""));
+    'SELECT count()'
+    > console.log(sql.select("count()").toString());
+    'SELECT count();'
+```
+
+If you would like to have some other delimiter used as the end of statement marker you
+can do so when overwriting Sql.eol at time of object creation or before calling toString().
+
+```
+	var sqlish = require("sqlish"),
+		Sql = new sqlish.Sql({eol: ";\n\n"});
+    
+    // No trailing semi-colon
+    console.log(sql.select("count()").toString(""));
+    // Trailing semi-colon with two new lines
+    console.log(sql.select("count()").toString());
+```
+
+Would yeild something like-
+
+```shell
+    > console.log(sql.select("count()").toString(""));
+    'SELECT count()'
+    > console.log(sql.select("count()").toString());
+    'SELECT count();'
+    
+    
+```
 
 # MongoDB shell example
 
@@ -94,8 +143,8 @@ Output should look something like-
 ```shell
 	MongoDB shell version: 2.2.0
 	connecting to: test
-	SELECT id, name, email, modified FROM myTable
-	REPLACE INTO myTable (id, name, email, modified) VALUES (1, "fred", "fred@example.com", "2012-09-11 10:21:14")
+	SELECT id, name, email, modified FROM myTable;
+	REPLACE INTO myTable (id, name, email, modified) VALUES (1, "fred", "fred@example.com", "2012-09-11 10:21:14");
 ```
 
 # Alternatives?

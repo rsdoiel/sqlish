@@ -118,6 +118,13 @@ TestHarness.push({ callback: function () {
     assert.ok(wasThrown, "Should have thrown an error for Sql.into(\"@myId\")");
 }, label: "SQLite specific tests."});
 
+TestHarness.push({callback: function () {
+    var sql = new sqlish.Sql();
+    
+    assert.equal(sql.select("count()").toString(), "SELECT count();");
+    assert.equal(sql.select("count()").toString(""), "SELECT count()");
+}, label: "Testing toString() terminiations"});
+
 if (require.main === module) {
     TestHarness.RunIt(path.basename(module.filename), 10, true);
 } else {
