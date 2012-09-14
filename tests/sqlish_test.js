@@ -156,8 +156,30 @@ harness.push({callback: function () {
     // Bugs needing fixing before version 0.0.4 released
     s = sql.select().toString();
     expected_s = "SELECT *;";
-    
+
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.createTable("test", {
+        id: "INTEGER AUTO_INCREMENT PRIMARY KEY",
+        name: "VARCHAR(255)",
+        email: "VARCHAR(255)",
+        modified: "TIMESTAMP"
+    }).toString();
+    expected_s = "CREATE TABLE test (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255), modified TIMESTAMP);";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.alterTable("test", "ADD COLUMN", {
+        created: "TIMESTAMP"
+    }).toString();
+    expected_s = "ALTER TABLE test ADD COLUMN (created TIMESTAMP);";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    
+    s = sql.dropTable("test");
+    expected_s = "DROP TABLE test";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    assert.fail("Auto-ordering of phrases not implemented.");
 }, label: "Test 0.0.4 features"});
 
 if (require.main === module) {

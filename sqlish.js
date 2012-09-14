@@ -337,6 +337,59 @@
             this.sql = "UPDATE " + tableName;
             return this;
         };
+        
+        sql.createTable = function (tableName, col_defs) {
+            var ky, i = 0;
+
+            this.sql = "CREATE TABLE " + tableName + " (";
+            for (ky in col_defs) {
+                if (col_defs.hasOwnProperty(ky)) {
+                    if (typeof ky === "string") {
+                        ky = ky.replace(/![a-zA-Z0-9_]/g, '');
+                        if (i > 0) {
+                            this.sql += ", ";
+                        }
+                        this.sql += ky + " " + col_defs[ky];
+                        i += 1;
+                    }
+                }
+            }
+            this.sql += ')';
+            
+            return this;
+        };
+        
+        // Initial alterTable support RENAME TO, ADD COLUMN, DROP COLUMN
+        sql.alterTable = function (tableName, action, col_defs) {
+            var ky, i = 0;
+            
+            this.sql = "ALTER TABLE " + tableName + " " + action;
+            if (action.match(/rename to/i)) {
+                this.sql += " " + col_defs;
+            } else {
+                this.sql += " (";
+                for (ky in col_defs) {
+                    if (col_defs.hasOwnProperty(ky)) {
+                        if (typeof ky === "string") {
+                            ky = ky.replace(/![a-zA-Z0-9_]/g, '');
+                            if (i > 0) {
+                                this.sql += ", ";
+                            }
+                            this.sql += ky + " " + col_defs[ky];
+                            i += 1;
+                        }
+                    }
+                }
+                this.sql += ")";
+
+            }
+            return this;
+        };
+
+        sql.dropTable = function (tableName) {
+            this.sql = "DROP TABLE " + tableName;
+            return this;
+        };
 
         return sql;
     };
