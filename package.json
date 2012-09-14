@@ -21,7 +21,7 @@
 		"npm" : ">= 1.1.59"
 	},
 	"scripts" : {
-		"test" : "node sqlish_test.js"
+		"test" : "node tests/sqlish_test.js"
 	},
 	"bugs": {
 		"url": "http://github.com/rsdoiel/sqlish/issues"

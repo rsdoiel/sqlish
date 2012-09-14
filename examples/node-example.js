@@ -1,7 +1,7 @@
 //
 // Simple example of using sqlish with NodeJS
 //
-var sqlish = require("sqlish"),
+var sqlish = require("../sqlish"),
 	Sql = new sqlish.Sql({dialect: sqlish.MySQL, use_UTC: false}),
 	message = {
 		id: 0,

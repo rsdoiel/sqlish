@@ -11,8 +11,8 @@
 
 var path = require("path"),
     assert = require("assert"),
-    sqlish = require("./sqlish"),
-    TestHarness = require("./harness");
+    sqlish = require("../sqlish"),
+    TestHarness = require("../lib/harness");
 
 
 // Basic SQL assembly

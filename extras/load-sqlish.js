@@ -11,7 +11,7 @@ if (load === undefined) {
 
 // Now that we have the objects methods we need, load sqlish
 if (typeof load === "function") {
-    load("./sqlish.js");
+    load("../sqlish.js");
 } else {
     throw "load() not a function.";
 }
