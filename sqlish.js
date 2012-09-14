@@ -270,19 +270,19 @@
             var ky, i;
             if (this.sql.indexOf("UPDATE") === 0) {
                 if (typeof (varNameOrObject) === "string") {
-                    this.sql += "SET " + varNameOrObject.replace(/![a-zA-Z0-9_]/g, '') +
+                    this.sql += " SET " + varNameOrObject.replace(/![a-zA-Z0-9_]/g, '') +
                         " = " + safely(value);
                 } else if (typeof varNameOrObject === "object") {
                     i = 0;
-                    this.sql += "SET ";
+                    this.sql += " SET ";
                     for (ky in varNameOrObject) {
                         if (varNameOrObject.hasOwnProperty(ky)) {
-                            if (i > 1) {
+                            if (i > 0) {
                                 this.sql += ", ";
                             }
-                            this.sql += varNameOrObject[ky].replace(/![a-zA-Z0-9_]/g, '') +
-                                " = " + safely(varNameOrObject[ky]);
                             i += 1;
+                            this.sql += ky.replace(/![a-zA-Z0-9_]/g, '') +
+                                " = " + safely(varNameOrObject[ky]);
                         }
                     }
                 } else {

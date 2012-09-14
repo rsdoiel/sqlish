@@ -142,7 +142,11 @@ TestHarness.push({callback: function () {
     s = sql.update("test").toString();
     expected_s = "UPDATE test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
+
+    s = sql.update("test").set({name: "George", email: "george@example.com"}).where("test.id = 2").toString();
+    expected_s = 'UPDATE test SET name = "George", email = "george@example.com" WHERE test.id = 2;';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
 }, label: "Test 0.0.3 freatures."});
 
 if (require.main === module) {
