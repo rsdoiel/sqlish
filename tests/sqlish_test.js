@@ -12,11 +12,11 @@
 var path = require("path"),
     assert = require("assert"),
     sqlish = require("../sqlish"),
-    TestHarness = require("../lib/harness");
+    harness = require("../lib/harness");
 
 
 // Basic SQL assembly
-TestHarness.push({callback: function () {
+harness.push({callback: function () {
     var Sql = new sqlish.Sql(),
         s,
         expected_s,
@@ -95,7 +95,7 @@ TestHarness.push({callback: function () {
 }, label: "Basic SQL assemble tests."});
 
 // Setup some basic tests for SQLite support
-TestHarness.push({ callback: function () {
+harness.push({ callback: function () {
     var wasThrown = false,
         s,
         expected_s,
@@ -118,7 +118,7 @@ TestHarness.push({ callback: function () {
     assert.ok(wasThrown, "Should have thrown an error for Sql.into(\"@myId\")");
 }, label: "SQLite specific tests."});
 
-TestHarness.push({callback: function () {
+harness.push({callback: function () {
     var sql = new sqlish.Sql();
     
     assert.equal(sql.eol, ";", "Should have eol equal to ;");
@@ -126,7 +126,7 @@ TestHarness.push({callback: function () {
     assert.equal(sql.select("count()").toString(""), "SELECT count()");
 }, label: "Testing toString() terminiations"});
 
-TestHarness.push({callback: function () {
+harness.push({callback: function () {
     var sql = new sqlish.Sql(),
         s,
         expected_s;
@@ -146,11 +146,22 @@ TestHarness.push({callback: function () {
     s = sql.update("test").set({name: "George", email: "george@example.com"}).where("test.id = 2").toString();
     expected_s = 'UPDATE test SET name = "George", email = "george@example.com" WHERE test.id = 2;';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+}, label: "Test 0.0.3 features."});
 
-}, label: "Test 0.0.3 freatures."});
+harness.push({callback: function () {
+    var sql = new sqlish.Sql(),
+        s,
+        expected_s;
+
+    // Bugs needing fixing before version 0.0.4 released
+    s = sql.select().toString();
+    expected_s = "SELECT *;";
+    
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+}, label: "Test 0.0.4 features"});
 
 if (require.main === module) {
-    TestHarness.RunIt(path.basename(module.filename), 10, true);
+    harness.RunIt(path.basename(module.filename), 10, true);
 } else {
-    exports.RunIt = TestHarness.RunIt;
+    exports.RunIt = harness.RunIt;
 }

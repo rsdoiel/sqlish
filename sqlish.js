@@ -8,7 +8,6 @@
 // Released under the Simplified BSD License.
 // See: http://opensource.org/licenses/bsd-license.php
 //
-// revision: 0.0.1
 //
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 
@@ -194,7 +193,9 @@
         sql.select = function (fields) {
             var i, s;
     
-            if (typeof fields === "string") {
+            if (fields === undefined) {
+                s = "SELECT *";
+            } else if (typeof fields === "string") {
                 s = "SELECT " + fields.replace(/![a-zA-Z0-9_\.\*]/g, "");
             } else {
                 for (i = 0; i < fields.length; i += 1) {
