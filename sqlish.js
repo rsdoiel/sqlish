@@ -1,3 +1,4 @@
+
 //
 // sqlish.js - utility methods for creating SQL statements.
 //
@@ -326,7 +327,7 @@
             return this.sql + eol;
         };
         
-        sql.deleteTable = function (tableName) {
+        sql.deleteFrom = function (tableName) {
             this.sql = "DELETE FROM " + tableName;
             return this;
         };

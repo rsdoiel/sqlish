@@ -131,7 +131,7 @@ TestHarness.push({callback: function () {
         s,
         expected_s;
     
-    s = sql.deleteTable("test").toString();
+    s = sql.deleteFrom("test").toString();
     expected_s = "DELETE FROM test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
