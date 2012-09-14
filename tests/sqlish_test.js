@@ -135,6 +135,10 @@ TestHarness.push({callback: function () {
     expected_s = "DELETE FROM test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
+    s = sql.deleteFrom("test").where("ID = 32").toString();
+    expected_s = "DELETE FROM test WHERE ID = 32;";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
     s = sql.update("test").toString();
     expected_s = "UPDATE test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
