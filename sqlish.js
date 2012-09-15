@@ -12,14 +12,17 @@
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 
 (function (self) {
-    var MySQL = "mysql",
-        PostgreSQL = "postgresql",
-        SQLite = "sqlite",
+    var Dialect = {
+            SQL92: "sql 1992",
+            MySQL55: "mysql 5.5",
+            PostgreSQL92: "postgresql 9.2",
+            SQLite3: "sqlite 3"
+        },
         Sql;
 
     Sql = function (config) {
         var sql = {
-            dialect: MySQL,
+            dialect: Dialect.MySQL55,
             use_UTC: false,
             sql: "",
             eol: ";"
@@ -291,8 +294,8 @@
                     throw "Cannot add " + varNameOrObject + " to " + this.sql;
                 }
             } else {
-                if (this.dialect === SQLite) {
-                    throw "SQLite does not support SET and @varname constructs";
+                if (this.dialect === Dialect.SQLite3) {
+                    throw Dialect.SQLite3 + " does not support SET and @varname constructs";
                 }
                 if (String(value).trim() === "LAST_INSERT_ID()") {
                     this.sql = "SET @" + varNameOrObject.replace(/![a-zA-Z0-9_]/g, '') +
@@ -307,8 +310,8 @@
         
         sql.into = function (fields) {
             // support for generating SQLite dialect quoting
-            if (this.dialect === SQLite) {
-                throw "INTO not supported in SQLite.";
+            if (this.dialect === Dialect.SQLite3) {
+                throw "INTO not supported by " + Dialect.SQLite3;
             }
             if (typeof fields === "string") {
                 this.sql += " INTO " + fields;
@@ -426,13 +429,11 @@
     };
 
     // If we're running under NodeJS then export objects
-    self.MySQL = MySQL;
-    self.SQLite = SQLite;
+    self.Dialect = Dialect;
     self.Sql = Sql;
     if (exports !== undefined) {
-        exports.MySQL = MySQL;
+        exports.Dialect = Dialect;
         exports.Sql = Sql;
-        exports.SQLite = SQLite;
     }
 
     return self;

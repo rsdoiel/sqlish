@@ -99,7 +99,9 @@ harness.push({ callback: function () {
     var wasThrown = false,
         s,
         expected_s,
-        Sql = new sqlish.Sql({dialect: sqlish.SQLite});
+        Sql = new sqlish.Sql({
+            dialect: sqlish.Dialect.SQLite3
+        });
     
     wasThrown = false;
     try {

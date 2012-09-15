@@ -49,14 +49,135 @@ an asterick is used in its place.
 The final toString() returns the assemble SQL statement as a
 string.
 
-# The functions
+# The sql statements and clauses as functions
 
-select()::
-    This creates the clause SELECT [FIELD NAMES].
+As you can see in the examples above chaining some
+of the sqlish function together will let you assemble a SQL
+statement (rendered by toString()).  I loosely think of SQL
+clauses as coming in several flavors - verbs, nouns, 
+adverbs, adjectives, and conjunctions. In SQL verbs, filters
+and modifiers. Verbs (e.g. SELECT ..., INSERT ...
+UPDATE ..., DELETE ..., CREATE ...) describe the action you're
+asking the database engine to perform.  The rest specify what
+the verb is operating on and restrict its effect or results. Sqlish
+organizes if functions in a similar way. Not all modifier
+make senses with all verbs but many can be combined.  Sqlish
+trys to assemble a SQL statement that makes sense but it is
+not a SQL validator and does not parse the SQL generated so
+it remains helpful to have a basic knowledge of the SQL
+dialect you're targeting when assemble SQL via sqlish
+functions.
+
+## Verbs
+
+This is a list of the verbs implemented so far as sqlish
+functions. More may be added overtime.
+
+createTable():
+	This generates a full create statement for the targeted
+	dialect of SQL. createTable takes two parameters - 
+	a table name and an object who's property names are
+	the column names you want to create and who's values
+	are also an object which attributes describe types
+	and properties of the column
 
 ```JavaScript
-    sql.select(["id", "name", "email"]).toString();
+	sql.createTable("story_book_characters", {
+		id: {
+			type: "INTEGER",
+			auto_increment: true,
+			primary_key: true
+		},
+		name: { 
+			type: "varchar", 
+			length: 255, 
+			not_null: true
+		},
+		tunnel_id: { 
+			type: integer, 
+			not_null: true,
+			default: 100
+		},
+		start_date: {
+			type: "date",
+			use_utc: true
+		},
+		poem: { type: "text" },
+		modified: { type: "timestamp" }
+	});
 ```
 
+createIndex():
+	Generate a index. Parameters expected are index name and
+	object with attributes describing the index.
+
+```JavaScript
+	sql.createIndex("i_character_names", {
+		unique: true,
+		on: {
+			table: "story_book_characters",
+			columns: ["name"]
+		}
+	});
+```
+
+dropTable():
+	Generates a drop table statement. It takes a single parameter
+	of the table name.
+
+```JavaScript
+	sql.dropTable("story_book_characters");
+``` 
+
+droptIndex():
+	Generate a drop index statement. It takes a single parameter
+	of the index name to drop.
+
+```JavaScript
+	sql.dropIndex("i_character_names");
+```
+
+insert():
+	This generates a row insert statement. Parameters are
+	table name and an object which has attribute names corresponding
+	to column names and attribute values containing the values to
+	be inserted.
+
+```JavaScript
+	sql.insert("test1", {
+		name: "Fred", 
+		tunnel_id: 12,
+		start_date: new Date("01/22/1803"),
+		modified: new Date()
+	});
+```
+
+replace():
+	Replace is support for SQLite3 and MySQL55 dialects. It takes
+	the same parameters as insert.
+
+```JavaScript
+	sql.replace("test1", {
+		id: 231,
+		name: "Fred", 
+		tunnel_id: 2,
+		start_date: new Date("01/22/2003"),
+		modified: new Date()
+	});
+```
+
+	
+select():
+    This creates the clause SELECT [FIELD NAMES]. Select
+    takes either a string that is a column identifier,
+    a SQL function name supported by the dialect or an
+    array of column identifiers and SQL functions.
+
+```JavaScript
+	sql.select("myId");
+	sql.select("COUNT()");
+    sql.select(["id", "name", "email"]).toString();
+```
+	
 
 
