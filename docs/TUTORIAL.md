@@ -119,11 +119,11 @@ by those used in MongoDB. From the three previous examples-
 ```
 
 If you need to group phrases in SQL to assert a precidence
-in evaluation you do so with parenthasis. Unfortunetly a simple
+in evaluation you do so with parenthesis. Unfortunetly a simple
 wrapper of Parathasis will not work in JavaScript since that 
 deliniates a functions' parameters and functions can be assigned
 inside object literals.  To allow expression composition we
-a function named _P()_ (P is short for parenthasis).
+a function named _P()_ (P is short for parenthesis).
 
 A sqlish's object literal integrating _P()_ -
 
@@ -176,7 +176,7 @@ createTable():
 ```JavaScript
 	sql.createTable("story_book_characters", {
 		id: {
-			type: "INTEGER",
+			type: "integer",
 			auto_increment: true,
 			primary_key: true
 		},
@@ -192,8 +192,7 @@ createTable():
 		},
 		start_date: {
 			type: "datetime",
-			use_utc: true,
-			default: "now"
+            not_null: true
 		},
 		poem: { type: "text" },
 		modified: { type: "timestamp" }
@@ -262,6 +261,7 @@ replace():
 	});
 ```
 
+
 update():
 	Generate an update clause. It is usually combined with
 	a set() and where(). Update takes the table name as the only parameter.
@@ -269,6 +269,7 @@ update():
 ```JavaScript
 	sql.update("story_book_characters").set({name: "Albert"}).where({id: 1});
 ```
+
 
 select():
     This creates the clause SELECT [FIELD NAMES]. Select
@@ -289,10 +290,34 @@ from():
 	a single table name or an array of table names.
 
 ```JavaScript
+    // SQL: SELECT id, name FROM story_book_characters
 	sql.select(["id", "name"]).from("story_book_characters")
 ```
 
+where():
+    Generating a where clause. Usually used with select.
+    Takes an expression as its parameter.
 
+```JavaScript
+    // SQL: SELECT id, name FROM story_book_characters
+    // WHERE name = "fred";
+	sql.select(["id", "name"]).from("story_book_characters")
+        .where({name: "fred"});
+```
+
+into():
+    Into is usually used with _select()_. It is not supported
+    by the SQLite 3 dialect. Takes a string or array of variable
+    or column names.
+    
+```JavaScript
+    // MySQL 5.5: SELECT 2 INTO @number;
+    // PostgreSQL 9.2: SELECT 2 INTO number;
+    sql.select(2).into("number");
+```
+
+join():
+    
 # Expressions
 
 >,>=,=,!=,<,<=:
@@ -337,10 +362,10 @@ OR, AND:
 ```
 
 (), P():
-    Generating parenthasis in expressions is a little different than
-    in MonogDB. Group with parenthasis is accomplish by a function 
+    Generating parenthesis in expressions is a little different than
+    in MonogDB. Group with parenthesis is accomplish by a function 
     named _P_. It evaluates the objet literal passed to it, converts 
-    that literal to a string and wraps the results in parenthasis.
+    that literal to a string and wraps the results in parenthesis.
 
 ```JavaScript
     // SQL: (cnt = 3)
