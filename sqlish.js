@@ -12,15 +12,14 @@
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 
 (function (self) {
-    var SQL92 = "sql92",
-        MySQL = "mysql",
-        PostgreSQL = "postgresql", 
+    var MySQL = "mysql",
+        PostgreSQL = "postgresql",
         SQLite = "sqlite",
         Sql;
 
     Sql = function (config) {
         var sql = {
-            dialect: SQL92,
+            dialect: MySQL,
             use_UTC: false,
             sql: "",
             eol: ";"
@@ -390,6 +389,36 @@
 
         sql.dropTable = function (tableName) {
             this.sql = "DROP TABLE " + tableName;
+            return this;
+        };
+        
+        sql.createIndex = function (indexName, options) {
+            var i;
+
+            if (options.unique !== undefined && options.unique === true) {
+                this.sql = "CREATE UNIQUE INDEX " + indexName;
+            } else {
+                this.sql = "CREATE INDEX " + indexName;
+            }
+            
+            if (options.on === undefined) {
+                throw "Must define an index on something.";
+            } else {
+                this.sql += " ON " + options.on.table + " (";
+                for (i = 0; i < options.on.columns.length; i += 1) {
+                    if (i > 0) {
+                        this.sql += ", ";
+                    }
+                    this.sql += options.on.columns[i];
+                }
+                this.sql += ")";
+            }
+            
+            return this;
+        };
+        
+        sql.dropIndex = function (indexName) {
+            this.sql = "DROP INDEX " + indexName;
             return this;
         };
 

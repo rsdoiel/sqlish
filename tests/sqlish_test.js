@@ -174,12 +174,35 @@ harness.push({callback: function () {
     expected_s = "ALTER TABLE test ADD COLUMN (created TIMESTAMP);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    
     s = sql.dropTable("test");
     expected_s = "DROP TABLE test";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+
+    s = sql.createIndex("i_test", {
+        unique: false,
+        on: {
+            table: "test", 
+            columns: [
+                "name", "email"
+            ]
+        }
+    }).toString();
+    expected_s = "CREATE INDEX i_test ON test (name, email);";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.dropIndex("i_test").toString();
+    expected_s = "DROP INDEX i_test;";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    assert.fail("Auto-ordering of phrases not implemented.");
+
+}, label: "Test 0.0.4 features"});
+
+/*
+harness.push({callback: function () {
+    
+    // Auto-ordering of phrases moved to 0.0.5
+    //assert.fail("Auto-ordering of phrases not implemented.");
     
     // SQLite supported by following sqlish functions
     // alterTable()
@@ -316,10 +339,9 @@ harness.push({callback: function () {
     // begin()
     // savepoint()
     // commit()
-    // rollback()
-    
-    
-}, label: "Test 0.0.4 features"});
+    // rollback()    
+}, label: "Test 0.0.5 features"});
+ */
 
 if (require.main === module) {
     harness.RunIt(path.basename(module.filename), 10, true);
