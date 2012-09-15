@@ -21,8 +21,8 @@ console.log(Sql.insert("test", message).toString());
 // SELECT id, name, email, msg, sent FROM messages 
 //	WHERE email LIKE "%@example.com"
 console.log(Sql.select(Object.keys(message))
-		.from("messages")
-		.where('email LIKE "%@example.com"').toString());
+		.from("messages"
+		.where({email: {$like: "%@example.com"}}).toString());
 
 // Output:
 // REPLACE INTO messages (id, name, email, msg, sent) VALUES (
