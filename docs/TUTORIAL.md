@@ -43,11 +43,27 @@ as the load script in this example).
 ```
 
 Each function produces phrase of SQL. select() is a verb and takes
-an array of fieldnames. If no field names are provided then the
-an asterick is used in its place.
+an array of column names. If no field names are provided then the
+an asterisk is used in its place.
 
 The final toString() returns the assemble SQL statement as a
 string.
+
+# Creating a sqlish object
+
+A sqlish object is created with the new operator after it has been
+imported. The constructor can take an object as a parameter. The 
+attributes support are dialect, use_UTC, and eol (e.g. ';') which 
+will be used by toString() to terminate the SQL statement generated.
+
+```JavaScript
+	var sql = new sqlish.Sql({
+		dialect: sqlish.Dialect.PostgreSQL92,
+		use_UTC: true,
+		eol: ";\n"
+	});
+```
+
 
 # The sql statements and clauses as functions
 
@@ -99,13 +115,15 @@ createTable():
 			default: 100
 		},
 		start_date: {
-			type: "date",
-			use_utc: true
+			type: "datetime",
+			use_utc: true,
+			default: "now"
 		},
 		poem: { type: "text" },
 		modified: { type: "timestamp" }
 	});
 ```
+
 
 createIndex():
 	Generate a index. Parameters expected are index name and
@@ -121,6 +139,7 @@ createIndex():
 	});
 ```
 
+
 dropTable():
 	Generates a drop table statement. It takes a single parameter
 	of the table name.
@@ -128,6 +147,7 @@ dropTable():
 ```JavaScript
 	sql.dropTable("story_book_characters");
 ``` 
+
 
 droptIndex():
 	Generate a drop index statement. It takes a single parameter
@@ -166,7 +186,14 @@ replace():
 	});
 ```
 
-	
+update():
+	Generate an update clause. It is usually combined with
+	a set() and where(). Update takes the table name as the only parameter.
+
+```JavaScript
+	sql.update("story_book_characters").set({name: "Albert"}).where({id: 1});
+```
+
 select():
     This creates the clause SELECT [FIELD NAMES]. Select
     takes either a string that is a column identifier,
@@ -179,5 +206,11 @@ select():
     sql.select(["id", "name", "email"]).toString();
 ```
 	
+from():
+	Generates a from clause. Usually used with select. Takes
+	a single table name or an array of table names.
 
+```JavaScript
+	sql.select(["id", "name"]).from("story_book_characters")
+```
 
