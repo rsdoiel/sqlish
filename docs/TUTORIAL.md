@@ -165,13 +165,12 @@ and environment variable references.
 This is a list of the verbs implemented so far as sqlish
 functions. More may be added overtime.
 
-createTable():
-	This generates a full create statement for the targeted
-	dialect of SQL. createTable takes two parameters - 
-	a table name and an object who's property names are
-	the column names you want to create and who's values
-	are also an object which attributes describe types
-	and properties of the column
+_createTable()_: This generates a full create statement for the targeted
+dialect of SQL. createTable takes two parameters - 
+a table name and an object who's property names are
+the column names you want to create and who's values
+are also an object which attributes describe types
+and properties of the column
 
 ```JavaScript
 	sql.createTable("story_book_characters", {
@@ -200,9 +199,8 @@ createTable():
 ```
 
 
-createIndex():
-	Generate a index. Parameters expected are index name and
-	object with attributes describing the index.
+_createIndex()_: Generate a index. Parameters expected are index name and
+object with attributes describing the index.
 
 ```JavaScript
 	sql.createIndex("i_character_names", {
@@ -215,28 +213,25 @@ createIndex():
 ```
 
 
-dropTable():
-	Generates a drop table statement. It takes a single parameter
-	of the table name.
+_dropTable()_: Generates a drop table statement. It takes a single parameter
+of the table name.
 
 ```JavaScript
 	sql.dropTable("story_book_characters");
 ``` 
 
 
-droptIndex():
-	Generate a drop index statement. It takes a single parameter
-	of the index name to drop.
+_droptIndex()_:	Generate a drop index statement. It takes a single parameter
+of the index name to drop.
 
 ```JavaScript
 	sql.dropIndex("i_character_names");
 ```
 
-insert():
-	This generates a row insert statement. Parameters are
-	table name and an object which has attribute names corresponding
-	to column names and attribute values containing the values to
-	be inserted.
+_insert()_: This generates a row insert statement. Parameters are
+table name and an object which has attribute names corresponding
+to column names and attribute values containing the values to
+be inserted.
 
 ```JavaScript
 	sql.insert("test1", {
@@ -247,9 +242,8 @@ insert():
 	});
 ```
 
-replace():
-	Replace is support for SQLite3 and MySQL55 dialects. It takes
-	the same parameters as insert.
+_replace()_: Replace is support for SQLite3 and MySQL55 dialects. It takes
+the same parameters as insert.
 
 ```JavaScript
 	sql.replace("test1", {
@@ -262,20 +256,18 @@ replace():
 ```
 
 
-update():
-	Generate an update clause. It is usually combined with
-	a set() and where(). Update takes the table name as the only parameter.
+_update()_: Generate an update clause. It is usually combined with
+a set() and where(). Update takes the table name as the only parameter.
 
 ```JavaScript
 	sql.update("story_book_characters").set({name: "Albert"}).where({id: 1});
 ```
 
 
-select():
-    This creates the clause SELECT [FIELD NAMES]. Select
-    takes either a string that is a column identifier,
-    a SQL function name supported by the dialect or an
-    array of column identifiers and SQL functions.
+_select()_: This creates the clause _SELECT *FIELD NAMES*_. Select
+takes either a string that is a column identifier,
+a SQL function name supported by the dialect or an
+array of column identifiers and SQL functions.
 
 ```JavaScript
 	sql.select("myId");
@@ -285,18 +277,16 @@ select():
 
 # Supporting clauses
 
-from():
-	Generates a from clause. Usually used with select. Takes
-	a single table name or an array of table names.
+_from()_: Generates a from clause. Usually used with select. Takes
+a single table name or an array of table names.
 
 ```JavaScript
     // SQL: SELECT id, name FROM story_book_characters
 	sql.select(["id", "name"]).from("story_book_characters")
 ```
 
-where():
-    Generating a where clause. Usually used with select.
-    Takes an expression as its parameter.
+_where()_: Generating a where clause. Usually used with select.
+Takes an expression as its parameter.
 
 ```JavaScript
     // SQL: SELECT id, name FROM story_book_characters
@@ -305,10 +295,9 @@ where():
         .where({name: "fred"});
 ```
 
-into():
-    Into is usually used with _select()_. It is not supported
-    by the SQLite 3 dialect. Takes a string or array of variable
-    or column names.
+_into()_: Into is usually used with _select()_. It is not supported
+by the SQLite 3 dialect. Takes a string or array of variable
+or column names.
     
 ```JavaScript
     // MySQL 5.5: SELECT 2 INTO @number;
@@ -316,17 +305,16 @@ into():
     sql.select(2).into("number");
 ```
 
-join():
+_join()_:
     
 # Expressions
 
->,>=,=,!=,<,<=:
-    Greater than, greater than or equal, equal, not equal, less than, 
-    and less than or equal are expressed using _$gt_, _$gte_, $eq,
-    _$le_, and _$lte_. Equals can be expressed two ways. Implicitly
-    where the value assigned to the attribute is a number, string,
-    or date. Explicitly it can be expression where the value is an
-    object who's attribute name is _$eq_.
+_>,>=,=,!=,<,<=_: Greater than, greater than or equal, equal, not equal, less than, 
+and less than or equal are expressed using _$gt_, _$gte_, $eq,
+_$le_, and _$lte_. Equals can be expressed two ways. Implicitly
+where the value assigned to the attribute is a number, string,
+or date. Explicitly it can be expression where the value is an
+object who's attribute name is _$eq_.
 
 ```JavaScript
     // SQL: cnt > 3
@@ -344,9 +332,8 @@ join():
     expr = {cnt: {$lte: 3}};
 ```
 
-OR, AND:
-    The conjunction operators OR are expressioned using _$or_ and _$and_.
-    Both take an erray literal as its value or the function _P()_.
+_OR, AND_: The conjunction operators OR are expressioned using _$or_ and _$and_.
+Both take an erray literal as its value or the function _P()_.
 
 ```JavaScript
     // SQL: cnt = 3 OR cnt = 6
