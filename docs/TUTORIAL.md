@@ -309,8 +309,8 @@ _join()_:
     
 # Expressions
 
-_>,>=,=,!=,<,<=_: Greater than, greater than or equal, equal, not equal, less than, 
-and less than or equal are expressed using _$gt_, _$gte_, $eq,
+_=, !=, >, >=, <, <=_ : Equal, not equal, greater than, greater than or equal, less than, 
+and less than or equal are expressed using _$eq_, _$ne_, _$gt_, _$gte_,
 _$le_, and _$lte_. Equals can be expressed two ways. Implicitly
 where the value assigned to the attribute is a number, string,
 or date. Explicitly it can be expression where the value is an
