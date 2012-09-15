@@ -156,7 +156,7 @@ and environment variable references.
 ### IMPORTANT WARNING!
 
 > sqlish is not a replacement for best practices when writing
-> software. It remains import to defensively validate input from users,
+> software. It remains important to defensively validate input from users,
 > web browsers or any data source.
 
 
