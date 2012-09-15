@@ -12,13 +12,15 @@
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 
 (function (self) {
-    var MySQL = "mysql",
+    var SQL92 = "sql92",
+        MySQL = "mysql",
+        PostgreSQL = "postgresql", 
         SQLite = "sqlite",
         Sql;
 
     Sql = function (config) {
         var sql = {
-            dialect: MySQL,
+            dialect: SQL92,
             use_UTC: false,
             sql: "",
             eol: ";"

@@ -43,7 +43,20 @@ as the load script in this example).
 ```
 
 Each function produces phrase of SQL. select() is a verb and takes
-an array of fieldnames. If not field names are provided then the
+an array of fieldnames. If no field names are provided then the
 an asterick is used in its place.
+
+The final toString() returns the assemble SQL statement as a
+string.
+
+# The functions
+
+select()::
+    This creates the clause SELECT [FIELD NAMES].
+
+```JavaScript
+    sql.select(["id", "name", "email"]).toString();
+```
+
 
 
