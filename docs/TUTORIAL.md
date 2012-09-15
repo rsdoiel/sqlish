@@ -99,14 +99,18 @@ _having()_ and _set()_
 
 Expressions find themselves sprinkled through out SQL
 statements.  Much of the power of SQL comes from its expressions.
-Expressions implement logic, e.g. _title LIKE "%Wild Things%"_. 
-They also can define, e.g. _id INTEGER AUTO_INCREMENT PRIMARY 
-KEY_. Expressions in sqlish usually are  formed by a JavaScript 
-object literal. From the two previous examples-
+Expressions implement logic, e.g._email = "johndoe@examples.com"_ 
+or _title LIKE "%Wild Things%"_.  They also can define, e.g.
+_id INTEGER AUTO_INCREMENT PRIMARY KEY_. Expressions in sqlish 
+usually are  formed by a JavaScript object literals inspired
+by those used in MongoDB. From the three previous examples-
 
 ```JavaScript
+    // email = "johndoe@examples.com"
+    email_johndoe_expr = {email: "johndoe@examples.com"};
     // (title LIKE "%Wild Things%")
-    titles_like_expr = {title: {like: "%Wild Things%"}};
+    titles_like_expr = {title: {$like: "%Wild Things%"}};
+    // id INTEGER AUTO_INCREMENT PRIMARY KEY
     def_auto_increment_id = { 
         type: "int",
         auto_increment: true,
@@ -119,20 +123,20 @@ in evaluation you do so with parenthasis. Unfortunetly a simple
 wrapper of Parathasis will not work in JavaScript since that 
 deliniates a functions' parameters and functions can be assigned
 inside object literals.  To allow expression composition we
-a function named _p()_ (p is short for parenthasis).
+a function named _P()_ (P is short for parenthasis).
 
-A sqlish's object literal integrating _p()_ -
+A sqlish's object literal integrating _P()_ -
 
 ```JavaScript
-    orExpression = sql.p({
+    orExpression = sql.P({
         or: [
-            paren({
+            sql.P({
                 and: [
-                    {tag_count: {gt: 5}},
-                    {tag_count: {lt: 10}}
+                    {tag_count: {$gt: 5}},
+                    {tag_count: {$lt: 10}}
                 ],
             }),
-            paren({modified: {ge: "2012-01-01"}})
+            sql.P({modified: {$gte: "2012-01-01"}})
         ]
     });
 ```
@@ -280,12 +284,68 @@ select():
 
 # Supporting clauses
 
-
 from():
 	Generates a from clause. Usually used with select. Takes
 	a single table name or an array of table names.
 
 ```JavaScript
 	sql.select(["id", "name"]).from("story_book_characters")
+```
+
+
+# Expressions
+
+>,>=,=,!=,<,<=:
+    Greater than, greater than or equal, equal, not equal, less than, 
+    and less than or equal are expressed using _$gt_, _$gte_, $eq,
+    _$le_, and _$lte_. Equals can be expressed two ways. Implicitly
+    where the value assigned to the attribute is a number, string,
+    or date. Explicitly it can be expression where the value is an
+    object who's attribute name is _$eq_.
+
+```JavaScript
+    // SQL: cnt > 3
+    expr = {cnt: {$gt: 3}};
+    // SQL: cnt >= 3
+    expr = {cnt: {$gte: 3}};
+    // SQL: cnt = 3
+    expr = {cnt: 3};
+    expr = {cnt: {$eq: 3}};
+    // SQL: cnt != 3
+    expr = {cnt: {$ne: 3}};
+    // SQL: cnt < 3
+    expr = {cnt: {$lt: 3}};
+    // SQL: cnt <= 3
+    expr = {cnt: {$lte: 3}};
+```
+
+OR, AND:
+    The conjunction operators OR are expressioned using _$or_ and _$and_.
+    Both take an erray literal as its value or the function _P()_.
+
+```JavaScript
+    // SQL: cnt = 3 OR cnt = 6
+    expr = {$or: [{cnt: 3}, {cnt: 6}]};
+    // SQL: cnt = 3 OR cnt = 6 OR cnt = 9
+    expr = {$or: [{cnt: 3}, {cnt: 6}, {cnt: 9}]};
+    // SQL: cnt > 3 AND cnt < 9
+    expr = {$and: [{cnt: {$gt: 3}}, {cnt: {$lt: 9}}]};
+    // SQL: (cnt = 3 OR cnt < 9)
+    expr = sql.P({$or: [{cnt: 3}, {cnt: {$lt: 9}}]})
+    // SQL: (cnt = 3) OR (cnt < 9)
+    expr = {$or: [sql.P({cnt: 3}), sql.P({cnt: {$lt: 9})}]})
+```
+
+(), P():
+    Generating parenthasis in expressions is a little different than
+    in MonogDB. Group with parenthasis is accomplish by a function 
+    named _P_. It evaluates the objet literal passed to it, converts 
+    that literal to a string and wraps the results in parenthasis.
+
+```JavaScript
+    // SQL: (cnt = 3)
+    expr = sql.P({cnt: 3});
+    // SQL: (cnt = 3) or (cnt = 9)
+    expr = {$or: [sql.P({cnt: 3}), sql.P({cnt: 9})]};
 ```
 
