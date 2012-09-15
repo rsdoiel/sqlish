@@ -57,7 +57,7 @@ To use with NodeJS install via npm.
 	//	WHERE email LIKE "%@example.com";
 	console.log(Sql.select(Object.keys(message))
 			.from("messages")
-			.where('email LIKE "%@example.com"').toString());
+			.where({email: {$like: "%@example.com"}}).toString());
 	
 	// Output:
 	// REPLACE INTO messages (id, name, email, msg, sent) VALUES (
