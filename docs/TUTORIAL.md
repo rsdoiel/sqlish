@@ -153,10 +153,10 @@ SQL injection by apply quoting and escaping to values and restricting the
 characters used for SQL function names, table names, column names
 and environment variable references.
 
-### Import WARNING!
+### IMPORTANT WARNING!
 
 > sqlish is not a replacement for best practices when writing
-> software such as defensively validating input from users,
+> software. It remains import to defensively validate input from users,
 > web browsers or any data source.
 
 
