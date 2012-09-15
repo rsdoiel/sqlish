@@ -36,7 +36,8 @@ To use with NodeJS install via npm.
 
 ```JavaScript
 	var sqlish = require("sqlish"),
-		Sql = new sqlish.Sql({dialect: sqlish.MySQL, use_UTC: false}),
+		dialect = sqlish.Dialect,
+		Sql = new sqlish.Sql({dialect: dialect.MySQL55, use_UTC: false}),
 		message = {
 			id: 0,
 			name: "fred",
