@@ -14,6 +14,8 @@
 (function (self) {
     var Dialect = {
             SQL92: "sql 1992",
+            SQL99: "sql 1999",
+            SQL03: "sql 2003",
             MySQL55: "mysql 5.5",
             PostgreSQL92: "postgresql 9.2",
             SQLite3: "sqlite 3"
@@ -22,7 +24,7 @@
 
     Sql = function (config) {
         var sql = {
-            dialect: Dialect.MySQL55,
+            dialect: Dialect.SQL92,
             use_UTC: false,
             sql: "",
             eol: ";"

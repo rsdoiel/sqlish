@@ -65,24 +65,96 @@ will be used by toString() to terminate the SQL statement generated.
 ```
 
 
-# The sql statements and clauses as functions
+# The sql statements and clauses
 
 As you can see in the examples above chaining some
 of the sqlish function together will let you assemble a SQL
 statement (rendered by toString()).  I loosely think of SQL
-clauses as coming in several flavors - verbs, nouns, 
-adverbs, adjectives, and conjunctions. In SQL verbs, filters
-and modifiers. Verbs (e.g. SELECT ..., INSERT ...
-UPDATE ..., DELETE ..., CREATE ...) describe the action you're
-asking the database engine to perform.  The rest specify what
-the verb is operating on and restrict its effect or results. Sqlish
-organizes if functions in a similar way. Not all modifier
-make senses with all verbs but many can be combined.  Sqlish
-trys to assemble a SQL statement that makes sense but it is
-not a SQL validator and does not parse the SQL generated so
-it remains helpful to have a basic knowledge of the SQL
-dialect you're targeting when assemble SQL via sqlish
-functions.
+clauses as coming in several flavors - verbs phrases, 
+supporting clauses, expressions, definitions, assignments
+and SQL function calls.
+
+Verb phrases include SQL statements starting with _CREATE_,
+_ALTER_, _DROP_, _INSERT_, _UPDATE_, _REPLACE_, _DELETE_,
+_SELECT_, and _SET_. These generatally describe an action
+you will take on a database, table or environment variable.
+Sqlish provides a corresponding set of functions to generate
+these phrases including - _createTable()_, _alterTable()_,
+_dropTable()_, _insert()_, _update()_, _replace()_, _deleteFrom()_,
+_select()_, and _set()_.  Where the SQL term would collide
+with a JavaScript keyword (e.g. delete, create) as similar
+compand word is used (e.g. deleteFrom, createTable).
+
+
+Supporting clauses modify the action in some way. Sometimes
+this is to filter the effect of the verb, modified or limit
+the results or to set the target of the action. They are 
+typically used after the verb phrase.  Supporting
+clauses include _FROM_, _INTO_, _JOIN_, _WHERE_, _ORDER BY_,
+_GROUP BY_, _LIMIT_, _OFFSET_, _HAVING_ and _SET_. You will
+see these defined later as _from()_, _into()_, _join()_, 
+_where()_, _orderBy()_, _groupBy()_, _limit()_, _offset()_, 
+_having()_ and _set()_
+
+
+Expressions find themselves sprinkled through out SQL
+statements.  Much of the power of SQL comes from its expressions.
+Expressions implement logic, e.g. _title LIKE "%Wild Things%"_. 
+They also can define, e.g. _id INTEGER AUTO_INCREMENT PRIMARY 
+KEY_. Expressions in sqlish usually are  formed by a JavaScript 
+object literal. From the two previous examples-
+
+```JavaScript
+    // (title LIKE "%Wild Things%")
+    titles_like_expr = {title: {like: "%Wild Things%"}};
+    def_auto_increment_id = { 
+        type: "int",
+        auto_increment: true,
+        primary_key: true
+    };
+```
+
+If you need to group phrases in SQL to assert a precidence
+in evaluation you do so with parenthasis. Unfortunetly a simple
+wrapper of Parathasis will not work in JavaScript since that 
+deliniates a functions' parameters and functions can be assigned
+inside object literals.  To allow expression composition we
+a function named _p()_ (p is short for parenthasis).
+
+A sqlish's object literal integrating _p()_ -
+
+```JavaScript
+    orExpression = sql.p({
+        or: [
+            paren({
+                and: [
+                    {tag_count: {gt: 5}},
+                    {tag_count: {lt: 10}}
+                ],
+            }),
+            paren({modified: {ge: "2012-01-01"}})
+        ]
+    });
+```
+
+Here's the SQL expression rendered by toString() -
+
+```SQL
+    ((tag_count > 5 AND tag_count < 10) OR (modified >= "2012-01-01"))
+```
+
+The downside of this approach is you type more code in JavaScript than
+hand writing the SQL. The upside is that sqlish will attempt to prevent
+SQL injection by apply quoting and escaping to values and restricting the
+characters used for SQL function names, table names, column names
+and environment variable references.
+
+### Import WARNING!
+
+> sqlish is not a replacement for best practices when writing
+> software such as defensively validation of input from users,
+> web browsers or any data source.
+
 
 ## Verbs
 
@@ -205,7 +277,10 @@ select():
 	sql.select("COUNT()");
     sql.select(["id", "name", "email"]).toString();
 ```
-	
+
+# Supporting clauses
+
+
 from():
 	Generates a from clause. Usually used with select. Takes
 	a single table name or an array of table names.
