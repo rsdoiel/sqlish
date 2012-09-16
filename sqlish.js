@@ -646,6 +646,8 @@
         };
         
         sql.createView = function (viewName, sql_obj) {
+            // FIXME: sql_obj needs to be validated as
+            // a sql_obj before calling toString().
             this.sql = "CREATE VIEW " + viewName + " AS " +
                 sql_obj.toString("");
             return this;

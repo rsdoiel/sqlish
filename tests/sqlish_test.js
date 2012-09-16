@@ -317,6 +317,14 @@ harness.push({callback: function () {
     expected_s = "CREATE VIEW myView AS SELECT id, name, email FROM profiles;"
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
+    threw_error = false;
+    try {
+        s = sql.createView("myView", expected_s);
+    } catch (err) {
+        thew_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Calling createView() with string in second parameter should throw error");
+    
     // dropView()
     s = sql.dropView("myView").toString();
     expected_s = "DROP VIEW myView;";
