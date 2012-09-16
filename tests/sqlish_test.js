@@ -350,7 +350,7 @@ harness.push({callback: function () {
     // releaseSavePoint()
     // begin()
     // end()
-    // set() without update() /* MySQL 5.5 and PostgreSQL 9.2 */
+    // set() /* where SET is verb MySQL 5.5 and PostgreSQL 9.2 */
 
 }, label: "Test 0.0.5 features"});
 
