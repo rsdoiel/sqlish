@@ -204,7 +204,29 @@
             }
             return false;
         };
-        
+       
+        var parseLike = function (value) {
+            if (typeof value === 'string') {
+                return "LIKE " + safely(value);
+            }
+
+            if (typeof value === 'object' && value instanceof RegExp) {
+                var source = value.source,
+                    string = "LIKE";
+                
+                if (source[0] !== '^') {
+                    string += '%';
+                }
+  
+                string += source.replace(/[\^\$]/g, '');
+                
+                if (source[source.length - 1] !== '$') {
+                    string += '%';
+                }
+                
+            }
+        };
+
         var expr = function (obj) {
             var options = {
                     period: true,
@@ -274,7 +296,7 @@
                     if (typeof obj[ky] === "object") {
                         throw "$like takes a value that is of type string or number";
                     }
-                    return "LIKE " + safely(obj[ky]);
+                    return parseLike(obj[ky]);
                 default:
                     throw [ky, "not supported"].join(" ");
                 }
