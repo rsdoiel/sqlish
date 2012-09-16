@@ -12,6 +12,7 @@
 var path = require("path"),
     assert = require("assert"),
     sqlish = require("../sqlish"),
+    dialect = sqlish.Dialect,
     harness = require("../lib/harness");
 
 
@@ -96,13 +97,13 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     // Check MySQL 5.5 variation
-    Sql.dialect = sqlish.Dialect.MySQL55;
+    Sql.dialect = dialect.MySQL55;
     s = Sql.set("my_count", 1);
     expected_s = "SET @my_count = 1";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
     // Check that SQLite3 throws error
-    Sql.dialect = sqlish.Dialect.SQLite3;
+    Sql.dialect = dialect.SQLite3;
     threw_error = false;
     try {
         s = Sql.set("my_count", 1);
@@ -117,7 +118,7 @@ harness.push({ callback: function () {
     var wasThrown = false, Sql;
 
     Sql = new sqlish.Sql({
-        dialect: sqlish.Dialect.SQLite3
+        dialect: dialect.SQLite3
     });
     
     wasThrown = false;
@@ -256,7 +257,8 @@ harness.push({callback: function () {
 harness.push({callback: function () {
     var sql  = new sqlish.Sql(),
         s,
-        expected_s;
+        expected_s,
+        threw_error = false;
 
     s = sql.expr({name: "George"});
     expected_s = 'name = "George"';
@@ -337,6 +339,15 @@ harness.push({callback: function () {
     // insert()
     // values()
     // replace() /* PostgreSQL 9.2 doesn't support replace() */
+    sql.dialect = dialect.PostgresSQL92;
+    threw_error = false;
+    try {
+        sql.replace("test", {id: 3, name: "fred"});
+    } catch (err) {
+        threw_error = true; 
+    }
+    assert.strictEqual(threw_error, true, "dialect of PostgreSQL should throw error when replace() is called.");
+    
     // update()
     // set() (outside of UPDATE, no prefixed '@')
     // deleteFrom()
