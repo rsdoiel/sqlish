@@ -546,7 +546,7 @@
                 if (safeName(name))
                 this.sql = {};
                 if (this.dialect === Dialect.MySQL55) {
-                    this.sql.verb = "SET @"; + safeName(name);
+                    this.sql.verb = "SET @" + safeName(name);
                 } else {
                     this.sql.verb = "SET " + safeName(name);
                 }
@@ -588,147 +588,133 @@
         };
     
         sql.toString = function (eol) {
-            var verb = this.sql.verb.substr(0, this.sql.verb.indexOf(" ")),
-                sql = [];
+            var verb, src = [];
+        
+            if (this.sql.verb === undefined ||
+                    this.sql.verb === undefined ||
+                    this.sql.verb.indexOf === undefined) {
+                console.error("DEBUG", this.sql);
+            }
+
+            if (this.sql.verb.indexOf(" ") >= 0) {
+                verb = this.sql.verb.substr(0, this.sql.verb.indexOf(" "));
+            }
+
             switch (verb) {
             case 'CREATE':
-                sql = this.sql.verb;
-                break;
-            case 'ALTER':
-                sql = this.sql.verb;
+                src.push(this.sql.verb);
+                // FIXME: Need to process the column defs and
+                // make sure injection can't slip in.
                 break;
             case 'DROP':
-                sql = this.sql.verb;
+                src.push(this.sql.verb);
                 break;
             case 'SELECT':
-                sql.push(this.sql.verb);
+                src.push(this.sql.verb);
                 if (this.sql.from !== undefined) {
-                    sql.push(this.sql.from);
+                    src.push(this.sql.from);
                 }
                 if (this.sql.joinOn !== undefined) {
-                    sql.push(this.sql.joinOn);
+                    src.push(this.sql.joinOn);
                 }
                 if (this.sql.where !== undefined) {
-                    sql.push(this.sql.where);
+                    src.push(this.sql.where);
                 }
                 if (this.sql.groupBy !== undefined) {
-                    sql.push(this.sql.groupBy);
+                    src.push(this.sql.groupBy);
                 }
                 if (this.sql.orderBy !== undefined) {
-                    sql.push(this.sql.orderBy);
+                    src.push(this.sql.orderBy);
                 }
                 if (this.sql.limit !== undefined) {
-                    sql.push(this.sql.limit);
+                    src.push(this.sql.limit);
                 }
                 if (this.sql.offset !== undefined) {
-                    sql.push(this.sql.offset);
+                    src.push(this.sql.offset);
                 }
                 if (this.sql.into !== undefined) {
-                    sql.push(this.sql.into);
+                    src.push(this.sql.into);
                 }
                 break;
             case 'INSERT':
             case 'REPLACE':
-                sql.push(this.sql.verb);
-                sql.push("(" + this.sql.columns + ")");
-                sql.push('VALUES');
-                sql.push("(" + this.sql.values + ")");
+                src.push(this.sql.verb);
+                src.push("(" + this.sql.columns + ")");
+                src.push('VALUES');
+                src.push("(" + this.sql.values + ")");
                 break;
             case 'UPDATE':
-                sql.push(this.sql.verb);
-                sql.push(this.sql.set);
+                src.push(this.sql.verb);
+                if (this.sql.set !== undefined) {
+                    src.push(this.sql.set);
+                }
                 if (this.sql.where !== undefined) {
-                    sql.push(this.sql.where)
+                    src.push(this.sql.where)
                 }
                 break;
             case 'DELETE':
-                sql.push(this.sql.verb);
+                src.push(this.sql.verb);
                 if (this.sql.where !== undefined) {
-                    sql.push(this.sql.where)
+                    src.push(this.sql.where)
                 }
                 break;
             case 'SET':
-                sql.push(this.sql.verb);
+                src.push(this.sql.verb);
                 break;
             default:
                 throw "Don't know how to assemble SQL statement form " + this.sql;
             }
             if (eol === undefined) {
-                return sql.join(" ") + this.eol;
+                return src.join(" ") + this.eol;
             }
-            return sql.join(" ") + eol;
+            return src.join(" ") + eol;
         };
         
         sql.deleteFrom = function (tableName) {
-            this.sql = "DELETE FROM " + tableName;
+            this.sql = {};
+            this.sql.verb = "DELETE FROM " + tableName;
             return this;
         };
 
         sql.update = function (tableName) {
-            this.sql = "UPDATE " + tableName;
+            this.sql = {};
+            this.sql.verb = "UPDATE " + tableName;
             return this;
         };
         
         sql.createTable = function (tableName, col_defs) {
-            var ky, i = 0;
+            var ky, i = 0, options = {}, cols, values;
 
-            this.sql = "CREATE TABLE " + tableName + " (";
+            this.sql = {};
+            this.sql.verb = "CREATE TABLE " + tableName;
+            this.sql.column_defs = [];
+
             for (ky in col_defs) {
                 if (col_defs.hasOwnProperty(ky)) {
-                    if (typeof ky === "string") {
-                        ky = ky.replace(/![a-zA-Z0-9_]/g, '');
-                        if (i > 0) {
-                            this.sql += ", ";
-                        }
-                        this.sql += ky + " " + col_defs[ky];
-                        i += 1;
+                    if (ky !== safeName(ky)) {
+                        throw "injection error:" + cal_defs;
                     }
                 }
             }
-            this.sql += ')';
-            
+            this.sql.column_defs = col_defs;           
             return this;
         };
         
-        // Initial alterTable support RENAME TO, ADD COLUMN, DROP COLUMN
-        sql.alterTable = function (tableName, action, col_defs) {
-            var ky, i = 0;
-            
-            this.sql = "ALTER TABLE " + tableName + " " + action;
-            if (action.match(/rename to/i)) {
-                this.sql += " " + col_defs;
-            } else {
-                this.sql += " (";
-                for (ky in col_defs) {
-                    if (col_defs.hasOwnProperty(ky)) {
-                        if (typeof ky === "string") {
-                            ky = ky.replace(/![a-zA-Z0-9_]/g, '');
-                            if (i > 0) {
-                                this.sql += ", ";
-                            }
-                            this.sql += ky + " " + col_defs[ky];
-                            i += 1;
-                        }
-                    }
-                }
-                this.sql += ")";
-
-            }
-            return this;
-        };
 
         sql.dropTable = function (tableName) {
-            this.sql = "DROP TABLE " + tableName;
+            this.sql = {};
+            this.sql.verb = "DROP TABLE " + tableName;
             return this;
         };
         
         sql.createIndex = function (indexName, options) {
             var i;
 
+            this.sql = {};
             if (options.unique !== undefined && options.unique === true) {
-                this.sql = "CREATE UNIQUE INDEX " + indexName;
+                this.sql.verb = "CREATE UNIQUE INDEX " + indexName;
             } else {
-                this.sql = "CREATE INDEX " + indexName;
+                this.sql.verb = "CREATE INDEX " + indexName;
             }
             
             if (options.on === undefined) {
@@ -748,7 +734,8 @@
         };
         
         sql.dropIndex = function (indexName) {
-            this.sql = "DROP INDEX " + indexName;
+            this.sql = {};
+            this.sql.verb = "DROP INDEX " + indexName;
             return this;
         };
         
@@ -756,15 +743,17 @@
             if (typeof sql_obj === "string") {
                 throw ["injection error:", sql_obj].join(" ");
             }
+            this.sql = {};
+            this.sql.verb = "CREATE VIEW " + viewName;
             // FIXME: sql_obj needs to be validated as
             // a sql_obj before calling toString().
-            this.sql = "CREATE VIEW " + viewName + " AS " +
-                sql_obj.toString("");
+            this.sql.as = "AS " + sql_obj.toString("");
             return this;
         };
         
         sql.dropView = function (viewName) {
-            this.sql = "DROP VIEW " + viewName;
+            this.sql = {};
+            this.sql.verb = "DROP VIEW " + viewName;
             return this;
         };
  

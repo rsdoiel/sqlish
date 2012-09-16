@@ -185,12 +185,6 @@ harness.push({callback: function () {
     }).toString();
     expected_s = "CREATE TABLE test (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255), modified TIMESTAMP);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-
-    s = sql.alterTable("test", "ADD COLUMN", {
-        created: "TIMESTAMP"
-    }).toString();
-    expected_s = "ALTER TABLE test ADD COLUMN (created TIMESTAMP);";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
     s = sql.dropTable("test");
     expected_s = "DROP TABLE test";
