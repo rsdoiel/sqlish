@@ -193,7 +193,7 @@
             throw ["injection error:", s].join(" ");
         };
 
-        firstKey = function (obj) {
+        var firstKey = function (obj) {
             var ky;
             if (typeof obj === "object") {
                 for (ky in obj) {
@@ -205,13 +205,31 @@
             return false;
         };
         
+        var re2SQLWildcard = function (re) {
+            var s = re.toString();
+            // Trim the first and last slash
+            s = s.substr(1, s.length - 2);
+            // replace * with %
+            s = s.replace(/\*/g, '%');
+            if (s.indexOf('^') === 0 && s.indexOf('$') === (s.length - 1)) {
+                return s.substr(1, s.length - 2);
+            } else if (s.indexOf('^') === 0) {
+                return s.substr(1).replace(/\s+$/, '') + '%';
+            } else if (s.indexOf('$') === (s.length - 1)) {
+                return '%' + s.substr(0, s.length - 1).replace(/^\s+/, '');
+            } else if (s.indexOf('^') === -1 && s.indexOf('$') === -1) {
+                return '%' + s + '%'
+            }
+            return s;
+        };
+        
         var expr = function (obj) {
             var options = {
                     period: true,
                     dollar_sign: true
                 },
                 ky = firstKey(obj), 
-                vals = [];
+                vals;
 
             if (ky === false || ky !== safeName(ky, options)) {
                 throw "injection error: " + obj +
@@ -272,8 +290,14 @@
                     return vals.join(" AND ");
                 case '$like':
                     if (typeof obj[ky] === "object") {
-                        throw "$like takes a value that is of type string or number";
+                        if (obj[ky] instanceof RegExp) {
+                            return "LIKE " + 
+                                safely(re2SQLWildcard(obj[ky]));
+                        } else {
+                            throw "$like takes a value that is of type string or number";
+                        }
                     }
+
                     return "LIKE " + safely(obj[ky]);
                 default:
                     throw [ky, "not supported"].join(" ");

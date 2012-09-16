@@ -329,6 +329,31 @@ harness.push({callback: function () {
     }
     assert.strictEqual(threw_error, true, "$like should not accept an object as an argument.");
 
+    s = sql.expr({name: {$like: /Albert/}});
+    expected_s = 'name LIKE "%Albert%"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({name: {$like: /^Albert/}});
+    expected_s = 'name LIKE "Albert%"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({name: {$like: /Albert$/}});
+    expected_s = 'name LIKE "%Albert"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({name: {$like: /^Albert$/}});
+    expected_s = 'name LIKE "Albert"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({name: {$like: /^Albert*Carrots/}});
+    expected_s = 'name LIKE "Albert%Carrots%"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({name: {$like: /^Albert*Carrots*bricks$/}});
+    expected_s = 'name LIKE "Albert%Carrots%bricks"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    
     // replace() /* PostgreSQL 9.2 doesn't support replace() */
     sql.dialect = dialect.PostgreSQL92;
     threw_error = false;
