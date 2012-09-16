@@ -258,6 +258,9 @@ harness.push({callback: function () {
     expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
+    s = sql.expr({name: {$eq: "George"}});
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
     //assert.ok(false, "0.0.5 features will be implemented after injection issues are addressed.");
     
     // Auto-ordering of phrases moved to 0.0.5

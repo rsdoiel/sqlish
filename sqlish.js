@@ -189,9 +189,6 @@
         sql.safely = safely;
         sql.safeName = safeName;
     
-        sql.expr = function (obj) {
-        };
-
         sql.insert = function (tableName, obj) {
             var fields = [], values = [], ky,
                 options = {period: true};
@@ -543,6 +540,34 @@
             this.sql = "DROP INDEX " + indexName;
             return this;
         };
+
+        sql.expr = function (obj) {
+		var s, ky, val;
+
+		if (typeof obj === "object" &&
+			obj.length === undefined) {
+		
+			for (ky in obj) {
+				if (obj.hasOwnProperty(ky)) {
+					val = obj[ky];
+				}
+			}
+			if (ky !== safeName(ky)) {
+				throw ["injection error:", ky].join(" ");
+			}
+
+			switch (typeof val) {
+			case 'object':
+				throw "not implementd";
+				break;
+			default:
+				s = safeName(ky) + " = " + safely(val);
+				break;
+			}
+		}
+		return s;
+        };
+
 
         return sql;
     };
