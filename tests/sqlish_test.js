@@ -114,12 +114,11 @@ harness.push({callback: function () {
 
 // Setup some basic tests for SQLite support
 harness.push({ callback: function () {
-    var wasThrown = false,
-        s,
-        expected_s,
-        Sql = new sqlish.Sql({
-            dialect: sqlish.Dialect.SQLite3
-        });
+    var wasThrown = false, Sql;
+
+    Sql = new sqlish.Sql({
+        dialect: sqlish.Dialect.SQLite3
+    });
     
     wasThrown = false;
     try {
@@ -251,7 +250,15 @@ harness.push({callback: function () {
 }, label: "Test for injection in parameters."});
 
 harness.push({callback: function () {
-    assert.ok(false, "0.0.5 features will be implemented after injection issues are addressed.");
+    var sql  = new sqlish.Sql(),
+        s,
+        expected_s;
+
+    s = sql.expr({name: "George"});
+    expected_s = 'name = "George"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    //assert.ok(false, "0.0.5 features will be implemented after injection issues are addressed.");
     
     // Auto-ordering of phrases moved to 0.0.5
     //assert.fail("Auto-ordering of phrases not implemented.");
@@ -391,7 +398,7 @@ harness.push({callback: function () {
     // begin()
     // savepoint()
     // commit()
-    // rollback()    
+    // rollback()
 }, label: "Test 0.0.5 features"});
 
 if (require.main === module) {

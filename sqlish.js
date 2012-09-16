@@ -39,8 +39,7 @@
             }
         }
     
-    
-    
+
         // Build an appropriate data string
         // from a JavaScript Date object.
         var sqlDate = function (d, use_UTC) {
@@ -77,7 +76,7 @@
                     d.getUTCSeconds()
                 ].join("");
             }
-        
+
             if (d.getHours() === 0 && d.getMinutes() === 0 &&
                     d.getSeconds() === 0 && d.getMilliseconds() === 0) {
                 return [
@@ -185,12 +184,14 @@
                 '"'
             ].join("");
         };
-    
-    
+
         sql.sqlDate = sqlDate;
         sql.safely = safely;
         sql.safeName = safeName;
     
+        sql.expr = function (obj) {
+        };
+
         sql.insert = function (tableName, obj) {
             var fields = [], values = [], ky,
                 options = {period: true};
@@ -206,7 +207,7 @@
                     }
                     ky = safeName(ky, options);
                     fields.push(ky);
-	                values.push(safely(obj[ky]));
+                    values.push(safely(obj[ky]));
                 }
             }
             this.sql = ["INSERT INTO ", tableName, " (", fields.join(", "),
