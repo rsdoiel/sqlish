@@ -18,6 +18,7 @@ var path = require("path"),
 // Basic SQL assembly
 harness.push({callback: function () {
     var Sql = new sqlish.Sql(),
+        threw_error = false,
         s,
         expected_s,
         now = new Date();
@@ -89,9 +90,26 @@ harness.push({callback: function () {
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 INTO @id, @name, @email";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
+    // Check to make sure it PostgreSQL 9.2 friendly
+    s = Sql.set("my_count", 1);
+    expected_s = "SET my_count = 1";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    // Check MySQL 5.5 variation
+    Sql.dialect = sqlish.Dialect.MySQL55;
     s = Sql.set("my_count", 1);
     expected_s = "SET @my_count = 1";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    // Check that SQLite3 throws error
+    Sql.dialect = sqlish.Dialect.SQLite3;
+    threw_error = false;
+    try {
+        s = Sql.set("my_count", 1);
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Dialect SQLite3 should throw error on set()");
 }, label: "Basic SQL assemble tests."});
 
 // Setup some basic tests for SQLite support
@@ -184,7 +202,7 @@ harness.push({callback: function () {
     s = sql.createIndex("i_test", {
         unique: false,
         on: {
-            table: "test", 
+            table: "test",
             columns: [
                 "name", "email"
             ]
@@ -200,8 +218,40 @@ harness.push({callback: function () {
 
 }, label: "Test 0.0.4 features"});
 
-/*
 harness.push({callback: function () {
+    var sql = new sqlish.Sql(),
+        threw_error = false,
+        s,
+        expected_s;
+
+    s = sql.safeName("test");
+    expected_s = "test";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.safeName("test.two");
+    expected_s = "testtwo";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.safeName("test.two", {period: true});
+    expected_s = "test.two";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.safeName("test.two.*", {period: true, asterisk: true});
+    expected_s = "test.two.*";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    threw_error = false;
+    try {
+        s = sql.select("test;SELECT * FROM other_test");
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.ok(threw_error, "injection error expected");
+
+}, label: "Test for injection in parameters."});
+
+harness.push({callback: function () {
+    assert.ok(false, "0.0.5 features will be implemented after injection issues are addressed.");
     
     // Auto-ordering of phrases moved to 0.0.5
     //assert.fail("Auto-ordering of phrases not implemented.");
@@ -343,7 +393,6 @@ harness.push({callback: function () {
     // commit()
     // rollback()    
 }, label: "Test 0.0.5 features"});
- */
 
 if (require.main === module) {
     harness.RunIt(path.basename(module.filename), 10, true);
