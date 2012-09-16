@@ -33,73 +33,71 @@ harness.push({callback: function () {
     s = Sql.sqlDate(now);
     assert.equal(s, expected_s);
     
-    s = Sql.insert("test1", {id: 1, name: "Fred", email: "fred@example.com"});
-    
-    expected_s =  'INSERT INTO test1 (id, name, email) VALUES (1, "Fred", "fred@example.com")';
-    
+    s = Sql.insert("test1", {id: 1, name: "Fred", email: "fred@example.com"}).toString();
+    expected_s =  'INSERT INTO test1 (id, name, email) VALUES (1, "Fred", "fred@example.com");';    
     assert.equal(s, expected_s);
 
-    s = Sql.select("id");
-    expected_s = "SELECT id";
+    s = Sql.select("id").toString();
+    expected_s = "SELECT id;";
+    assert.equal(s, expected_s, "#1\n" + s + "\n" + expected_s);
+
+    s = Sql.select(["id", "name", "email"]).toString();
+    expected_s = "SELECT id, name, email;";
+    assert.equal(s, expected_s, "#2\n" + s + "\n" + expected_s);
+    
+    s = Sql.select(["id", "name", "email"]).from("test1").toString();
+    expected_s = "SELECT id, name, email FROM test1;";
+    assert.equal(s, expected_s, "#3\n" + s + "\n" + expected_s);
+    
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]);
-    expected_s = "SELECT id, name, email";
-    assert.equal(s, expected_s);
-    
-    s = Sql.select(["id", "name", "email"]).from("test1");
-    expected_s = "SELECT id, name, email FROM test1";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).orderBy("name").toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1});
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id:  1}).orderBy(["name", "email"]).toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name, email;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).orderBy("name");
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email", "name"]).toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email, name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id:  1}).orderBy(["name", "email"]);
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name, email";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy("email").toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email", "name"]);
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email, name";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy("email");
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email"]).orderBy(["email", "name"]);
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email ORDER BY email, name";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email"]).orderBy(["email", "name"]).toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email ORDER BY email, name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).limit(1);
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).limit(1).toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).limit(1, 1);
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1,1";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).limit(1, 1).toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1,1;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = Sql.select("id").from("test1").where({id: 1}).into("@id");
-    expected_s = "SELECT id FROM test1 WHERE id = 1 INTO @id";
+    s = Sql.select("id").from("test1").where({id: 1}).into("@id").toString();
+    expected_s = "SELECT id FROM test1 WHERE id = 1 INTO @id;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).into(["@id", "@name", "@email"]);
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 INTO @id, @name, @email";
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).into(["@id", "@name", "@email"]).toString();
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 INTO @id, @name, @email;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
     // Check to make sure it PostgreSQL 9.2 friendly
-    s = Sql.set("my_count", 1);
-    expected_s = "SET my_count = 1";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    s = Sql.set("my_count", 1).toString();
+    expected_s = "SET my_count = 1;";
+    assert.equal(s, expected_s, "#5\n" + s + "\n" + expected_s);
 
     // Check MySQL 5.5 variation
     Sql.dialect = dialect.MySQL55;
-    s = Sql.set("my_count", 1);
-    expected_s = "SET @my_count = 1";
+    s = Sql.set("my_count", 1).toString();
+    expected_s = "SET @my_count = 1;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
     // Check that SQLite3 throws error
@@ -386,6 +384,14 @@ harness.push({callback: function () {
     expected_s = "DROP VIEW myView;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
+    s = sql.select(["id", "name", "building"]).from("personnel").groupBy("building").orderBy("name");
+    expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.select(["id", "name", "building"]).from("personnel").orderBy("name").groupBy("building");
+    expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
     // insert()
     // values()
     // update()

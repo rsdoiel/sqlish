@@ -28,7 +28,7 @@
         var sql = {
             dialect: Dialect.SQL92,
             use_UTC: false,
-            sql: "",
+            sql: {},
             eol: ";"
         }, key;
 
@@ -323,11 +323,12 @@
         sql.insert = function (tableName, obj) {
             var fields = [], values = [], ky,
                 options = {period: true};
-            
+
             if (tableName !== safeName(tableName)) {
                 tableName = safeName(tableName, options);
             }
-			// Mongo 2.2's shell doesn't support Object.keys()
+
+ 			// Mongo 2.2's shell doesn't support Object.keys()
             for (ky in obj) {
                 if (obj.hasOwnProperty(ky) && typeof ky === "string") {
                     if (ky !== safeName(ky, options)) {
@@ -338,8 +339,12 @@
                     values.push(safely(obj[ky]));
                 }
             }
-            this.sql = ["INSERT INTO ", tableName, " (", fields.join(", "),
-                    ") VALUES (", values.join(", "), ")"].join("");
+
+            // Reset this inner sql object since this is a verb
+            this.sql = {};
+            this.sql.verb = "INSERT INTO " + tableName;
+            this.sql.columns = fields.join(", ");
+            this.sql.values = values.join(", ");
             return this;
         };
     
@@ -353,7 +358,7 @@
             if (tableName !== safeName(tableName)) {
                 tableName = safeName(tableName, options);
             }
-            
+
 			// Mongo 2.2's shell doesn't support Object.keys()
             for (ky in obj) {
                 if (obj.hasOwnProperty(ky) && typeof ky === "string") {
@@ -365,8 +370,12 @@
 	                values.push(safely(obj[ky]));
                 }
             }
-            this.sql = ["REPLACE INTO ", tableName, " (", fields.join(", "),
-                    ") VALUES (", values.join(", "), ")"].join("");
+
+            // Reset this inner sql object since this is a verb
+            this.sql = {};
+            this.sql.verb = "REPLACE INTO " + tableName;
+            this.sql.columns = fields.join(", ");
+            this.sql.values = values.join(", ");
             return this;
         };
         
@@ -390,7 +399,10 @@
                 }
                 s = "SELECT " + fields.join(", ");
             }
-            this.sql = s;
+
+            // Reset this inner sql object since this is a verb
+            this.sql = {};
+            this.sql.verb = s;
             return this;
         };
     
@@ -400,7 +412,7 @@
                 if (safeName(tables) !== tables) {
                     throw ["injection error:", tables].join(" ");
                 }
-                this.sql += " FROM " + safeName(tables);
+                this.sql.from = "FROM " + safeName(tables);
             } else {
                 for (i = 0; i < tables.length; i += 1) {
                     if (safeName(tables[i]) !== tables[i]) {
@@ -408,18 +420,18 @@
                     }
                     tables[i] = safeName(tables[i]);
                 }
-                this.sql += " FROM " + tables.join(", ");
+                this.sql.from = "FROM " + tables.join(", ");
             }
             return this;
         };
     
-        sql.joinOn = function (tables, expr) {
+        sql.joinOn = function (tables, expression) {
             var i;
             if (typeof tables === "string") {
                 if (safeName(tables) !== tables) {
                     throw ["injection error:", tables].join(" ");
                 }
-                this.sql += " JOIN " + safeName(tables);
+                this.sql.joinOn = " JOIN " + safeName(tables);
             } else {
                 for (i = 0; i < tables.length; i += 1) {
                     if (safeName(tables[i]) !== tables[i]) {
@@ -427,14 +439,14 @@
                     }
                     tables[i] = safeName(tables[i]);
                 }
-                this.sql += " JOIN " + tables.join(", ");
+                this.sql.joinOn = " JOIN " + tables.join(", ");
             }
-            this.sql += " ON " + expr;
+            this.sql.joinOn += " ON " + expr(expression);
             return this;
         };
 
         sql.where = function (expression) {
-            this.sql += " WHERE " + sql.expr(expression);
+            this.sql.where = "WHERE " + sql.expr(expression);
             return this;
         };
 
@@ -443,12 +455,12 @@
                 throw ["injection error:", index].join(" ");
             }
             if (count === undefined || count === null) {
-                this.sql += " LIMIT " + index;
+                this.sql.limit = "LIMIT " + index;
             } else {
                 if (typeof count !== "number") {
                     throw ["injection error:", count].join(" ");
                 }
-                this.sql += " LIMIT " + index + "," + count;
+                this.sql.limit = "LIMIT " + index + "," + count;
             }
             return this;
         };
@@ -459,7 +471,7 @@
                 if (fields !== safeName(fields, options)) {
                     throw ["injection error:", fields].join(" ");
                 }
-                this.sql += " ORDER BY " + fields;
+                this.sql.orderBy = "ORDER BY " + fields;
             } else {
                 for (i = 0; i < fields.length; i += 1) {
                     if (fields[i] !== safeName(fields[i], options)) {
@@ -467,14 +479,14 @@
                     }
                     fields[i] = safeName(fields[i], options);
                 }
-                this.sql += " ORDER BY " + fields.join(", ");
+                this.sql.orderBy = "ORDER BY " + fields.join(", ");
             }
             if (direction === undefined || direction === null) {
                 return this;
             } else if (direction.toUpperCase() === "ASC" || direction >= 0) {
-                this.sql += " ASC";
+                this.sql.orderBy += " ASC";
             } else if (direction.toUpperCase() === "DESC" || direction < 0) {
-                this.sql += " DESC";
+                this.sql.orderBy += " DESC";
             }
             return this;
         };
@@ -486,7 +498,7 @@
                 if (fields !== safeName(fields, options)) {
                     throw ["injection error:", fields].join(" ");
                 }
-                this.sql += " GROUP BY " + fields;
+                this.sql.groupBy = "GROUP BY " + fields;
             } else {
                 for (i = 0; i < fields.length; i += 1) {
                     if (fields[i] !== safeName(fields[i], options)) {
@@ -494,7 +506,7 @@
                     }
                     fields[i] = safeName(fields[i], options);
                 }
-                this.sql += " GROUP BY " + fields.join(", ");
+                this.sql.groupBy = "GROUP BY " + fields.join(", ");
             }
             return this;
         };
@@ -507,20 +519,20 @@
                     at_sign: true,
                 };
 
-            if (this.sql.indexOf("UPDATE") === 0) {
+            if (this.sql.verb.indexOf("UPDATE") === 0) {
                 if (typeof name === "string") {
-                    this.sql += " SET " + safeName(name) +
+                    this.sql.set = "SET " + safeName(name) +
                         " = " + safely(value);
                 } else if (typeof name === "object") {
                     i = 0;
-                    this.sql += " SET ";
+                    this.sql.set = "SET ";
                     for (ky in name) {
                         if (name.hasOwnProperty(ky)) {
                             if (i > 0) {
-                                this.sql += ", ";
+                                this.sql.set += ", ";
                             }
                             i += 1;
-                            this.sql += safeName(ky) +
+                            this.sql.set += safeName(ky) +
                                 " = " + safely(name[ky]);
                         }
                     }
@@ -531,22 +543,18 @@
                 if (this.dialect === Dialect.SQLite3) {
                     throw Dialect.SQLite3 + " does not support SET and @varname constructs";
                 }
-                if (String(value).trim() === "LAST_INSERT_ID()") {
-                    if (this.dialect === Dialect.MySQL55) {
-                        this.sql = "SET @" + safeName(name) +
-                            " = LAST_INSERT_ID()";
-                    } else {
-                        this.sql = "SET " + safeName(name) +
-                            " = LAST_INSERT_ID()";
-                    }
+                if (safeName(name))
+                this.sql = {};
+                if (this.dialect === Dialect.MySQL55) {
+                    this.sql.verb = "SET @"; + safeName(name);
                 } else {
-                    if (this.dialect === Dialect.MySQL55) {
-                        this.sql = "SET @" + safeName(name) +
-                            " = " + safely(value);
-                    } else {
-                        this.sql = "SET " + safeName(name) +
-                            " = " + safely(value);
-                    }
+                    this.sql.verb = "SET " + safeName(name);
+                }
+                if (String(value).toUpperCase() === "LAST_INSERT_ID()") {
+                    // FIXME: Need to support other functions
+                    this.sql.verb += " = LAST_INSERT_ID()";
+                } else {
+                    this.sql.verb += " = " + safely(value);
                 }
             }
             return this;
@@ -562,7 +570,7 @@
                 if (fields !== safeName(fields, options)) {
                     throw ["injection error:", fields].join(" ");
                 }
-                this.sql += " INTO " + fields;
+                this.sql.into = "INTO " + fields;
             } else {
                 for (i = 0; i < fields.length; i += 1) {
                     if (fields[i] !== safeName(fields[i], options)) {
@@ -570,7 +578,7 @@
                     }
                     fields[i] = safeName(fields[i], options);
                 }
-                this.sql += " INTO " + fields.join(", ");
+                this.sql.into = "INTO " + fields.join(", ");
             }
             return this;
         };
@@ -580,10 +588,75 @@
         };
     
         sql.toString = function (eol) {
-            if (eol === undefined) {
-                return this.sql + this.eol;
+            var verb = this.sql.verb.substr(0, this.sql.verb.indexOf(" ")),
+                sql = [];
+            switch (verb) {
+            case 'CREATE':
+                sql = this.sql.verb;
+                break;
+            case 'ALTER':
+                sql = this.sql.verb;
+                break;
+            case 'DROP':
+                sql = this.sql.verb;
+                break;
+            case 'SELECT':
+                sql.push(this.sql.verb);
+                if (this.sql.from !== undefined) {
+                    sql.push(this.sql.from);
+                }
+                if (this.sql.joinOn !== undefined) {
+                    sql.push(this.sql.joinOn);
+                }
+                if (this.sql.where !== undefined) {
+                    sql.push(this.sql.where);
+                }
+                if (this.sql.groupBy !== undefined) {
+                    sql.push(this.sql.groupBy);
+                }
+                if (this.sql.orderBy !== undefined) {
+                    sql.push(this.sql.orderBy);
+                }
+                if (this.sql.limit !== undefined) {
+                    sql.push(this.sql.limit);
+                }
+                if (this.sql.offset !== undefined) {
+                    sql.push(this.sql.offset);
+                }
+                if (this.sql.into !== undefined) {
+                    sql.push(this.sql.into);
+                }
+                break;
+            case 'INSERT':
+            case 'REPLACE':
+                sql.push(this.sql.verb);
+                sql.push("(" + this.sql.columns + ")");
+                sql.push('VALUES');
+                sql.push("(" + this.sql.values + ")");
+                break;
+            case 'UPDATE':
+                sql.push(this.sql.verb);
+                sql.push(this.sql.set);
+                if (this.sql.where !== undefined) {
+                    sql.push(this.sql.where)
+                }
+                break;
+            case 'DELETE':
+                sql.push(this.sql.verb);
+                if (this.sql.where !== undefined) {
+                    sql.push(this.sql.where)
+                }
+                break;
+            case 'SET':
+                sql.push(this.sql.verb);
+                break;
+            default:
+                throw "Don't know how to assemble SQL statement form " + this.sql;
             }
-            return this.sql + eol;
+            if (eol === undefined) {
+                return sql.join(" ") + this.eol;
+            }
+            return sql.join(" ") + eol;
         };
         
         sql.deleteFrom = function (tableName) {
