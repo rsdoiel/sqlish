@@ -310,6 +310,10 @@ harness.push({callback: function () {
     expected_s = "(cnt = 3)";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
+    s = sql.P({name: {$like: "John"});
+    expected_s = '(name LIKE "John")';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
     // createView()
     sql2 = new sqlish.Sql();    
     s = sql.createView("myView", 
