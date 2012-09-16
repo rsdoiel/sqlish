@@ -218,7 +218,7 @@
                     string += '%';
                 }
   
-                string += source.replace(/[\^\$]/g, '');
+                string += safely(source.replace(/[\^\$]/g, ''));
                 
                 if (source[source.length - 1] !== '$') {
                     string += '%';
