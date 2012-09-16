@@ -328,6 +328,18 @@ harness.push({callback: function () {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "$like should not accept an object as an argument.");
+
+    // replace() /* PostgreSQL 9.2 doesn't support replace() */
+    sql.dialect = dialect.PostgreSQL92;
+    threw_error = false;
+    try {
+        sql.replace("test", {id: 3, name: "fred"});
+    } catch (err) {
+        threw_error = true; 
+    }
+    assert.strictEqual(threw_error, true, "dialect of PostgreSQL should throw error when replace() is called.");
+    sql.dialect = dialect.SQL92;
+    
     
     // createView()
     sql2 = new sqlish.Sql();    
@@ -340,7 +352,7 @@ harness.push({callback: function () {
     try {
         s = sql.createView("myView", expected_s);
     } catch (err) {
-        thew_error = true;
+        threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Calling createView() with string in second parameter should throw error");
     
@@ -351,16 +363,6 @@ harness.push({callback: function () {
 
     // insert()
     // values()
-    // replace() /* PostgreSQL 9.2 doesn't support replace() */
-    sql.dialect = dialect.PostgresSQL92;
-    threw_error = false;
-    try {
-        sql.replace("test", {id: 3, name: "fred"});
-    } catch (err) {
-        threw_error = true; 
-    }
-    assert.strictEqual(threw_error, true, "dialect of PostgreSQL should throw error when replace() is called.");
-    
     // update()
     // set() (outside of UPDATE, no prefixed '@')
     // deleteFrom()

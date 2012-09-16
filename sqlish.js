@@ -13,12 +13,14 @@
 
 (function (self) {
     var Dialect = {
-            SQL92: "sql 1992",
-            SQL99: "sql 1999",
-            SQL03: "sql 2003",
-            MySQL55: "mysql 5.5",
-            PostgreSQL92: "postgresql 9.2",
-            SQLite3: "sqlite 3"
+            SQL92: "SQL 1992",
+            /*
+            SQL99: "SQL 1999",
+            SQL03: "SQL 2003",
+            */
+            MySQL55: "MySQL 5.5",
+            PostgreSQL92: "PostgreSQL 9.2",
+            SQLite3: "SQLite 3"
         },
         Sql;
 
@@ -321,9 +323,13 @@
             var fields = [], values = [], ky,
                 options = {period: true};
 
+            if (this.dialect === Dialect.PostgreSQL92) {
+                throw "PostpreSQL 9.2 does not support replace";
+            }
             if (tableName !== safeName(tableName)) {
                 tableName = safeName(tableName, options);
             }
+            
 			// Mongo 2.2's shell doesn't support Object.keys()
             for (ky in obj) {
                 if (obj.hasOwnProperty(ky) && typeof ky === "string") {
@@ -404,7 +410,6 @@
         };
 
         sql.where = function (expression) {
-            // FIXME need ot validate the expression and prevent injection
             this.sql += " WHERE " + sql.expr(expression);
             return this;
         };
@@ -651,6 +656,9 @@
         };
         
         sql.createView = function (viewName, sql_obj) {
+            if (typeof sql_obj === "string") {
+                throw ["injection error:", sql_obj].join(" ");
+            }
             // FIXME: sql_obj needs to be validated as
             // a sql_obj before calling toString().
             this.sql = "CREATE VIEW " + viewName + " AS " +
