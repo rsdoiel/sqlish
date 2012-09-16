@@ -120,20 +120,24 @@
                         options.at_sign === true) {
                     re_terms.push("@");
                 }
+                if (options.dollar_sign !== undefined &&
+                        options.dollar_sign === true) {
+                    re_terms.push("\\$");
+                }
             }
             re_terms.push("]");
             re = new RegExp(re_terms.join(""), "g");
             //console.log("DEBUG", re, s);
             return s.replace(new RegExp(re_terms.join(""), "g"), "");
         };
-    
+
         // Return s as a double quoted string
         // safely escaped.
         var safely = function (s) {
             if (s === undefined || s === null) {
                 return 'NULL';
             }
-        
+
             switch (typeof s) {
             case 'boolean':
                 if (s === true) {
@@ -142,53 +146,149 @@
                     return 'false';
                 }
             case 'number':
-                return String(s);
+                return s;
+            case 'string':
+                s = s.trim();
+                if (s.substr(0, 1) === '@') {
+                    return safeName(s, {at_sign: true}).trim();
+                }
+                if (s === "" || s === '""') {
+                    return '""';
+                }
+                return [
+                    '"',
+                    s.replace(/[\0\n\r\b\t\\\'\"\x1a]/g, function (c) {
+                        switch (c) {
+                        case "\0":
+                            return "\\0";
+                        case "\n":
+                            return "\\n";
+                        case "\r":
+                            return "\\r";
+                        case "\b":
+                            return "\\b";
+                        case "\t":
+                            return "\\t";
+                        case "\x1a":
+                            return "\\Z";
+                        case "'":
+                            if (this.dialect === Dialect.SQLite3) {
+                                // SQLite single-quote escaping.
+                                return "''";
+                            }
+                            return "\\" + c;
+                        default:
+                            return "\\" + c;
+                        }
+                    }).trim(),
+                    '"'
+                ].join("");
             }
-        
+
             if (s instanceof Date) {
                 return '"' + sqlDate(s) + '"';
             }
-        
-            if (String(s).trim().substr(0, 1) === '@') {
-                return s.replace(/![a-zA-Z0-9_]/g, '').trim();
-            }
-            if (String(s).trim() === "" || String(s).trim() === '""') {
-                return '""';
-            }
-            return [
-                '"',
-                String(s).replace(/[\0\n\r\b\t\\\'\"\x1a]/g, function (c) {
-                    switch (c) {
-                    case "\u0000":
-                        return "\\0";
-                    case "\n":
-                        return "\\n";
-                    case "\r":
-                        return "\\r";
-                    case "\b":
-                        return "\\b";
-                    case "\t":
-                        return "\\t";
-                    case "\x1a":
-                        return "\\Z";
-                    case "'":
-                        if (this.dialect === Dialect.SQLite3) {
-                            // SQLite single-quote escaping.
-                            return "''";
-                        }
-                        return "\\" + c;
-                    default:
-                        return "\\" + c;
-                    }
-                }).trim(),
-                '"'
-            ].join("");
+            throw ["injection error:", s].join(" ");
         };
+
+        firstKey = function (obj) {
+            var ky;
+            if (typeof obj === "object") {
+                for (ky in obj) {
+                    if (obj.hasOwnProperty(ky)) {
+                        return ky;
+                    }
+                }
+            }
+            return false;
+        };
+        
+        var expr = function (obj) {
+            var options = {
+                    period: true,
+                    dollar_sign: true
+                },
+                ky = firstKey(obj), 
+                vals = [];
+
+            if (ky === false || ky !== safeName(ky, options)) {
+                throw "injection error: " + obj +
+                    " should be an object literal";
+            }
+            
+            // Does key begin with $eq, $ne, $gt, $gte, $lt, $lte,
+            // $or, $and
+            if (ky.substr(0,1) ===  "$") {
+                switch(ky) {
+                case '$eq':
+                    if (typeof obj[ky] === "object") {
+                        return ["=", expr(obj[ky])].join(" ");
+                    }
+                    return ["=", safely(obj[ky])].join(" ");
+                case '$ne':
+                    if (typeof obj[ky] === "object") {
+                        return ["!=", expr(obj[ky])].join(" ");
+                    }
+                    return ["!=", safely(obj[ky])].join(" ");
+                case '$gt':
+                    if (typeof obj[ky] === "object") {
+                        return [">", expr(obj[ky])].join(" ");
+                    }
+                    return [">", safely(obj[ky])].join(" ");
+                case '$gte':
+                    if (typeof obj[ky] === "object") {
+                        return [">=", expr(obj[ky])].join(" ");
+                    }
+                    return [">=", safely(obj[ky])].join(" ");
+                case '$lt':
+                    if (typeof obj[ky] === "object") {
+                        return ["<", expr(obj[ky])].join(" ");
+                    }
+                    return ["<", safely(obj[ky])].join(" ");
+                case '$lte':
+                    if (typeof obj[ky] === "object") {
+                        return ["<=", expr(obj[ky])].join(" ");
+                    }
+                    return ["<=", safely(obj[ky])].join(" ");
+                case '$or':
+                    vals = [];
+                    if (obj[ky].length === undefined) {
+                        throw "$or takes an array of objects as the value";
+                    }
+                    for (i = 0; i < obj[ky].length; i += 1) {
+                        vals.push(expr(obj[ky][i]));
+                    }
+                    return vals.join(" OR ");
+                case '$and':
+                    vals = [];
+                    if (obj[ky].length === undefined) {
+                        throw "$and takes an array of objects as the value";
+                    }
+                    for (i = 0; i < obj[ky].length; i += 1) {
+                        vals.push(expr(obj[ky][i]));
+                    }
+                    return vals.join(" AND ");
+                default:
+                    throw [ky, "not supported"].join(" ");
+                }
+            } else if (typeof obj[ky] === "object") {
+                return [ky, expr(obj[ky])].join(" ");
+            } else {
+            }
+            return [ky, safely(obj[ky])].join(" = ");
+        };
+
+        var P = function (expression) {
+            return ["(", expr(expression), ")"].join("");        
+        };
+
 
         sql.sqlDate = sqlDate;
         sql.safely = safely;
         sql.safeName = safeName;
-    
+        sql.expr = expr;
+        sql.P = P;
+
         sql.insert = function (tableName, obj) {
             var fields = [], values = [], ky,
                 options = {period: true};
@@ -297,13 +397,13 @@
             this.sql += " ON " + expr;
             return this;
         };
-    
-        sql.where = function (expr) {
+
+        sql.where = function (expression) {
             // FIXME need ot validate the expression and prevent injection
-            this.sql += " WHERE " + expr;
+            this.sql += " WHERE " + sql.expr(expression);
             return this;
         };
-    
+
         sql.limit = function (index, count) {
             if (typeof index !== "number") {
                 throw ["injection error:", index].join(" ");
@@ -318,7 +418,7 @@
             }
             return this;
         };
-        
+
         sql.orderBy = function (fields, direction) {
             var i, options = {period: true};
             if (typeof fields === "string") {
@@ -368,7 +468,11 @@
         // Do a MySQL SET, e.g. SET @my_count = 0;
         // Or add a SET pharse to an UPDATE statement.
         sql.set = function (name, value) {
-            var ky, i;
+            var ky, i, options = {
+                    period: true,
+                    at_sign: true,
+                };
+
             if (this.sql.indexOf("UPDATE") === 0) {
                 if (typeof name === "string") {
                     this.sql += " SET " + safeName(name) +
@@ -540,34 +644,6 @@
             this.sql = "DROP INDEX " + indexName;
             return this;
         };
-
-        sql.expr = function (obj) {
-		var s, ky, val;
-
-		if (typeof obj === "object" &&
-			obj.length === undefined) {
-		
-			for (ky in obj) {
-				if (obj.hasOwnProperty(ky)) {
-					val = obj[ky];
-				}
-			}
-			if (ky !== safeName(ky)) {
-				throw ["injection error:", ky].join(" ");
-			}
-
-			switch (typeof val) {
-			case 'object':
-				throw "not implementd";
-				break;
-			default:
-				s = safeName(ky) + " = " + safely(val);
-				break;
-			}
-		}
-		return s;
-        };
-
 
         return sql;
     };

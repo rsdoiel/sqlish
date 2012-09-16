@@ -50,43 +50,43 @@ harness.push({callback: function () {
     expected_s = "SELECT id, name, email FROM test1";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1");
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1});
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").orderBy("name");
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).orderBy("name");
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").orderBy(["name", "email"]);
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id:  1}).orderBy(["name", "email"]);
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name, email";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").groupBy(["email", "name"]);
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email", "name"]);
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email, name";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").groupBy("email");
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy("email");
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").groupBy(["email"]).orderBy(["email", "name"]);
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email"]).orderBy(["email", "name"]);
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email ORDER BY email, name";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").limit(1);
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).limit(1);
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").limit(1, 1);
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).limit(1, 1);
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1,1";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = Sql.select("id").from("test1").where("id = 1").into("@id");
+    s = Sql.select("id").from("test1").where({id: 1}).into("@id");
     expected_s = "SELECT id FROM test1 WHERE id = 1 INTO @id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where("id = 1").into(["@id", "@name", "@email"]);
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).into(["@id", "@name", "@email"]);
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 INTO @id, @name, @email";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
@@ -154,7 +154,7 @@ harness.push({callback: function () {
     expected_s = "DELETE FROM test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = sql.deleteFrom("test").where("ID = 32").toString();
+    s = sql.deleteFrom("test").where({ID: 32}).toString();
     expected_s = "DELETE FROM test WHERE ID = 32;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
@@ -162,7 +162,7 @@ harness.push({callback: function () {
     expected_s = "UPDATE test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.update("test").set({name: "George", email: "george@example.com"}).where("test.id = 2").toString();
+    s = sql.update("test").set({name: "George", email: "george@example.com"}).where({"test.id": 2}).toString();
     expected_s = 'UPDATE test SET name = "George", email = "george@example.com" WHERE test.id = 2;';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 }, label: "Test 0.0.3 features."});
@@ -223,6 +223,10 @@ harness.push({callback: function () {
         s,
         expected_s;
 
+    s = sql.safely("George");
+    expected_s = '"George"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
     s = sql.safeName("test");
     expected_s = "test";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
@@ -259,8 +263,53 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
     s = sql.expr({name: {$eq: "George"}});
+    expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
+    s = sql.expr({$or: [{name: "George"}, {name: "Georgia"}]});
+    expected_s = 'name = "George" OR name = "Georgia"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({$or: [{name: "George"}, {name: "Georgia"}, {name: "Wilma"}]});
+    expected_s = 'name = "George" OR name = "Georgia" OR name = "Wilma"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({$and: [{name: "George"}, {name: "Georgia"}]});
+    expected_s = 'name = "George" AND name = "Georgia"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({$and: [{name: "George"}, {name: "Georgia"}, {name: "Wilma"}]});
+    expected_s = 'name = "George" AND name = "Georgia" AND name = "Wilma"';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({cnt: 3});
+    expected_s = "cnt = 3";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({cnt: {$eq: 3}});
+    expected_s = "cnt = 3";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({cnt: {$gt: 3}});
+    expected_s = "cnt > 3";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({cnt: {$gte: 3}});
+    expected_s = "cnt >= 3";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({cnt: {$lt: 3}});
+    expected_s = "cnt < 3";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.expr({cnt: {$lte: 3}});
+    expected_s = "cnt <= 3";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.P({cnt: 3});
+    expected_s = "(cnt = 3)";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
     //assert.ok(false, "0.0.5 features will be implemented after injection issues are addressed.");
     
     // Auto-ordering of phrases moved to 0.0.5
