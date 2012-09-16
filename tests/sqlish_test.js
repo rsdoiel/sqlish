@@ -178,15 +178,18 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     s = sql.createTable("test", {
-        id: "INTEGER AUTO_INCREMENT PRIMARY KEY",
-        name: "VARCHAR(255)",
-        email: "VARCHAR(255)",
-        modified: "TIMESTAMP"
+        id: { 
+            type: "INTEGER", auto_increment: true,
+            primary_key: true 
+        },
+        name: {type: "VARCHAR", length: 255},
+        email: {type: "VARCHAR", length: 255},
+        modified: {type: "TIMESTAMP"}
     }).toString();
     expected_s = "CREATE TABLE test (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255), modified TIMESTAMP);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = sql.dropTable("test").toString();
+    s = sql.dropTable("test");
     expected_s = "DROP TABLE test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
@@ -378,16 +381,14 @@ harness.push({callback: function () {
     expected_s = "DROP VIEW myView;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.select(["id", "name", "building"]).from("personnel").groupBy("building").orderBy("name");
-    expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name";
+    s = sql.select(["id", "name", "building"]).from("personnel").groupBy("building").orderBy("name").toString();
+    expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-  
-    /*   
-    s = sql.select(["id", "name", "building"]).from("personnel").orderBy("name").groupBy("building");
-    expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name";
+    
+    s = sql.select(["id", "name", "building"]).from("personnel").orderBy("name").groupBy("building").toString();
+    expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    */
-
+    
     // insert()
     // values()
     // update()
