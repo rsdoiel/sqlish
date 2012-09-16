@@ -178,16 +178,17 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     s = sql.createTable("test", {
-        id: "INTEGER AUTO_INCREMENT PRIMARY KEY",
-        name: "VARCHAR(255)",
-        email: "VARCHAR(255)",
-        modified: "TIMESTAMP"
+        id: { type: "INTEGER", auto_increment: true,
+            primary_key: true },
+        name: {type: "VARCHAR", length: 255},
+        email: {type: "VARCHAR", length: 255},
+        modified: {type: "TIMESTAMP"}
     }).toString();
     expected_s = "CREATE TABLE test (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255), modified TIMESTAMP);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = sql.dropTable("test");
-    expected_s = "DROP TABLE test";
+    s = sql.dropTable("test").toString();
+    expected_s = "DROP TABLE test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 

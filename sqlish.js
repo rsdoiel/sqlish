@@ -586,9 +586,59 @@
         sql.valueOf = function () {
             return this.sql;
         };
+        
+        var toColDef = function (name, attr) {
+            var s = [];
+            
+            s.push(safeName(name));
+
+            switch (attr.type) {
+            case 'INTEGER':
+            case 'INT':
+                s.push("INTEGER");
+                if (attr.auto_increment === true) {
+                    s.push("AUTO_INCREMENT");
+                }
+                if (attr.primary_key === true) {
+                    s.push("PRIMARY KEY");
+                }
+                break;
+            case 'VARCHAR':
+                s.push("VARCHAR(" + attr.length + ")");
+                break;
+            case 'TEXT':
+            case 'TINYTEXT':
+            case 'MEDIUMTEXT':
+            case 'LONGTEXT':
+            case 'BLOB':
+            case 'TINYBLOB':
+            case 'MEDIUMBLOB':
+            case 'LONGBLOB':
+                // FIXME: add checks for dialect support
+                s.push(attr.type);
+                break;
+            case 'DATE':
+            case 'DATETIME':
+            case 'TIME':
+            case 'TIMESTAMP':
+                s.push(attr.type);
+                break;
+            default:
+                throw name + " of type " + attr.type + " not supported.";
+            }
+            
+            if (attr.no_null === true) {
+                s.push("NOT NULL");
+            }
+            if (attr.default !== undefined) {
+                s.push("DEFAULT " + safely(attr.default));
+            }
+
+            return s.join(" ");
+        };
     
         sql.toString = function (eol) {
-            var verb, src = [];
+            var verb, src = [], ky, defs = [];
         
             if (this.sql.verb === undefined ||
                     this.sql.verb === undefined ||
@@ -602,9 +652,21 @@
 
             switch (verb) {
             case 'CREATE':
+                if (this.sql.verb.indexOf("CREATE TABLE") === 0) {
+                } else if (this.sql.verb.indexOf("CREATE TABLE") === 0) {
+                }
                 src.push(this.sql.verb);
                 // FIXME: Need to process the column defs and
                 // make sure injection can't slip in.
+                for (ky in this.sql.column_defs) {
+                    if (this.sql.column_defs.hasOwnProperty(ky) &&
+                        ky === safeName(ky)) {
+                        defs.push(toColDef(ky,this.sql.column_defs[ky])); 
+                    } else {
+                        throw "injection error:" + this.sql.column_defs;
+                    }
+                }
+                src.push("(" + defs.join(", ") + ")");
                 break;
             case 'DROP':
                 src.push(this.sql.verb);
