@@ -312,10 +312,23 @@ harness.push({callback: function () {
     expected_s = "(cnt = 3)";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.P({name: {$like: "John"});
+    s = sql.P({name: {$like: "John"}});
     expected_s = '(name LIKE "John")';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
+    s = sql.P({name: {$like: 5}});
+    expected_s = '(name LIKE 5)';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    threw_error = false;
+    try {
+        s = sql.P({name: {$like: {name: "some object"}}});
+        expected_s = '(name LIKE 5)';
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "$like should not accept an object as an argument.");
+    
     // createView()
     sql2 = new sqlish.Sql();    
     s = sql.createView("myView", 

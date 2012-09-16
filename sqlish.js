@@ -268,6 +268,11 @@
                         vals.push(expr(obj[ky][i]));
                     }
                     return vals.join(" AND ");
+                case '$like':
+                    if (typeof obj[ky] === "object") {
+                        throw "$like takes a value that is of type string or number";
+                    }
+                    return "LIKE " + safely(obj[ky]);
                 default:
                     throw [ky, "not supported"].join(" ");
                 }
