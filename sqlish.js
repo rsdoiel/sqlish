@@ -206,10 +206,6 @@
         };
        
         var parseLike = function (value) {
-            if (typeof value === 'string') {
-                return "LIKE " + safely(value);
-            }
-
             if (typeof value === 'object' && value instanceof RegExp) {
                 var source = value.source,
                     string = "LIKE";
@@ -223,8 +219,11 @@
                 if (source[source.length - 1] !== '$') {
                     string += '%';
                 }
-                
+
+                return string; 
             }
+
+            return "LIKE " + safely(value);
         };
 
         var expr = function (obj) {
@@ -293,9 +292,6 @@
                     }
                     return vals.join(" AND ");
                 case '$like':
-                    if (typeof obj[ky] === "object") {
-                        throw "$like takes a value that is of type string or number";
-                    }
                     return parseLike(obj[ky]);
                 default:
                     throw [ky, "not supported"].join(" ");
