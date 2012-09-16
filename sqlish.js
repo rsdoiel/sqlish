@@ -586,6 +586,60 @@
         sql.valueOf = function () {
             return this.sql;
         };
+        
+        var defColumns = function (column_defs) {
+            var ky, src = [], def, clause;
+            for (ky in column_defs) {
+                if (ky !== safeName(ky)) {
+                    throw "injection error: " + column_defs;
+                }
+                clause = [];
+                def = column_defs[ky];
+                switch(def.type.toUpperCase()) {
+                case 'INTEGER':
+                case 'INT':
+                    clause = [def.type];
+                    if (def.auto_increment === true) {
+                        clause.push("AUTO_INCREMENT");
+                    }
+                    if (def.primary_key === true) {
+                        clause.push("PRIMARY KEY");
+                    }
+                    break;
+                case 'VARCHAR':
+                case 'CHAR':
+                    if (def.length !== undefined) {
+                        clause.push(def.type + "(" + def.length + ")");
+                    }
+                    break;
+                case 'DATE':
+                case 'TIME':
+                case 'DATETIME':
+                case 'TIMESTAMP':
+                case 'TINYTEXT':
+                case 'TEXT':
+                case 'MEDIUMTEXT':
+                case 'LONGTEXT':
+                case 'TINYBLOB':
+                case 'BLOB':
+                case 'MEDIUMBLOB':
+                case 'LONGBLOB':
+                    clause = [def.type];
+                    break;
+                default:
+                    throw ky + " of " + def.type + " not supported";
+                }
+                if (def.default === true) {
+                    clause.push("DEFAULT " + safely(def.default));
+                }
+                if (def.not_null === true) {
+                    clsuse.push("NOT NULL");
+                }
+                src.push(ky + " " + clause.join(" "));
+            }
+            
+            return src.join(", ");
+        };
     
         sql.toString = function (eol) {
             var verb, src = [];
@@ -603,8 +657,15 @@
             switch (verb) {
             case 'CREATE':
                 src.push(this.sql.verb);
-                // FIXME: Need to process the column defs and
-                // make sure injection can't slip in.
+                if (this.sql.verb.indexOf("CREATE TABLE") === 0) {
+                    src.push("(" + defColumns(this.sql.columns) + ")");
+                } else if (this.sql.verb.indexOf("CREATE INDEX") === 0 ||
+                    this.sql.verb.indexOf("CREATE UNIQUE INDEX") === 0) {
+                    src.push("ON " + this.sql.table + " (" +
+                        this.sql.columns.join(", ") + ")");
+                } else if (this.sql.verb.indexOf("CREATE VIEW") === 0) {
+                    src.push((this.sql.as).toString(""));
+                }
                 break;
             case 'DROP':
                 src.push(this.sql.verb);
@@ -683,11 +744,7 @@
         };
         
         sql.createTable = function (tableName, col_defs) {
-            var ky, i = 0, options = {}, cols, values;
-
-            this.sql = {};
-            this.sql.verb = "CREATE TABLE " + tableName;
-            this.sql.column_defs = [];
+            var ky, i = 0, options = {};
 
             for (ky in col_defs) {
                 if (col_defs.hasOwnProperty(ky)) {
@@ -696,7 +753,10 @@
                     }
                 }
             }
-            this.sql.column_defs = col_defs;           
+
+            this.sql = {};
+            this.sql.verb = "CREATE TABLE " + tableName;
+            this.sql.columns = col_defs;
             return this;
         };
         
@@ -720,14 +780,11 @@
             if (options.on === undefined) {
                 throw "Must define an index on something.";
             } else {
-                this.sql += " ON " + options.on.table + " (";
+                this.sql.table = options.on.table;
+                this.sql.columns = [];
                 for (i = 0; i < options.on.columns.length; i += 1) {
-                    if (i > 0) {
-                        this.sql += ", ";
-                    }
-                    this.sql += options.on.columns[i];
+                    this.sql.columns.push(options.on.columns[i]);
                 }
-                this.sql += ")";
             }
             
             return this;
