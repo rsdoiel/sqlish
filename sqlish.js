@@ -644,7 +644,18 @@
             this.sql = "DROP INDEX " + indexName;
             return this;
         };
-
+        
+        sql.createView = function (viewName, sql_obj) {
+            this.sql = "CREATE VIEW " + viewName + " AS " +
+                sql_obj.toString("");
+            return this;
+        };
+        
+        sql.dropView = function (viewName) {
+            this.sql = "DROP VIEW " + viewName;
+            return this;
+        };
+ 
         return sql;
     };
 

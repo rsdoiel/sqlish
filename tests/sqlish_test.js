@@ -309,148 +309,49 @@ harness.push({callback: function () {
     s = sql.P({cnt: 3});
     expected_s = "(cnt = 3)";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
-    //assert.ok(false, "0.0.5 features will be implemented after injection issues are addressed.");
-    
-    // Auto-ordering of phrases moved to 0.0.5
-    //assert.fail("Auto-ordering of phrases not implemented.");
-    
-    // SQLite supported by following sqlish functions
-    // alterTable()
-    // add()
-    // rename()
-    // begin()
-    // transaction()
-    // commit()
-    // rollback()
-    // end()
-    // createIndex()
-    // createTable()
-    // createTrigger()
+
     // createView()
-    // createVirtualTable()
-    // deleteFrom()
-    // dropIndex()
-    // dropTable()
-    // dropTrigger()
-    // dropView()
-    // endTransaction()
-    // indexBy()
-    // insert()
-    // onConflict()
-    // pragma() # Not sure this makes sense from a JS environment
-    // reindex() # Not sure this makes sense from a JS environment
-    // releaseSavePoint()
-    // replace()
-    // savePoint()
-    // select()
-    // update()
-    // vacuum() # Not sure this makes sense from a JS environment
-    // from()
-    // where()
-    // groupBy()
-    // having()
-    // distinct()
-    // join()
-    // union()
-    // groupBy()
-    // orderBy()
-    // limit()
-    // offset()
-    //
+    sql2 = new sqlish.Sql();    
+    s = sql.createView("myView", 
+            sql2.select(["id", "name", "email"]).from("profiles")).toString();
+    expected_s = "CREATE VIEW myView AS SELECT id, name, email FROM profiles;"
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    // MySQL supported by following sqlish function
-    // alterDatabase()
-    // alterEvent() # Not sure this makes sense from a JS environment
-    // alterFunction() # Not sure this makes sense from a JS environment
-    // alterTable()
-    // createDatabase()
-    // createEvent() # Not sure this makes sense from a JS environment
-    // createFunction() # Not sure this makes sense from a JS environment
-    // createIndex()
-    // createProcedure() # Not sure this makes sense from a JS environment
-    // createTable()
-    // createTrigger() # Not sure this makes sense from a JS environment
-    // createView()
-    // dropDatabase()
-    // dropEvent() # Not sure this makes sense from a JS environment
-    // dropFunction() # Not sure this makes sense from a JS environment
-    // dropIndex()
-    // dropProcedure() # Not sure this makes sense from a JS environment
-    // dropTable()
-    // dropTrigger() # Not sure this makes sense from a JS environment
     // dropView()
-    // renameTable()
-    // truncateTable()
-    // call() # Not sure this makes sense from a JS environment
-    // delete()
-    // handler() # Not sure this makes sense from a JS environment
+    s = sql.dropView("myView").toString();
+    expected_s = "DROP VIEW myView;";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
     // insert()
-    // loadDataInFile() # Not sure this makes sense from a JS environment
-    // loadXML() # Not sure this makes sense from a JS environment
-    // replace()
-    // select()
-    // update()
-    // set() without update()
-    // ignore()
-    // groupBy()
-    // having()
-    // orderBy()
-    // join()
-    // union()
-    // where()
-    // with()
-    // in()
-    // into()
-    // begin()
-    // transaction()
-    // savePoint()
-    // releaseSavePoint()
-    // commit()
-    // rollback()
-    
-    // PostgreSQL supported by following sqlish functions:
-    // alterTable()
-    // createRule()
-    // createSchema()
-    // createTable()
-    // createTrigger() # Not sure this makes sense from a JS environment
-    // createType() # Not sure this makes sense from a JS environment
-    // createFunction() # Not sure this makes sense from a JS environment
-    // createView()
-    // dropSchema()
-    // dropTable()
-    // dropView()
-    // operator()  # Not sure this makes sense from a JS environment
-    // set() (outside of UPDATE, no prefixed '@')
-    // having()
-    // inherits()
-    // orReplace()
-    // insert()
-    // update()
-    // deleteFrom()
-    // where()
-    // from()
-    // orderBy()
-    // groupBy()
-    // having()
-    // distinct()
-    // limit()
-    // offset()
-    // with()
     // values()
+    // replace() /* PostgreSQL 9.2 doesn't support replace() */
+    // update()
+    // set() (outside of UPDATE, no prefixed '@')
+    // deleteFrom()
+
+    // select()
+    // distinct()
+    // from()
     // join()
     // union()
-    // intersect()
-    // except()
-    // with()
-    // recursive()
+    // where()
+    // having()
     // in()
-    // over()
-    // begin()
-    // savepoint()
+    // with()
+    // groupBy()
+    // orderBy()
+    // limit()
+    // offset()
+
+    // transaction()
     // commit()
     // rollback()
+    // savePoint()
+    // releaseSavePoint()
+    // begin()
+    // end()
+    // set() without update() /* MySQL 5.5 and PostgreSQL 9.2 */
+
 }, label: "Test 0.0.5 features"});
 
 if (require.main === module) {
