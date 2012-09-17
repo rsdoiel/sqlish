@@ -392,6 +392,24 @@ harness.push({callback: function () {
     s = sql.select(["id", "name", "building"]).from("personnel").orderBy("name").groupBy("building").toString();
     expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    threw_error = false;
+    try {
+        s = sql.createTable("myTable;SELECT * FROM secrets;", {
+            id: {
+                type: "INTEGER",
+                auto_increment: true,
+                primary_key: true
+            },
+            name: {
+                type: "VARCHAR",
+                length: 255
+            }
+        });
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
     
     // insert()
     // values()

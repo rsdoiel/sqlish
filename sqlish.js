@@ -760,6 +760,11 @@
         sql.createTable = function (tableName, col_defs) {
             var ky, i = 0, options = {};
 
+
+            if (tableName !== safeName(tableName)) {
+                throw "injection error: " + tableName;
+            }
+
             for (ky in col_defs) {
                 if (col_defs.hasOwnProperty(ky)) {
                     if (ky !== safeName(ky)) {
@@ -769,6 +774,7 @@
             }
 
             this.sql = {};
+            this.sql.tableName = tableName;
             this.sql.verb = "CREATE TABLE " + tableName;
             this.sql.columns = col_defs;
             return this;
