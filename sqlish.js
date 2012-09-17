@@ -235,15 +235,21 @@
                 throw "injection error: " + obj +
                     " should be an object literal";
             }
-            
+             
             // Does key begin with $eq, $ne, $gt, $gte, $lt, $lte,
             // $or, $and
             if (ky.substr(0,1) ===  "$") {
                 switch(ky) {
                 case '$eq':
-                    if (typeof obj[ky] === "object") {
+                    /* if (typeof obj[ky] === "object") {
                         return ["=", expr(obj[ky])].join(" ");
-                    }
+                    }*/
+
+                    if (Array.isArray(obj[ky])) {
+                        return obj[ky].map(function (v) {
+                            return safely(v);
+                        });
+                    } 
                     return ["=", safely(obj[ky])].join(" ");
                 case '$ne':
                     if (typeof obj[ky] === "object") {
@@ -303,6 +309,14 @@
                     throw [ky, "not supported"].join(" ");
                 }
             } else if (typeof obj[ky] === "object") {
+                var clause = expr(obj[ky]);
+
+                if (Array.isArray(clause)) {
+                    return '(' + clause.map(function (v) {
+                      return [ky, v].join(" = "); 
+                    }).join(" OR ") + ')';
+                }
+
                 return [ky, expr(obj[ky])].join(" ");
             } else {
             }
