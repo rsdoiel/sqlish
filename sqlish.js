@@ -333,6 +333,34 @@
         sql.safeName = safeName;
         sql.expr = expr;
         sql.P = P;
+        
+        var isSafeSqlObj = function (a_obj) {
+            if (a_obj.sql === undefined) {
+                return false;
+            }
+            if (a_obj.sql.verb === undefined) {
+                return false;
+            }
+            if (a_obj.sqlDate === undefined) {
+                return false;
+            }
+            if (a_obj.safely === undefined) {
+                return false;
+            }
+            if (a_obj.safeName === undefined) {
+                return false;
+            }
+            if (a_obj.expr === undefined) {
+                return false;
+            }
+            if (a_obj.P === undefined) {
+                return false;
+            }
+            if (a_obj.toString === undefined) {
+                return false;
+            }
+            return true;
+        };
 
         sql.insert = function (tableName, obj) {
             var fields = [], values = [], ky,
@@ -342,7 +370,7 @@
                 tableName = safeName(tableName, options);
             }
 
- 			// Mongo 2.2's shell doesn't support Object.keys()
+            // Mongo 2.2's shell doesn't support Object.keys()
             for (ky in obj) {
                 if (obj.hasOwnProperty(ky) && typeof ky === "string") {
                     if (ky !== safeName(ky, options)) {
@@ -530,12 +558,12 @@
         sql.set = function (name, value) {
             var ky, i, options = {
                     period: true,
-                    at_sign: true,
+                    at_sign: true
                 };
 
             if (this.sql.verb.indexOf("UPDATE") === 0) {
                 if (typeof name === "string") {
-                    this.sql.set = "SET " + safeName(name) +
+                    this.sql.set = "SET " + safeName(name, {period: true}) +
                         " = " + safely(value);
                 } else if (typeof name === "object") {
                     i = 0;
@@ -557,7 +585,9 @@
                 if (this.dialect === Dialect.SQLite3) {
                     throw Dialect.SQLite3 + " does not support SET and @varname constructs";
                 }
-                if (safeName(name))
+                if (name !== safeName(name, options)) {
+                    throw "injection error: " + name;
+                }
                 this.sql = {};
                 if (this.dialect === Dialect.MySQL55) {
                     this.sql.verb = "SET @" + safeName(name);
@@ -796,13 +826,13 @@
                 this.sql.verb = "CREATE INDEX " + indexName;
             }
             
-            if (options.on === undefined) {
+            if (options.table === undefined || options.columns === undefined) {
                 throw "Must define an index on something.";
             } else {
-                this.sql.table = options.on.table;
+                this.sql.table = options.table;
                 this.sql.columns = [];
-                for (i = 0; i < options.on.columns.length; i += 1) {
-                    this.sql.columns.push(options.on.columns[i]);
+                for (i = 0; i < options.columns.length; i += 1) {
+                    this.sql.columns.push(options.columns[i]);
                 }
             }
             
@@ -810,8 +840,18 @@
         };
         
         sql.createView = function (viewName, sql_obj) {
-            if (typeof sql_obj === "string") {
-                throw ["injection error:", sql_obj].join(" ");
+            if (viewName !== safeName(viewName)) {
+                throw "injection error: " + viewName;
+            }
+            // FIXME: might want to switch to a prototype
+            // declaration of sqlish.Sql() so we can
+            // check for instanceof.
+            
+            // Make sure sql_obj is a real sql_obj
+            if (typeof sql_obj === "string" ||
+                    sql_obj instanceof String ||
+                    isSafeSqlObj(sql_obj) === false) {
+                throw "injection error: " + sql_obj;
             }
             this.sql = {};
             this.sql.view = viewName;

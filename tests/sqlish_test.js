@@ -140,6 +140,8 @@ harness.push({ callback: function () {
     assert.ok(wasThrown, "Should have thrown an error for Sql.into(\"@myId\")");
 }, label: "SQLite specific tests."});
 
+
+//Testing toString() terminations
 harness.push({callback: function () {
     var sql = new sqlish.Sql();
     
@@ -148,6 +150,8 @@ harness.push({callback: function () {
     assert.equal(sql.select("count()").toString(""), "SELECT count()");
 }, label: "Testing toString() terminiations"});
 
+
+// Test 0.0.3 feature set
 harness.push({callback: function () {
     var sql = new sqlish.Sql(),
         s,
@@ -170,6 +174,8 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 }, label: "Test 0.0.3 features."});
 
+
+// Test 0.0.4 feature set
 harness.push({callback: function () {
     var sql = new sqlish.Sql(),
         s,
@@ -183,7 +189,8 @@ harness.push({callback: function () {
 
     s = sql.createTable("test", {
         id: { 
-            type: "INTEGER", auto_increment: true,
+            type: "INTEGER", 
+            auto_increment: true,
             primary_key: true 
         },
         name: {type: "VARCHAR", length: 255},
@@ -200,12 +207,8 @@ harness.push({callback: function () {
 
     s = sql.createIndex("i_test", {
         unique: false,
-        on: {
-            table: "test",
-            columns: [
-                "name", "email"
-            ]
-        }
+        table: "test",
+        columns: [ "name", "email" ]
     }).toString();
     expected_s = "CREATE INDEX i_test ON test (name, email);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
@@ -213,15 +216,17 @@ harness.push({callback: function () {
     s = sql.dropIndex("i_test").toString();
     expected_s = "DROP INDEX i_test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
-
 }, label: "Test 0.0.4 features"});
 
+
+// Tests for injection vulnerabilities
 harness.push({callback: function () {
     var sql = new sqlish.Sql(),
         threw_error = false,
         s,
-        expected_s;
+        expected_s,
+        sql2,
+        evil_injection;
 
     s = sql.safely("George");
     expected_s = '"George"';
@@ -251,13 +256,70 @@ harness.push({callback: function () {
     }
     assert.ok(threw_error, "injection error expected");
 
+    threw_error = false;
+    try {
+        s = sql.createTable("myTable;SELECT * FROM secrets;", {
+            id: {
+                type: "INTEGER",
+                auto_increment: true,
+                primary_key: true
+            },
+            name: {
+                type: "VARCHAR",
+                length: 255
+            }
+        });
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
+    
+    threw_error = false;
+    try {
+        s = sql.createIndex("i_myTable;SELECT * FROM secrets;", {
+            unique: true,
+            table: "myTable",
+            columns: "name"
+        });
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
+
+    sql2 = new sqlish.Sql();
+    threw_error = false;
+    try {
+        s = sql.createView("myView;SELECT * FROM secrets;", 
+                sql2.select(["id", "name"]).from("myTable")
+                    .orderBy("name"));
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
+
+    evil_injection = {
+        toString: function () {
+            return "This is some random injected string";
+        }
+    };
+    threw_error = false;
+    try {
+        s = sql.createView("myView",
+            evil_injection);
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an injection error when String object is passed in second parameter.");
 }, label: "Test for injection in parameters."});
 
+
+// Test for 0.0.5 feature set
 harness.push({callback: function () {
     var sql  = new sqlish.Sql(),
         s,
         expected_s,
-        threw_error = false;
+        threw_error = false,
+        sql2;
 
     s = sql.expr({name: "George"});
     expected_s = 'name = "George"';
@@ -363,8 +425,7 @@ harness.push({callback: function () {
     }
     assert.strictEqual(threw_error, true, "dialect of PostgreSQL should throw error when replace() is called.");
     sql.dialect = dialect.SQL92;
-    
-    
+
     // createView()
     sql2 = new sqlish.Sql();    
     s = sql.createView("myView", 
@@ -392,59 +453,6 @@ harness.push({callback: function () {
     s = sql.select(["id", "name", "building"]).from("personnel").orderBy("name").groupBy("building").toString();
     expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-
-    threw_error = false;
-    try {
-        s = sql.createTable("myTable;SELECT * FROM secrets;", {
-            id: {
-                type: "INTEGER",
-                auto_increment: true,
-                primary_key: true
-            },
-            name: {
-                type: "VARCHAR",
-                length: 255
-            }
-        });
-    } catch (err) {
-        threw_error = true;
-    }
-    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
-    
-    threw_error = false;
-    try {
-        s = sql.createIndex("i_myTable;SELECT * FROM secrets;", {
-            unique: true,
-            on: {
-                table: "myTable",
-                columns: "name",
-            }
-        });
-    } catch (err) {
-        threw_error = true;
-    }
-    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
-
-    sql2 = new sqlish.Sql();
-    threw_error = false;
-    try {
-        s = sql.createView("myView;SELECT * FROM secrets;", 
-                sql2.select(["id", "name"]).from("myTable")
-                    .orderBy("name"));
-    } catch (err) {
-        threw_error = true;
-    }
-    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
-
-    evil_injection = new String ("This is some random injected string");
-    threw_error = false;
-    try {
-        s = sql.createView("myView",
-            evil_injection);
-    } catch (err) {
-        threw_error = true;
-    }
-    assert.strictEqual(threw_error, true, "Should throw an injection error when String object is passed in second parameter.");
 
 
     // insert()
