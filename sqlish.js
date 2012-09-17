@@ -780,17 +780,16 @@
             return this;
         };
         
-
-        sql.dropTable = function (tableName) {
-            this.sql = {};
-            this.sql.verb = "DROP TABLE " + tableName;
-            return this;
-        };
         
         sql.createIndex = function (indexName, options) {
             var i;
 
+            if (indexName !== safeName(indexName)) {
+                throw "injection error:" + indexName;
+            }
             this.sql = {};
+            this.sql.index = indexName;
+
             if (options.unique !== undefined && options.unique === true) {
                 this.sql.verb = "CREATE UNIQUE INDEX " + indexName;
             } else {
@@ -810,21 +809,28 @@
             return this;
         };
         
-        sql.dropIndex = function (indexName) {
-            this.sql = {};
-            this.sql.verb = "DROP INDEX " + indexName;
-            return this;
-        };
-        
         sql.createView = function (viewName, sql_obj) {
             if (typeof sql_obj === "string") {
                 throw ["injection error:", sql_obj].join(" ");
             }
             this.sql = {};
+            this.sql.view = viewName;
+            this.sql.sql_view = sql_obj;
             this.sql.verb = "CREATE VIEW " + viewName;
             // FIXME: sql_obj needs to be validated as
             // a sql_obj before calling toString().
             this.sql.as = "AS " + sql_obj.toString("");
+            return this;
+        };
+        
+        sql.dropTable = function (tableName) {
+            this.sql = {};
+            this.sql.verb = "DROP TABLE " + tableName;
+            return this;
+        };
+        sql.dropIndex = function (indexName) {
+            this.sql = {};
+            this.sql.verb = "DROP INDEX " + indexName;
             return this;
         };
         

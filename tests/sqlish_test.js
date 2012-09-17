@@ -411,6 +411,42 @@ harness.push({callback: function () {
     }
     assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
     
+    threw_error = false;
+    try {
+        s = sql.createIndex("i_myTable;SELECT * FROM secrets;", {
+            unique: true,
+            on: {
+                table: "myTable",
+                columns: "name",
+            }
+        });
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
+
+    sql2 = new sqlish.Sql();
+    threw_error = false;
+    try {
+        s = sql.createView("myView;SELECT * FROM secrets;", 
+                sql2.select(["id", "name"]).from("myTable")
+                    .orderBy("name"));
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
+
+    evil_injection = new String ("This is some random injected string");
+    threw_error = false;
+    try {
+        s = sql.createView("myView",
+            evil_injection);
+    } catch (err) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an injection error when String object is passed in second parameter.");
+
+
     // insert()
     // values()
     // update()
