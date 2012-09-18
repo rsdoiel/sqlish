@@ -109,7 +109,7 @@ by those used in MongoDB. From the three previous examples-
     // email = "johndoe@examples.com"
     email_johndoe_expr = {email: "johndoe@examples.com"};
     // (title LIKE "%Wild Things%")
-    titles_like_expr = {title: {$like: "%Wild Things%"}};
+    titles_like_expr = {title: {$like: /Wild Things/}};
     // id INTEGER AUTO_INCREMENT PRIMARY KEY
     def_auto_increment_id = { 
         type: "int",
@@ -205,10 +205,8 @@ object with attributes describing the index.
 ```JavaScript
 	sql.createIndex("i_character_names", {
 		unique: true,
-		on: {
-			table: "story_book_characters",
-			columns: ["name"]
-		}
+		table: "story_book_characters",
+		columns: ["name"]
 	});
 ```
 
@@ -260,18 +258,22 @@ _update()_: Generate an update clause. It is usually combined with
 a set() and where(). Update takes the table name as the only parameter.
 
 ```JavaScript
-	sql.update("story_book_characters").set({name: "Albert"}).where({id: 1});
+	sql.update("story_book_characters").set([{name: "Albert"},
+        {email: al@example.mf"}]).where({id: 1});
 ```
 
 
 _select()_: This creates the clause _SELECT *FIELD NAMES*_. Select
-takes either a string that is a column identifier,
-a SQL function name supported by the dialect or an
-array of column identifiers and SQL functions.
+takes either a string that is a single column identifier, an
+array of strings as a list of columns or number if you want
+the SQL wild card for all columns. A SQL function name supported
+can also be used as a column identifier. Columns can be 
+aliased with the AS operator.
 
 ```JavaScript
 	sql.select("myId");
 	sql.select("COUNT()");
+    sql.select("COUNT() AS subtotal");
     sql.select(["id", "name", "email"]).toString();
 ```
 
