@@ -125,7 +125,7 @@
             }
             re_terms.push("]");
             re = new RegExp(re_terms.join(""), "g");
-            return s.replace(new RegExp(re_terms.join(""), "g"), "");
+            return String(s).replace(new RegExp(re_terms.join(""), "g"), "");
         };
 
         // Return s as a double quoted string
@@ -548,50 +548,40 @@
         // Do a MySQL SET, e.g. SET @my_count = 0;
         // Or add a SET pharse to an UPDATE statement.
         sql.set = function (name, value) {
-            var ky,
+            var ky, i,
                 options = {
                     period: true,
                     at_sign: true
                 };
 
-            if (this.sql.verb.indexOf("UPDATE") === 0) {
-                if (typeof name === "string") {
-                    if (name !== safeName(name, {period: true})) {
-                        throw "injection error: " + name;
-                    }
-                    this.sql.values = [{key: safeName(name, {period: true}),
-                        value:  safely(value)}];
-                } else if (typeof name === "object") {
-                    this.sql.values = [];
-                    for (ky in name) {
-                        if (name.hasOwnProperty(ky)) {
-                            this.sql.values.push({key: safeName(ky),
-                                value: safely(name[ky])});
-                        }
-                    }
-                } else {
-                    throw "Cannot add " + name + " to " + this.sql;
-                }
-            } else {
+            if (this.sql.verb !== "UPDATE") {
                 if (this.dialect === Dialect.SQLite3) {
                     throw Dialect.SQLite3 + " does not support SET and @varname constructs";
                 }
-                if (name !== safeName(name, options)) {
-                    throw "injection error: " + name;
-                }
                 this.sql = {};
                 this.sql.verb = "SET";
-                if (this.dialect === Dialect.MySQL55) {
-                    this.sql.values = [{key: "@" + safeName(name), value: ""}];
-                } else {
-                    this.sql.values = [{key: safeName(name), value: ""}];
+            }
+
+            if (typeof name === "string") {
+                if (name !== safeName(name, {period: true})) {
+                    throw "injection error: " + name;
                 }
-                if (String(value).toUpperCase() === "LAST_INSERT_ID()") {
-                    // FIXME: Need to support other functions
-                    this.sql.values[0].value = "LAST_INSERT_ID()";
-                } else {
-                    this.sql.values[0].value = safely(value);
+                if (this.dialect === Dialect.MySQL55 && this.sql.verb === "SET") {
+                    name = "@" + name;
                 }
+                this.sql.values = [{key: name, value: safely(value)}];
+            } else if (typeof name === "object") {
+                this.sql.values = [];
+                for (ky in name) {
+                    if (name.hasOwnProperty(ky)) {
+                        if (ky !== safeName(ky, {period: true})) {
+                            throw "injection error: " + JSON.stringify(ky);
+                        }
+                        this.sql.values.push({key: ky, value: safely(name[ky])});
+                    }
+                }
+            } else {
+                throw "Cannot add " + name + " to " + this.sql;
             }
             return this;
         };
@@ -792,7 +782,7 @@
         
         sql.deleteFrom = function (tableName) {
             if (tableName !== safeName(tableName)) {
-                throw "injection error: " + tableName
+                throw "injection error: " + tableName;
             }
             this.sql = {};
             this.sql.tableName = tableName;

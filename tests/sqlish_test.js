@@ -188,10 +188,10 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     s = sql.createTable("test", {
-        id: { 
-            type: "INTEGER", 
+        id: {
+            type: "INTEGER",
             auto_increment: true,
-            primary_key: true 
+            primary_key: true
         },
         name: {type: "VARCHAR", length: 255},
         email: {type: "VARCHAR", length: 255},
@@ -269,7 +269,7 @@ harness.push({callback: function () {
                 length: 255
             }
         });
-    } catch (err) {
+    } catch (err2) {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
@@ -281,7 +281,7 @@ harness.push({callback: function () {
             table: "myTable",
             columns: "name"
         });
-    } catch (err) {
+    } catch (err3) {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
@@ -289,10 +289,10 @@ harness.push({callback: function () {
     sql2 = new sqlish.Sql();
     threw_error = false;
     try {
-        s = sql.createView("myView;SELECT * FROM secrets;", 
+        s = sql.createView("myView;SELECT * FROM secrets;",
                 sql2.select(["id", "name"]).from("myTable")
                     .orderBy("name"));
-    } catch (err) {
+    } catch (err4) {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
@@ -306,7 +306,7 @@ harness.push({callback: function () {
     try {
         s = sql.createView("myView",
             evil_injection);
-    } catch (err) {
+    } catch (err5) {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Should throw an injection error when String object is passed in second parameter.");
@@ -316,7 +316,6 @@ harness.push({callback: function () {
 // Test for 0.0.5 feature set
 harness.push({callback: function () {
     var sql  = new sqlish.Sql(),
-        sql2,
         s,
         expected_s,
         threw_error = false,
