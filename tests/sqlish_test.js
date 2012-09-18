@@ -201,12 +201,10 @@ harness.push({callback: function () {
 
     s = sql.createIndex("i_test", {
         unique: false,
-        on: {
-            table: "test",
-            columns: [
-                "name", "email"
-            ]
-        }
+        tables: "test",
+        columns: [
+            "name", "email"
+        ]
     }).toString();
     expected_s = "CREATE INDEX i_test ON test (name, email);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
@@ -214,8 +212,6 @@ harness.push({callback: function () {
     s = sql.dropIndex("i_test").toString();
     expected_s = "DROP INDEX i_test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
-
 }, label: "Test 0.0.4 features"});
 
 harness.push({callback: function () {
