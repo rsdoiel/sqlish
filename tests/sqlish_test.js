@@ -34,7 +34,7 @@ harness.push({callback: function () {
     assert.equal(s, expected_s);
     
     s = Sql.insert("test1", {id: 1, name: "Fred", email: "fred@example.com"}).toString();
-    expected_s =  'INSERT INTO test1 (id, name, email) VALUES (1, "Fred", "fred@example.com");';    
+    expected_s =  'INSERT INTO test1 (id, name, email) VALUES (1, "Fred", "fred@example.com");';
     assert.equal(s, expected_s);
 
     s = Sql.select("id").toString();
@@ -89,7 +89,7 @@ harness.push({callback: function () {
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 INTO @id, @name, @email;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = Sql.select(["id"]).from("test1").where({ id: { $eq: [1,2,3] } }).toString();
+    s = Sql.select(["id"]).from("test1").where({ id: { $eq: [1, 2, 3] } }).toString();
     expected_s = "SELECT id FROM test1 WHERE (id = 1 OR id = 2 OR id = 3);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
@@ -316,6 +316,7 @@ harness.push({callback: function () {
 // Test for 0.0.5 feature set
 harness.push({callback: function () {
     var sql  = new sqlish.Sql(),
+        sql2,
         s,
         expected_s,
         threw_error = false,
@@ -420,23 +421,23 @@ harness.push({callback: function () {
     threw_error = false;
     try {
         sql.replace("test", {id: 3, name: "fred"});
-    } catch (err) {
-        threw_error = true; 
+    } catch (err2) {
+        threw_error = true;
     }
     assert.strictEqual(threw_error, true, "dialect of PostgreSQL should throw error when replace() is called.");
     sql.dialect = dialect.SQL92;
 
     // createView()
-    sql2 = new sqlish.Sql();    
-    s = sql.createView("myView", 
+    sql2 = new sqlish.Sql();
+    s = sql.createView("myView",
             sql2.select(["id", "name", "email"]).from("profiles")).toString();
-    expected_s = "CREATE VIEW myView AS SELECT id, name, email FROM profiles;"
+    expected_s = "CREATE VIEW myView AS SELECT id, name, email FROM profiles;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
+
     threw_error = false;
     try {
         s = sql.createView("myView", expected_s);
-    } catch (err) {
+    } catch (err3) {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Calling createView() with string in second parameter should throw error");
@@ -454,7 +455,24 @@ harness.push({callback: function () {
     expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-
+    threw_error = false;
+    try {
+        s = sql.createTable("myTable;SELECT * FROM secrets;", {
+            id: {
+                type: "INTEGER",
+                auto_increment: true,
+                primary_key: true
+            },
+            name: {
+                type: "VARCHAR",
+                length: 255
+            }
+        });
+    } catch (err4) {
+        threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
+    
     // insert()
     // values()
     // update()
