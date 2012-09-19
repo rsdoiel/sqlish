@@ -165,7 +165,9 @@ and environment variable references.
 This is a list of the verbs implemented so far as sqlish
 functions. More may be added overtime.
 
-_createTable()_: This generates a full create statement for the targeted
+### createTable()
+
+This generates a full create statement for the targeted
 dialect of SQL. createTable takes two parameters - 
 a table name and an object who's property names are
 the column names you want to create and who's values
@@ -199,7 +201,9 @@ and properties of the column
 ```
 
 
-_createIndex()_: Generate a index. Parameters expected are index name and
+### createIndex()
+
+Generate a index. Parameters expected are index name and
 object with attributes describing the index.
 
 ```JavaScript
@@ -211,7 +215,9 @@ object with attributes describing the index.
 ```
 
 
-_dropTable()_: Generates a drop table statement. It takes a single parameter
+### _dropTable()_
+
+Generates a drop table statement. It takes a single parameter
 of the table name.
 
 ```JavaScript
@@ -219,14 +225,18 @@ of the table name.
 ``` 
 
 
-_droptIndex()_:	Generate a drop index statement. It takes a single parameter
+### droptIndex()
+
+Generate a drop index statement. It takes a single parameter
 of the index name to drop.
 
 ```JavaScript
 	sql.dropIndex("i_character_names");
 ```
 
-_insert()_: This generates a row insert statement. Parameters are
+### insert()
+
+This generates a row insert statement. Parameters are
 table name and an object which has attribute names corresponding
 to column names and attribute values containing the values to
 be inserted.
@@ -240,7 +250,9 @@ be inserted.
 	});
 ```
 
-_replace()_: Replace is support for SQLite3 and MySQL55 dialects. It takes
+### replace()
+
+Replace is support for SQLite3 and MySQL55 dialects. It takes
 the same parameters as insert.
 
 ```JavaScript
@@ -254,7 +266,9 @@ the same parameters as insert.
 ```
 
 
-_update()_: Generate an update clause. It is usually combined with
+### update()
+
+Generate an update clause. It is usually combined with
 a set() and where(). Update takes the table name as the only parameter.
 
 ```JavaScript
@@ -279,7 +293,9 @@ aliased with the AS operator.
 
 # Supporting clauses
 
-_from()_: Generates a from clause. Usually used with select. Takes
+### from()
+
+Generates a from clause. Usually used with select. Takes
 a single table name or an array of table names.
 
 ```JavaScript
@@ -287,7 +303,9 @@ a single table name or an array of table names.
 	sql.select(["id", "name"]).from("story_book_characters")
 ```
 
-_where()_: Generating a where clause. Usually used with select.
+### where()
+
+Generating a where clause. Usually used with select.
 Takes an expression as its parameter.
 
 ```JavaScript
@@ -297,7 +315,9 @@ Takes an expression as its parameter.
         .where({name: "fred"});
 ```
 
-_into()_: Into is usually used with _select()_. It is not supported
+### into()
+
+Into is usually used with _select()_. It is not supported
 by the SQLite 3 dialect. Takes a string or array of variable
 or column names.
     
@@ -308,10 +328,13 @@ or column names.
 ```
 
 _join()_:
-    
+
+
 # Expressions
 
-_=, !=, >, >=, <, <=_ : Equal, not equal, greater than, greater than or equal, less than, 
+### =, !=, >, >=, <, <=
+
+Equal, not equal, greater than, greater than or equal, less than, 
 and less than or equal are expressed using _$eq_, _$ne_, _$gt_, _$gte_,
 _$le_, and _$lte_. Equals can be expressed two ways. Implicitly
 where the value assigned to the attribute is a number, string,
@@ -334,7 +357,9 @@ object who's attribute name is _$eq_.
     expr = {cnt: {$lte: 3}};
 ```
 
-_OR, AND_: The conjunction operators OR are expressioned using _$or_ and _$and_.
+### OR, AND
+
+The conjunction operators OR are expressioned using _$or_ and _$and_.
 Both take an erray literal as its value or the function _P()_.
 
 ```JavaScript
@@ -350,7 +375,8 @@ Both take an erray literal as its value or the function _P()_.
     expr = {$or: [sql.P({cnt: 3}), sql.P({cnt: {$lt: 9})}]})
 ```
 
-(), P():
+### (), parenthesis
+
     Generating parenthesis in expressions is a little different than
     in MonogDB. Group with parenthesis is accomplish by a function 
     named _P_. It evaluates the objet literal passed to it, converts 
@@ -363,3 +389,86 @@ Both take an erray literal as its value or the function _P()_.
     expr = {$or: [sql.P({cnt: 3}), sql.P({cnt: 9})]};
 ```
 
+# Adding or modifying a dialect
+
+This is hypathetical at this point. Will deinately change before
+implemented in version 0.0.6.
+
+```JavaScript
+    // Just some sketches of what it might look like.
+
+    sql.define("MyFunkySQL", {
+        inherit: "SQL96",
+    	// Defaults you want to allow for
+    	// this dialect (e.g. REPLACE is not
+    	// available in PostgreSQL92, SET
+    	// cannot be a verb in SQLite3)
+    	verbs: [
+    		"select",
+    		"insert",
+    		"update",
+    		"delete"
+    	],
+    	clauses: [
+    		"from",
+    		"where",
+    		"limit"
+    	],
+    	// Verbs and clauses you want to override
+    	// or Add
+    	customVerbs: {
+    		myThing: function (...someArgs) {
+    		},
+    		myOtherThing: function (...someArgs) {
+    		}
+    	},
+    	customClauses: {
+    		myFinder: function (...someArgs) {
+    		}
+    	},
+    	// Replaces default toString()
+    	toString: function (...someArgs) {
+    		... Code to render inner sql Model
+    	},
+    	// Optional method bind a db connection
+    	// e.g. could transform the active verb
+    	// and clauses into a MongoDB query.
+    	// Should support steams of results if
+    	// no callback is provided
+    	execute: function (...someArgs, callback) {
+    	}
+    });
+    
+    // Defining subset of PostgreSQL 9.2 might look like
+    sql.define("PostgreSQL92ReadOnly", {
+    	inherit: "PostgreSQL92",
+    	verbs: [
+    		"select"
+    	],
+    	clauses: [
+    		"from",
+    		"where",
+    		"limit",
+    		"groupBy",
+    		"orderBy",
+    		"offset",
+    		"limit"
+    	]
+    });
+    
+    // Defining a generate that only supports reading/writing
+    // rows in MySQL 5.5 might look like
+    sql.define("MySQL55ReadWrite", {
+    	inherit: "MySQL55",
+    	verbs: [
+    		"select",
+    		"from",
+    		"where",
+    		"joinOn",
+    		"union"
+    	],
+    	clauses: [
+    	]
+    });
+    
+```
