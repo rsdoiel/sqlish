@@ -145,23 +145,26 @@
                 quot = null;
                 parens = 1;
                 for (i = m2[0].length; i < s.length; i += 1) {
-                    if (s[i] === "\\" && (i + 1) < s.length) {
-                        i += 1;
-                    }
-                    if (quot === null &&
-                            (s[i] === "'" || s[i] === '"')) {
-                        quot = s[i];
-                    } else if (quot !== null && s[i] === quot) {
-                        quot = null;
-                    } else if (quot === null &&
-                            s[i] === ';') {
-                        return false;
-                    } else if (quot === null && s[i] === '(') {
-                        parens += 1;
-                    } else if (quot === null && s[i] === ')') {
-                        parens -= 1;
-                        if (parens === 0) {
-                            return s.substr(0, i + 1);
+                    if (quot === null) {
+                        // outside a quoted string
+                        if (s[i] === "'" || s[i] === '"') {
+                            quot = s[i];
+                        } else if (s[i] === ';') {
+                            return false;
+                        } else if (s[i] === '(') {
+                            parens += 1;
+                        } else if (s[i] === ')') {
+                            parens -= 1;
+                            if (parens === 0) {
+                                return s.substr(0, i + 1);
+                            }
+                        }
+                    } else {
+                        // Inside quoted string.
+                        if (s[i] === "\\" && (i + 1) < s.length) {
+                            i += 1;
+                        } else if (s[i] === quot) {
+                            quot = null;
                         }
                     }
                 }
