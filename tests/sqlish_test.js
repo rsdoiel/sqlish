@@ -342,6 +342,9 @@ harness.push({callback: function () {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Should throw an injection error when String object is passed in second parameter.");
+    s = sql.set({myVar: 'CONCAT(2, COUNT(3), " Jiminy Cricket")'}).toString();
+    expected_s = 'SET @myVar = CONCAT(2, COUNT(3), " Jiminy Cricket");';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 }, label: "Test for injection in parameters."});
 
 

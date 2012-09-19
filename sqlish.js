@@ -159,7 +159,7 @@
                             if (parens === 0) {
                                 return s.substr(0, i + 1);
                             }
-                        } else if (! String(s[i]).match(reParamOkChar)) {
+                        } else if (!String(s[i]).match(reParamOkChar)) {
                             throw "injection error: at '" + s[i] + "' in " + s;
                         }
                     } else {
@@ -597,8 +597,8 @@
         
         // Do a MySQL SET, e.g. SET @my_count = 0;
         // Or add a SET pharse to an UPDATE statement.
-        sql.set = function (name, value) {
-            var ky, i,
+        sql.set = function (nameOrObject, value) {
+            var ky, i, name, val,
                 options = {
                     period: true,
                     at_sign: true
@@ -612,26 +612,43 @@
                 this.sql.verb = "SET";
             }
 
-            if (typeof name === "string") {
-                if (name !== safeName(name, {period: true})) {
-                    throw "injection error: " + name;
+            if (typeof nameOrObject === "string") {
+                if (nameOrObject !== safeName(nameOrObject, {period: true})) {
+                    throw "injection error: " + nameOrObject;
                 }
                 if (this.dialect === Dialect.MySQL55 && this.sql.verb === "SET") {
-                    name = "@" + name;
+                    name = "@" + nameOrObject;
+                } else {
+                    name = nameOrObject;
                 }
-                this.sql.values = [{key: name, value: safely(value)}];
-            } else if (typeof name === "object") {
+                if (value === safeFunc(value)) {
+                    val = value;
+                } else {
+                    val = safely(value);
+                }
+                this.sql.values = [{key: name, value: value}];
+            } else if (typeof nameOrObject === "object") {
                 this.sql.values = [];
-                for (ky in name) {
-                    if (name.hasOwnProperty(ky)) {
+                for (ky in nameOrObject) {
+                    if (nameOrObject.hasOwnProperty(ky)) {
                         if (ky !== safeName(ky, {period: true})) {
                             throw "injection error: " + JSON.stringify(ky);
                         }
-                        this.sql.values.push({key: ky, value: safely(name[ky])});
+                        if (Dialect.MySQL55 && this.sql.verb === "SET") {
+                            name = "@" + ky;
+                        } else {
+                            name = ky;
+                        }
+                        if (nameOrObject[ky] === safeFunc(nameOrObject[ky])) {
+                            val = nameOrObject[ky];
+                        } else {
+                            val = safely(nameOrObject[ky]);
+                        }
+                        this.sql.values.push({key: name, value: val});
                     }
                 }
             } else {
-                throw "Cannot add " + name + " to " + this.sql;
+                throw "Cannot add " + nameOrObject + " to " + this.sql;
             }
             return this;
         };
