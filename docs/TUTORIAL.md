@@ -397,37 +397,36 @@ implemented in version 0.0.6.
 ```JavaScript
     // Just some sketches of what it might look like.
 
-    sql.define("MyFunkySQL", {
-        inherit: "SQL96",
-    	// Defaults you want to allow for
-    	// this dialect (e.g. REPLACE is not
-    	// available in PostgreSQL92, SET
-    	// cannot be a verb in SQLite3)
-    	verbs: [
-    		"select",
-    		"insert",
-    		"update",
-    		"delete"
-    	],
-    	clauses: [
-    		"from",
-    		"where",
-    		"limit"
-    	],
-    	// Verbs and clauses you want to override
-    	// or Add
-    	customVerbs: {
-    		myThing: function (...someArgs) {
-    		},
-    		myOtherThing: function (...someArgs) {
-    		}
-    	},
-    	customClauses: {
-    		myFinder: function (...someArgs) {
-    		}
-    	},
+    sql.define("ReadOnlySQL", {
+    	verbs: {
+            // Defining schema
+            createTable: true,
+            dropTable: true,
+            createIndex: true,
+            dropIndex: true,
+            createView: true,
+            dropView: true,
+            // Manimulating rows
+            insert: false,
+            update: false,
+            replace: false,
+            select: true,
+            set: false,
+            deleteFrom: false,
+        },
+    	clauses: {
+            // Modifing a verb
+            set: false,
+            from: true,
+            joinOn: true,
+            where: true,
+            limit: true,
+            orderBy: true,
+            groupBy: true,
+            into: false
+        },
     	// Replaces default toString()
-    	toString: function (...someArgs) {
+    	toString: function (someArgs) {
     		... Code to render inner sql Model
     	},
     	// Optional method bind a db connection
@@ -437,38 +436,5 @@ implemented in version 0.0.6.
     	// no callback is provided
     	execute: function (...someArgs, callback) {
     	}
-    });
-    
-    // Defining subset of PostgreSQL 9.2 might look like
-    sql.define("PostgreSQL92ReadOnly", {
-    	inherit: "PostgreSQL92",
-    	verbs: [
-    		"select"
-    	],
-    	clauses: [
-    		"from",
-    		"where",
-    		"limit",
-    		"groupBy",
-    		"orderBy",
-    		"offset",
-    		"limit"
-    	]
-    });
-    
-    // Defining a generate that only supports reading/writing
-    // rows in MySQL 5.5 might look like
-    sql.define("MySQL55ReadWrite", {
-    	inherit: "MySQL55",
-    	verbs: [
-    		"select",
-    		"from",
-    		"where",
-    		"joinOn",
-    		"union"
-    	],
-    	clauses: [
-    	]
-    });
-    
+    });    
 ```

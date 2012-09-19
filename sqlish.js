@@ -24,6 +24,33 @@
         var sql = {
             dialect: Dialect.SQL92,
             use_UTC: false,
+            verbs: {
+                // Defining schema
+                createTable: true,
+                dropTable: true,
+                createIndex: true,
+                dropIndex: true,
+                createView: true,
+                dropView: true,
+                // Rows interaction
+                insert: true,
+                update: true,
+                replace: true,
+                deleteFrom: true,
+                select: true,
+                set: true
+            },
+            clauses: {
+                // Supporting clauses
+                set: true,
+                from: true,
+                joinOn: true,
+                where: true,
+                limit: true,
+                orderBy: true,
+                groupBy: true,
+                into: true
+            },
             sql: {},
             eol: ";"
         }, key;
@@ -400,10 +427,196 @@
         sql.P = P;
         sql.isSafeSqlObj = isSafeSqlObj;
 
+        /*
+         * Primary query methods - verbs and clauses 
+         */
+
+        sql.deleteFrom = function (tableName) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.deleteFrom === "function") {
+                return this.verbs.deleteFrom(tableName);
+            } else if (this.verbs.deleteFrom === false) {
+                throw "deleteFrom not supported by " + this.dialect;
+            }
+
+            if (tableName !== safeName(tableName)) {
+                throw "injection error: " + tableName;
+            }
+            this.sql = {};
+            this.sql.tableName = tableName;
+            this.sql.verb = "DELETE FROM";
+            return this;
+        };
+
+        sql.update = function (tableName) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.update === "function") {
+                return this.verbs.update(tableName);
+            } else if (this.verbs.update === false) {
+                throw "update not supported by " + this.dialect;
+            }
+
+            if (tableName !== safeName(tableName)) {
+                throw "injection error: " + tableName;
+            }
+            this.sql = {};
+            this.sql.tableName = tableName;
+            this.sql.verb = "UPDATE";
+            return this;
+        };
+        
+        sql.createTable = function (tableName, col_defs) {
+            var ky;
+
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.createTable === "function") {
+                return this.verbs.createTable(tableName, col_defs);
+            } else if (this.verbs.createTable === false) {
+                throw "createTable not supported by " + this.dialect;
+            }
+
+            if (tableName !== safeName(tableName)) {
+                throw "injection error: " + tableName;
+            }
+
+            for (ky in col_defs) {
+                if (col_defs.hasOwnProperty(ky)) {
+                    if (ky !== safeName(ky)) {
+                        throw "injection error:" + col_defs;
+                    }
+                }
+            }
+
+            this.sql = {};
+            this.sql.tableName = tableName;
+            this.sql.verb = "CREATE TABLE";
+            this.sql.columns = col_defs;
+            return this;
+        };
+        
+        sql.dropTable = function (tableName) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.dropTable === "function") {
+                return this.verbs.dropTable(tableName);
+            } else if (this.verbs.dropTable === false) {
+                throw "createTable not supported by " + this.dialect;
+            }
+
+            this.sql = {};
+            
+            if (tableName !== safeName(tableName)) {
+                throw "injection error: " + tableName;
+            }
+            this.sql.tableName = tableName;
+            this.sql.verb = "DROP TABLE";
+            return this;
+        };
+        
+        sql.createIndex = function (indexName, options) {
+            var i;
+
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.createIndex === "function") {
+                return this.verbs.createIndex(indexName, options);
+            } else if (this.verbs.createIndex === false) {
+                throw "createIndex not supported by " + this.dialect;
+            }
+
+            if (indexName !== safeName(indexName)) {
+                throw "injection error:" + indexName;
+            }
+            this.sql = {};
+            this.sql.indexName = indexName;
+            if (options.unique !== undefined && options.unique === true) {
+                this.sql.verb = "CREATE UNIQUE INDEX";
+            } else {
+                this.sql.verb = "CREATE INDEX";
+            }
+            
+            if (options.table === undefined || options.columns === undefined) {
+                throw "Must define an index on something.";
+            } else {
+                this.sql.table = options.table;
+                this.sql.columns = [];
+                for (i = 0; i < options.columns.length; i += 1) {
+                    this.sql.columns.push(options.columns[i]);
+                }
+            }
+            
+            return this;
+        };
+        
+        sql.dropIndex = function (indexName) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.dropIndex === "function") {
+                return this.verbs.dropIndex(indexName);
+            } else if (this.verbs.dropIndex === false) {
+                throw "dropIndex not supported by " + this.dialect;
+            }
+
+            if (indexName !== safeName(indexName)) {
+                throw "injection error: " + indexName;
+            }
+            this.sql = {};
+            this.sql.indexName = indexName;
+            this.sql.verb = "DROP INDEX";
+            return this;
+        };
+        
+        sql.createView = function (viewName, sql_obj) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.createView === "function") {
+                return this.verbs.createView(viewName, sql_obj);
+            } else if (this.verbs.createView === false) {
+                throw "createView not supported by " + this.dialect;
+            }
+
+            if (viewName !== safeName(viewName)) {
+                throw "injection error: " + viewName;
+            }
+
+            // Make sure sql_obj is a real sql_obj
+            if (typeof sql_obj === "string" ||
+                    sql_obj instanceof String ||
+                    isSafeSqlObj(sql_obj) === false) {
+                throw "injection error: " + sql_obj;
+            }
+            this.sql = {};
+            this.sql.viewName = viewName;
+            this.sql.sql_view = sql_obj;
+            this.sql.verb = "CREATE VIEW";
+            this.sql.as = "AS " + sql_obj.toString("");
+            return this;
+        };
+        
+        sql.dropView = function (viewName) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.dropView === "function") {
+                return this.verbs.dropView(viewName);
+            } else if (this.verbs.dropView === false) {
+                throw "dropView not supported by " + this.dialect;
+            }
+
+            if (viewName !== safeName(viewName)) {
+                throw "injection error: " + viewName;
+            }
+            this.sql = {};
+            this.sql.viewName = viewName;
+            this.sql.verb = "DROP VIEW";
+            return this;
+        };
+ 
         sql.insert = function (tableName, obj) {
             var fields = [], values = [], ky,
                 options = {period: true};
 
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.insert === "function") {
+                return this.verbs.insert(tableName, obj);
+            } else if (this.verbs.insert === false) {
+                throw "insert not supported by " + this.dialect;
+            }
+            
             if (tableName !== safeName(tableName)) {
                 tableName = safeName(tableName, options);
             }
@@ -433,6 +646,13 @@
             var fields = [], values = [], ky,
                 options = {period: true};
 
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.replace === "function") {
+                return this.verbs.replace(tableName, obj);
+            } else if (this.verbs.replace === false) {
+                throw "replace not supported by " + this.dialect;
+            }
+            
             if (this.dialect === Dialect.PostgreSQL92) {
                 throw "PostpreSQL 9.2 does not support replace";
             }
@@ -467,6 +687,13 @@
                 colName,
                 asName,
                 options = {period: true, parenthesis: true, asterisk: true};
+
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.select === "function") {
+                return this.verbs.select(fields);
+            } else if (this.verbs.select === false) {
+                throw "select not supported by " + this.dialect;
+            }
 
             if (fields === undefined) {
                 cols = ["*"];
@@ -506,6 +733,14 @@
     
         sql.from = function (tables) {
             var i;
+
+            // Check to see if clause is available or over written
+            if (typeof this.clauses.from === "function") {
+                return this.clauses.from(tables);
+            } else if (this.clauses.from === false) {
+                throw "from clause not supported by " + this.dialect;
+            }
+
             if (typeof tables === "string") {
                 if (safeName(tables) !== tables) {
                     throw ["injection error:", tables].join(" ");
@@ -525,6 +760,14 @@
     
         sql.joinOn = function (tables, expression) {
             var i;
+            
+            // Check to see if clause is available or over written
+            if (typeof this.clauses.joinOn === "function") {
+                return this.clauses.JoinOn(tables, expression);
+            } else if (this.clauses.joinOn === false) {
+                throw "joinOn clause not supported by " + this.dialect;
+            }
+
             if (typeof tables === "string") {
                 if (safeName(tables) !== tables) {
                     throw ["injection error:", tables].join(" ");
@@ -544,11 +787,25 @@
         };
 
         sql.where = function (expression) {
+            // Check to see if clause is available or over written
+            if (typeof this.clauses.where === "function") {
+                return this.clauses.where(expression);
+            } else if (this.clauses.where === false) {
+                throw "where clause not supported by " + this.dialect;
+            }
+
             this.sql.where = "WHERE " + sql.expr(expression);
             return this;
         };
 
         sql.limit = function (index, count) {
+            // Check to see if insert is available or over written
+            if (typeof this.clauses.limit === "function") {
+                return this.clauses.limit(index, count);
+            } else if (this.clauses.limit === false) {
+                throw "limit clause not supported by " + this.dialect;
+            }
+
             if (typeof index !== "number") {
                 throw ["injection error:", index].join(" ");
             }
@@ -565,6 +822,14 @@
 
         sql.orderBy = function (fields, direction) {
             var i, options = {period: true};
+
+            // Check to see if insert is available or over written
+            if (typeof this.clauses.orderBy === "function") {
+                return this.clauses.orderBy(fields, direction);
+            } else if (this.clauses.orderBy === false) {
+                throw "orderBy clause not supported by " + this.dialect;
+            }
+
             if (typeof fields === "string") {
                 if (fields !== safeName(fields, options)) {
                     throw ["injection error:", fields].join(" ");
@@ -591,6 +856,13 @@
     
         sql.groupBy = function (fields) {
             var i, options = {period: true};
+
+            // Check to see if insert is available or over written
+            if (typeof this.clauses.groupBy === "function") {
+                return this.clauses.groupBy(fields);
+            } else if (this.clauses.groupBy === false) {
+                throw "orderBy clause not supported by " + this.dialect;
+            }
 
             if (typeof fields === "string") {
                 if (fields !== safeName(fields, options)) {
@@ -622,8 +894,21 @@
                 if (this.dialect === Dialect.SQLite3) {
                     throw Dialect.SQLite3 + " does not support SET and @varname constructs";
                 }
+                // Check to see if clause is available or over written
+                if (typeof this.clauses.set === "function") {
+                    return this.clauses.set(nameOrObject, value);
+                } else if (this.clauses.set === false) {
+                    throw "set clause not supported by " + this.dialect;
+                }
                 this.sql = {};
                 this.sql.verb = "SET";
+            } else {
+                // Check to see if verb is available or over written
+                if (typeof this.verbs.set === "function") {
+                    return this.verbs.set(nameOrObject, value);
+                } else if (this.verbs.set === false) {
+                    throw "set not supported by " + this.dialect;
+                }
             }
 
             if (typeof nameOrObject === "string") {
@@ -669,6 +954,14 @@
 
         sql.into = function (fields) {
             var i, options = {period: true, at_sign: true};
+
+            // Check to see if clause is available or over written
+            if (typeof this.clauses.into === "function") {
+                return this.clauses.into(fields);
+            } else if (this.clauses.into === false) {
+                throw "into clause not supported by " + this.dialect;
+            }
+
             // support for generating SQLite dialect quoting
             if (this.dialect === Dialect.SQLite3) {
                 throw "INTO not supported by " + Dialect.SQLite3;
@@ -870,129 +1163,46 @@
             }
             return src.join(" ") + eol;
         };
-        
-        sql.deleteFrom = function (tableName) {
-            if (tableName !== safeName(tableName)) {
-                throw "injection error: " + tableName;
-            }
-            this.sql = {};
-            this.sql.tableName = tableName;
-            this.sql.verb = "DELETE FROM";
-            return this;
-        };
 
-        sql.update = function (tableName) {
-            if (tableName !== safeName(tableName)) {
-                throw "injection error: " + tableName;
-            }
-            this.sql = {};
-            this.sql.tableName = tableName;
-            this.sql.verb = "UPDATE";
-            return this;
+        sql.execute = function (options) {
+            throw "execute not supported by " + this.dialect;
         };
-        
-        sql.createTable = function (tableName, col_defs) {
+        /*
+         * Plugins and extensions
+         */
+        sql.define = function (dialect_name, definition) {
             var ky;
-
-            if (tableName !== safeName(tableName)) {
-                throw "injection error: " + tableName;
-            }
-
-            for (ky in col_defs) {
-                if (col_defs.hasOwnProperty(ky)) {
-                    if (ky !== safeName(ky)) {
-                        throw "injection error:" + col_defs;
+            
+            this.dialect = dialect_name;
+            // Add the verb support
+            if (typeof definition.verbs === "object") {
+                for (ky in definition.verbs) {
+                    if (definition.verbs.hasOwnProperty(ky)) {
+                        this.verbs[ky] = definition.verbs[ky];
                     }
                 }
             }
-
-            this.sql = {};
-            this.sql.tableName = tableName;
-            this.sql.verb = "CREATE TABLE";
-            this.sql.columns = col_defs;
-            return this;
-        };
-        
-        sql.dropTable = function (tableName) {
-            this.sql = {};
             
-            if (tableName !== safeName(tableName)) {
-                throw "injection error: " + tableName;
-            }
-            this.sql.tableName = tableName;
-            this.sql.verb = "DROP TABLE";
-            return this;
-        };
-        
-        sql.createIndex = function (indexName, options) {
-            var i;
-
-            if (indexName !== safeName(indexName)) {
-                throw "injection error:" + indexName;
-            }
-            this.sql = {};
-            this.sql.indexName = indexName;
-            if (options.unique !== undefined && options.unique === true) {
-                this.sql.verb = "CREATE UNIQUE INDEX";
-            } else {
-                this.sql.verb = "CREATE INDEX";
-            }
-            
-            if (options.table === undefined || options.columns === undefined) {
-                throw "Must define an index on something.";
-            } else {
-                this.sql.table = options.table;
-                this.sql.columns = [];
-                for (i = 0; i < options.columns.length; i += 1) {
-                    this.sql.columns.push(options.columns[i]);
+            if (typeof definition.clauses === "object") {
+                for (ky in definition.clauses) {
+                    if (definition.clauses.hasOwnProperty(ky)) {
+                        this.clauses[ky] = definition.clauses[ky];
+                    }
                 }
             }
             
-            return this;
-        };
-        
-        sql.dropIndex = function (indexName) {
-            if (indexName !== safeName(indexName)) {
-                throw "injection error: " + indexName;
+            if (typeof definition.toString === "function") {
+                this.toString = definition.toString;
             }
-            this.sql = {};
-            this.sql.indexName = indexName;
-            this.sql.verb = "DROP INDEX";
-            return this;
-        };
-        
-        sql.createView = function (viewName, sql_obj) {
-            if (viewName !== safeName(viewName)) {
-                throw "injection error: " + viewName;
+            
+            if (typeof definition.execute === "function") {
+                this.execute = definition.execute;
             }
+        };
 
-            // Make sure sql_obj is a real sql_obj
-            if (typeof sql_obj === "string" ||
-                    sql_obj instanceof String ||
-                    isSafeSqlObj(sql_obj) === false) {
-                throw "injection error: " + sql_obj;
-            }
-            this.sql = {};
-            this.sql.viewName = viewName;
-            this.sql.sql_view = sql_obj;
-            this.sql.verb = "CREATE VIEW";
-            this.sql.as = "AS " + sql_obj.toString("");
-            return this;
-        };
-        
-        sql.dropView = function (viewName) {
-            if (viewName !== safeName(viewName)) {
-                throw "injection error: " + viewName;
-            }
-            this.sql = {};
-            this.sql.viewName = viewName;
-            this.sql.verb = "DROP VIEW";
-            return this;
-        };
- 
         return sql;
     };
-
+    
     // If we're running under NodeJS then export objects
     self.Dialect = Dialect;
     self.Sql = Sql;
