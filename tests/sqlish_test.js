@@ -216,6 +216,38 @@ harness.push({callback: function () {
     s = sql.dropIndex("i_test").toString();
     expected_s = "DROP INDEX i_test;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.safeFunc("LAST_INSERT_ID()");
+    expected_s = "LAST_INSERT_ID()";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.safeFunc('CONCAT("Hello", "World!")');
+    expected_s = 'CONCAT("Hello", "World!")';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.safeFunc('CONCAT("said", name, ", \\"World I know!\\"")');
+    expected_s = 'CONCAT("said", name, ", \\"World I know!\\"")';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.safeFunc('CONCAT("Hello");SELECT "World!";');
+    expected_s = 'CONCAT("Hello")';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.safeFunc('CONCAT("Hello World!";');
+    expected_s = false;
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.safeFunc('CONCAT("Hello World!\');');
+    expected_s = false;
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.safeFunc('CONCAT("Hello World!\');');
+    expected_s = false;
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+    s = sql.safeFunc('CONCAT("Hello World!", COUNT())');
+    expected_s = 'CONCAT("Hello World!", COUNT())';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 }, label: "Test 0.0.4 features"});
 
 

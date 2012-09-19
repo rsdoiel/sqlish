@@ -127,6 +127,47 @@
             re = new RegExp(re_terms.join(""), "g");
             return String(s).replace(new RegExp(re_terms.join(""), "g"), "");
         };
+        
+        var safeFunc = function (s) {
+            var re1 = /^[A-Z_]+\(\)$/i,
+                re2 = /^[A-Z_]+\(/i,
+                m2,
+                i,
+                quot,
+                parens;
+            if (String(s).match(re1)) {
+                return s;
+            }
+            m2 = String(s).match(re2);
+            if (m2) {
+                // Scan the string to make sure quoted content is
+                // propertly escaped.
+                quot = null;
+                parens = 1;
+                for (i = m2[0].length; i < s.length; i += 1) {
+                    if (s[i] === "\\" && (i + 1) < s.length) {
+                        i += 1;
+                    }
+                    if (quot === null &&
+                            (s[i] === "'" || s[i] === '"')) {
+                        quot = s[i];
+                    } else if (quot !== null && s[i] === quot) {
+                        quot = null;
+                    } else if (quot === null &&
+                            s[i] === ';') {
+                        return false;
+                    } else if (quot === null && s[i] === '(') {
+                        parens += 1;
+                    } else if (quot === null && s[i] === ')') {
+                        parens -= 1;
+                        if (parens === 0) {
+                            return s.substr(0, i + 1);
+                        }
+                    }
+                }
+            }
+            return false;
+        };
 
         // Return s as a double quoted string
         // safely escaped.
@@ -317,13 +358,6 @@
             return ["(", expr(expression), ")"].join("");
         };
 
-
-        sql.sqlDate = sqlDate;
-        sql.safely = safely;
-        sql.safeName = safeName;
-        sql.expr = expr;
-        sql.P = P;
-        
         var isSafeSqlObj = function (a_obj) {
             if (a_obj.sql === undefined) {
                 return false;
@@ -351,6 +385,14 @@
             }
             return true;
         };
+
+        sql.sqlDate = sqlDate;
+        sql.safely = safely;
+        sql.safeName = safeName;
+        sql.safeFunc = safeFunc;
+        sql.expr = expr;
+        sql.P = P;
+        sql.isSafeSqlObj = isSafeSqlObj;
 
         sql.insert = function (tableName, obj) {
             var fields = [], values = [], ky,
@@ -420,13 +462,15 @@
             if (fields === undefined) {
                 cols = ["*"];
             } else if (typeof fields === "string") {
-                if (safeName(fields, options) !== fields) {
+                if (safeName(fields, options) !== fields &&
+                        safeFunc(fields) !== fields) {
                     throw ["injection error: ", fields].join("");
                 }
-                cols = [safeName(fields, options)];
+                cols = [fields];
             } else {
                 for (i = 0; i < fields.length; i += 1) {
-                    if (safeName(fields[i], options) !== fields[i]) {
+                    if (safeName(fields[i], options) !== fields[i] &&
+                            safeFunc(fields[i]) !== fields[i]) {
                         throw "injection error: " + fields[i];
                     }
                 }
