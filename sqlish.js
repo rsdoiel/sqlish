@@ -131,6 +131,7 @@
         var safeFunc = function (s) {
             var re1 = /^[A-Z_]+\(\)$/i,
                 re2 = /^[A-Z_]+\(/i,
+                reParamOkChar = /(\s|[0-9]|[a-z]|,|\.)/i,
                 m2,
                 i,
                 quot,
@@ -158,6 +159,8 @@
                             if (parens === 0) {
                                 return s.substr(0, i + 1);
                             }
+                        } else if (! String(s[i]).match(reParamOkChar)) {
+                            throw "injection error: at '" + s[i] + "' in " + s;
                         }
                     } else {
                         // Inside quoted string.
