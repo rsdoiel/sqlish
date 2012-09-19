@@ -463,7 +463,10 @@
         
         // Select options.    
         sql.select = function (fields) {
-            var i, cols, options = {period: true, parenthesis: true, asterisk: true};
+            var i, cols,
+                colName,
+                asName,
+                options = {period: true, parenthesis: true, asterisk: true};
 
             if (fields === undefined) {
                 cols = ["*"];
@@ -475,9 +478,20 @@
                 cols = [fields];
             } else {
                 for (i = 0; i < fields.length; i += 1) {
-                    if (safeName(fields[i], options) !== fields[i] &&
+                    if (typeof fields[i] === "object") {
+                        // Unpack and "AS" sub clause
+                        colName = firstKey(fields[i]);
+                        asName = fields[i][colName];
+                        if (colName !== safeName(colName) &&
+                                colName !== safeFunc(colName)) {
+                            throw "injection error: " + JSON.stringify(fields[i]);
+                        }
+                        if (asName !== safeName(asName)) {
+                            throw "injection error: " + JSON.stringify(fields[i]);
+                        }
+                    } else if (safeName(fields[i], options) !== fields[i] &&
                             safeFunc(fields[i]) !== fields[i]) {
-                        throw "injection error: " + fields[i];
+                        throw "injection error: " + JSON.stringify(fields[i]);
                     }
                 }
                 cols = fields;
@@ -737,7 +751,7 @@
         };
 
         sql.toString = function (eol) {
-            var src = [], i, vals;
+            var src = [], i, ky, vals;
 
             switch (this.sql.verb) {
             case 'CREATE TABLE':
@@ -771,7 +785,17 @@
                 break;
             case 'SELECT':
                 src.push(this.sql.verb);
-                src.push(this.sql.columns.join(", "));
+                // Need to handle AS cases.
+                vals = [];
+                for (i = 0; i < this.sql.columns.length; i += 1) {
+                    if (typeof this.sql.columns[i] === "object") {
+                        ky = firstKey(this.sql.columns[i]);
+                        vals.push(ky + " AS " + this.sql.columns[i][ky]);
+                    } else {
+                        vals.push(this.sql.columns[i]);
+                    }
+                }
+                src.push(vals.join(", "));
                 if (this.sql.from !== undefined) {
                     src.push(this.sql.from);
                 }

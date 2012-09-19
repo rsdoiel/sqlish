@@ -506,12 +506,18 @@ harness.push({callback: function () {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
-    
-    // insert()
+
+    s = sql.select([
+        {id: "building_id"},
+        "name",
+        "building",
+        {"COUNT()": "cnt"}
+    ]).from("personnel").orderBy("name").groupBy("building").toString();
+    expected_s = "SELECT id AS building_id, name, building, COUNT() AS cnt FROM personnel GROUP BY building ORDER BY name;";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
     // values()
     // update()
-    // set() (outside of UPDATE, no prefixed '@')
-    // deleteFrom()
 
     // select()
     // distinct()
@@ -534,8 +540,6 @@ harness.push({callback: function () {
     // releaseSavePoint()
     // begin()
     // end()
-    // set() /* where SET is verb MySQL 5.5 and PostgreSQL 9.2 */
-
 }, label: "Test 0.0.5 features"});
 
 if (require.main === module) {
