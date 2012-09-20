@@ -1218,7 +1218,7 @@
     // If we're running under NodeJS then export objects
     self.Dialect = Dialect;
     self.Sql = Sql;
-    if (typeof exports !== undefined) {
+    if (typeof exports !== "undefined") {
         exports.Dialect = Dialect;
         exports.Sql = Sql;
     }
