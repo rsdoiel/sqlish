@@ -4,7 +4,7 @@ sqlish - tutorial
 # Getting started
 
 The basic idea of sqlish is to mimic the typical SQL vocabulary
-with a serious of function calls. Here's an example of a typical
+as a serious of function calls. Here's an example of a typical
 SQL statement followed by how to render the same thing with 
 in native JavaScript with sqlish.
 
@@ -23,9 +23,9 @@ Now let's write that with sqlish running under NodeJS-
 ```
 
 That's the basic idea. The nice thing about sqlish is this also
-works on the MongoDB shell though you'll need to load it a little
+works in the MongoDB shell though you'll need to load it a little
 differently. MongoDB's shell doesn't provide a module system like
-node. It will through errors when it encounters undefined
+NodeJS. It will through errors when it encounters undefined
 variables. If you look in extras folder you'll see and example
 load script for using sqlish.js with Mongo. Here's the 
 basic idea (I've assumed that sqlish.js is in the same directory
@@ -42,19 +42,19 @@ as the load script in this example).
     sql.select(["id", "name", "email"]).from("test").toString();
 ```
 
-Each function produces phrase of SQL. select() is a verb and takes
-an array of column names. If no field names are provided then the
-an asterisk is used in its place.
-
-The final toString() returns the assemble SQL statement as a
-string.
+Each function produces phrases or clauses of SQL. _select()_ is a verb
+and takes an array of column names. If no field names are provided then the
+an asterisk is used in its place. _from()_ adds the FROM SQL clause
+and accepts a list of table names as arguments.  The finally toString() 
+job is to return an assemble SQL statement as a string.
 
 # Creating a sqlish object
 
 A sqlish object is created with the new operator after it has been
 imported. The constructor can take an object as a parameter. The 
-attributes support are dialect, use_UTC, and eol (e.g. ';') which 
-will be used by toString() to terminate the SQL statement generated.
+attributes supported are dialect name, use_UTC, and eol (e.g. ';')
+which will be used by toString() to terminate the SQL statement 
+generated.
 
 ```JavaScript
     var sql = new sqlish.Sql({
@@ -65,14 +65,18 @@ will be used by toString() to terminate the SQL statement generated.
 ```
 
 
-# The sql statements and clauses
+# SQL statements and clauses
 
-As you can see in the examples above chaining some
-of the sqlish function together will let you assemble a SQL
-statement (rendered by toString()).  I loosely think of SQL
-clauses as coming in several flavors - verbs phrases, 
-supporting clauses, expressions, definitions, assignments
-and SQL function calls.
+Chaining some sqlish functions together will let you 
+assemble an SQL statement rendered by toString().  
+sqlish groups SQL phrases into four general categories
+verbs, supporting clauses, expressions and definitions.  
+The verbs always start the chain. Chaining two verbs
+together will cause the second verb to replace the first.
+Clauses refine the actions of the verb. They be describe
+the object to work on (e.g. _from()_) or filter results
+(e.g. _where()_) or effect ordering (e.g. _orderBy()_
+or _groupBy()_). Some
 
 Verb phrases include SQL statements starting with _CREATE_,
 _ALTER_, _DROP_, _INSERT_, _UPDATE_, _REPLACE_, _DELETE_,
@@ -334,17 +338,17 @@ sql.union(sql1, sql2);
 
 Generate a transaction bound set of SQL statements.
 
-### savepoint
+### savepoint()
 
 Sets marker among the array of SQL statements in the 
 transaction block.
 
-### commit
+### commit()
 
 Sets a marker amount the array of SQL statements in the
 transaction block.
 
-### rollback
+### rollback()
 
 Sets a marker for rollback in the array of SQL statements
 in the transaction block.

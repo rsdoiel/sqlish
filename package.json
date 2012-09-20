@@ -18,7 +18,7 @@
 	}],
 	"engines" : {
 		"node" : ">= 0.8",
-		"npm" : ">= 1.1.59"
+		"npm" : ">= 1.1"
 	},
 	"scripts" : {
 		"test" : "node tests/sqlish_test.js"
