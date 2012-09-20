@@ -16,6 +16,10 @@
 		"name" : "R. S. Doiel", 
 		"url" : "https://github.com/rsdoiel"
 	}],
+	"contributors": [{
+		"name": "Yawn",
+		"url": "https://github.com/yawnt"
+	}],
 	"engines" : {
 		"node" : ">= 0.8",
 		"npm" : ">= 1.1"
