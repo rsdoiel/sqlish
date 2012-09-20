@@ -58,7 +58,7 @@
             eol: ";"
         }, key;
 
-        if (config !== undefined) {
+        if (typeof config !== "undefined") {
             // Mongo 2.2's shell doesn't support Object.keys()
             for (key in config) {
                 if (config.hasOwnProperty(key) && typeof config[key] !== "function") {
@@ -71,13 +71,13 @@
         // Build an appropriate data string
         // from a JavaScript Date object.
         var sqlDate = function (d, use_UTC) {
-            if (d === undefined) {
+            if (typeof d === "undefined") {
                 d = new Date();
             } else if (typeof d === "string") {
                 d = new Date(d);
             }
             
-            if (use_UTC === undefined) {
+            if (typeof use_UTC === "undefined") {
                 use_UTC = sql.use_UTC;
             }
             
@@ -131,24 +131,24 @@
         // Return s as a safe variable, table or coloumn name
         var safeName = function (s, options) {
             var re_terms = ["[", "^a-zA-Z0-9_"], re;
-            if (options !== undefined) {
-                if (options.period !== undefined &&
+            if (typeof options !== "undefined") {
+                if (typeof options.period !== "undefined" &&
                         options.period === true) {
                     re_terms.push("\\.");
                 }
-                if (options.parenthesis !== undefined &&
+                if (typeof options.parenthesis !== "undefined" &&
                         options.parenthesis === true) {
                     re_terms.push("\\(\\)");
                 }
-                if (options.asterisk !== undefined &&
+                if (typeof options.asterisk !== "undefined" &&
                         options.asterisk === true) {
                     re_terms.push("\\*");
                 }
-                if (options.at_sign !== undefined &&
+                if (typeof options.at_sign !== "undefined" &&
                         options.at_sign === true) {
                     re_terms.push("@");
                 }
-                if (options.dollar_sign !== undefined &&
+                if (typeof options.dollar_sign !== "undefined" &&
                         options.dollar_sign === true) {
                     re_terms.push("\\$");
                 }
@@ -208,7 +208,7 @@
         // Return s as a double quoted string
         // safely escaped.
         var safely = function (s) {
-            if (s === undefined || s === null) {
+            if (typeof s === "undefined" || s === null) {
                 return 'NULL';
             }
 
@@ -346,7 +346,7 @@
                     return ["<=", safely(obj[ky])].join(" ");
                 case '$or':
                     vals = [];
-                    if (obj[ky].length === undefined) {
+                    if (typeof obj[ky].length === undefined) {
                         throw "$or takes an array of objects as the value";
                     }
                     for (i = 0; i < obj[ky].length; i += 1) {
@@ -355,7 +355,7 @@
                     return vals.join(" OR ");
                 case '$and':
                     vals = [];
-                    if (obj[ky].length === undefined) {
+                    if (typeof obj[ky].length === undefined) {
                         throw "$and takes an array of objects as the value";
                     }
                     for (i = 0; i < obj[ky].length; i += 1) {
@@ -395,31 +395,21 @@
         };
 
         var isSafeSqlObj = function (a_obj) {
-            if (a_obj.sql === undefined) {
-                return false;
-            }
-            if (a_obj.sql.verb === undefined) {
-                return false;
-            }
-            if (a_obj.sqlDate === undefined) {
-                return false;
-            }
-            if (a_obj.safely === undefined) {
-                return false;
-            }
-            if (a_obj.safeName === undefined) {
-                return false;
-            }
-            if (a_obj.expr === undefined) {
-                return false;
-            }
-            if (a_obj.P === undefined) {
-                return false;
-            }
-            if (a_obj.toString === undefined) {
-                return false;
-            }
-            return true;
+            var error = true;
+
+            ['sql', 'sql.verb', 'sqlDate', 'safely', 'safeName', 'expr', 'P', 'toString'].forEach(function (elem) {
+                var out = a_obj;
+
+                elem.split('.').forEach(function (key) {
+                    out = out[key];
+                });
+
+                if (typeof out === 'undefined') {
+                    error = false;
+                }
+            });
+
+            return error;
         };
 
         sql.sqlDate = sqlDate;
@@ -495,13 +485,13 @@
             }
             this.sql = {};
             this.sql.indexName = indexName;
-            if (options.unique !== undefined && options.unique === true) {
+            if (typeof options.unique !== "undefined" && options.unique === true) {
                 this.sql.verb = "CREATE UNIQUE INDEX";
             } else {
                 this.sql.verb = "CREATE INDEX";
             }
             
-            if (options.table === undefined || options.columns === undefined) {
+            if (typeof options.table === "undefined" || typeof options.columns === "undefined") {
                 throw "Must define an index on something.";
             } else {
                 this.sql.table = options.table;
@@ -691,7 +681,7 @@
                 asName,
                 options = {period: true, parenthesis: true, asterisk: true};
             
-            if (opt === undefined) {
+            if (typeof opt === "undefined") {
                 opt = {};
             }
 
@@ -702,7 +692,7 @@
                 throw "select not supported by " + this.dialect;
             }
 
-            if (fields === undefined) {
+            if (typeof fields === "undefined") {
                 cols = ["*"];
             } else if (typeof fields === "string") {
                 if (safeName(fields, options) !== fields &&
@@ -878,7 +868,7 @@
                 }
                 this.sql.orderBy = "ORDER BY " + fields.join(", ");
             }
-            if (direction === undefined || direction === null) {
+            if (typeof direction === "undefined" || direction === null) {
                 return this;
             } else if (direction.toUpperCase() === "ASC" || direction >= 0) {
                 this.sql.orderBy += " ASC";
@@ -1043,7 +1033,7 @@
                         break;
                     case 'VARCHAR':
                     case 'CHAR':
-                        if (def.length !== undefined) {
+                        if (typeof def.length !== "undefined") {
                             clause.push(def.type + "(" + def.length + ")");
                         }
                         break;
@@ -1090,8 +1080,7 @@
             case 'CREATE UNIQUE INDEX':
                 src.push(this.sql.verb);
                 src.push(this.sql.indexName);
-                src.push("ON " + this.sql.table + " (" +
-                    this.sql.columns.join(", ") + ")");
+                src.push("ON " + this.sql.table + " (" + this.sql.columns.join(", ") + ")");
                 break;
             case 'CREATE VIEW':
                 src.push(this.sql.verb);
@@ -1125,30 +1114,12 @@
                     }
                 }
                 src.push(vals.join(", "));
-                if (this.sql.from !== undefined) {
-                    src.push(this.sql.from);
-                }
-                if (this.sql.joinOn !== undefined) {
-                    src.push(this.sql.joinOn);
-                }
-                if (this.sql.where !== undefined) {
-                    src.push(this.sql.where);
-                }
-                if (this.sql.groupBy !== undefined) {
-                    src.push(this.sql.groupBy);
-                }
-                if (this.sql.orderBy !== undefined) {
-                    src.push(this.sql.orderBy);
-                }
-                if (this.sql.limit !== undefined) {
-                    src.push(this.sql.limit);
-                }
-                if (this.sql.offset !== undefined) {
-                    src.push(this.sql.offset);
-                }
-                if (this.sql.into !== undefined) {
-                    src.push(this.sql.into);
-                }
+
+                ['from', 'joinOn', 'where', 'groupBy', 'orderBy', 'limit', 'offset', 'into'].forEach((function (elem) {
+                    if (typeof this.sql[elem] !== "undefined") {
+                        src.push(this.sql[elem]);
+                    }
+                }).bind(this)); 
                 break;
             case 'INSERT INTO':
             case 'REPLACE INTO':
@@ -1161,7 +1132,7 @@
             case 'UPDATE':
                 src.push(this.sql.verb);
                 src.push(this.sql.tableName);
-                if (this.sql.values !== undefined) {
+                if (typeof this.sql.values !== "undefined") {
                     vals = [];
                     src.push("SET");
                     for (i = 0; i < this.sql.values.length; i += 1) {
@@ -1170,20 +1141,20 @@
                     }
                     src.push(vals.join(", "));
                 }
-                if (this.sql.where !== undefined) {
+                if (typeof this.sql.where !== "undefined") {
                     src.push(this.sql.where);
                 }
                 break;
             case 'DELETE FROM':
                 src.push(this.sql.verb);
                 src.push(this.sql.tableName);
-                if (this.sql.where !== undefined) {
+                if (typeof this.sql.where !== "undefined") {
                     src.push(this.sql.where);
                 }
                 break;
             case 'SET':
                 src.push(this.sql.verb);
-                if (this.sql.values !== undefined) {
+                if (typeof this.sql.values !== "undefined") {
                     vals = [];
                     for (i = 0; i < this.sql.values.length; i += 1) {
                         vals.push(this.sql.values[i].key + " = " + this.sql.values[i].value);
@@ -1199,7 +1170,7 @@
             default:
                 throw "Don't know how to assemble SQL statement form " + this.sql.verb;
             }
-            if (eol === undefined) {
+            if (typeof eol === "undefined") {
                 return src.join(" ") + this.eol;
             }
             return src.join(" ") + eol;
@@ -1247,7 +1218,7 @@
     // If we're running under NodeJS then export objects
     self.Dialect = Dialect;
     self.Sql = Sql;
-    if (exports !== undefined) {
+    if (typeof exports !== undefined) {
         exports.Dialect = Dialect;
         exports.Sql = Sql;
     }
