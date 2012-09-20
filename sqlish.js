@@ -12,6 +12,8 @@
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 
 (function (self) {
+    "use strict";
+
     var Dialect = {
             SQL92: "SQL 1992",
             MySQL55: "MySQL 5.5",
