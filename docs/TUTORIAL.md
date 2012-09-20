@@ -57,8 +57,8 @@ attributes support are dialect, use_UTC, and eol (e.g. ';') which
 will be used by toString() to terminate the SQL statement generated.
 
 ```JavaScript
-	var sql = new sqlish.Sql({
-		dialect: sqlish.Dialect.PostgreSQL92,
+    var sql = new sqlish.Sql({
+    	dialect: sqlish.Dialect.PostgreSQL92,
 		use_UTC: true,
 		eol: ";\n"
 	});
@@ -201,6 +201,16 @@ and properties of the column
 ```
 
 
+### dropTable()
+
+Generates a drop table statement. It takes a single parameter
+of the table name.
+
+```JavaScript
+    sql.dropTable("story_book_characters");
+``` 
+
+
 ### createIndex()
 
 Generate a index. Parameters expected are index name and
@@ -215,16 +225,6 @@ object with attributes describing the index.
 ```
 
 
-### _dropTable()_
-
-Generates a drop table statement. It takes a single parameter
-of the table name.
-
-```JavaScript
-	sql.dropTable("story_book_characters");
-``` 
-
-
 ### droptIndex()
 
 Generate a drop index statement. It takes a single parameter
@@ -233,6 +233,28 @@ of the index name to drop.
 ```JavaScript
 	sql.dropIndex("i_character_names");
 ```
+
+### createView()
+
+Generate a create view statement. It takes a two parameters
+a view name and a SQL object that will be rendered with
+toString().
+
+```JavaScript
+    sql_subquery = sqlish.Sql();
+    sql_subquery.select().from("my_test").limit(10);
+    sql.createView("my_view", sql_subquery);
+```
+
+### dropView()
+
+Generate a drop view statement. It takes a single parameter
+of the view name to drop.
+
+```JavaScript
+    sql.dropView("my_view");
+```
+
 
 ### insert()
 
@@ -277,7 +299,9 @@ a set() and where(). Update takes the table name as the only parameter.
 ```
 
 
-_select()_: This creates the clause _SELECT *FIELD NAMES*_. Select
+### select()
+
+This creates the clause _SELECT *FIELD NAMES*_. Select
 takes either a string that is a single column identifier, an
 array of strings as a list of columns or number if you want
 the SQL wild card for all columns. A SQL function name supported
@@ -290,6 +314,42 @@ aliased with the AS operator.
     sql.select("COUNT() AS subtotal");
     sql.select(["id", "name", "email"]).toString();
 ```
+
+### union()
+
+Render a union clause. Takes one parameters each an Sql object. Not supported
+in SQLite3.
+
+```JavaScript
+sql1 = sqlish.Sql();
+sql2 = sqlish.Sql();
+
+sql1.select().from("test1");
+sql2.select().from("test2");
+// render (SELECT * FROM test1) UNION (SELECT * FROM test2)
+sql.union(sql1, sql2);
+```
+
+### transaction()
+
+Generate a transaction bound set of SQL statements.
+
+### savepoint
+
+Sets marker among the array of SQL statements in the 
+transaction block.
+
+### commit
+
+Sets a marker amount the array of SQL statements in the
+transaction block.
+
+## rollback
+
+Sets a marker for rollback in the array of SQL statements
+in the transaction block.
+
+
 
 # Supporting clauses
 
@@ -327,8 +387,14 @@ or column names.
     sql.select(2).into("number");
 ```
 
-_join()_:
+### joinOn()
 
+Renders a JOIN clause. Takes two parameters the table to join to
+and the expression to join with.
+
+```JavaScript
+    sql.select().from("test").joinOn("something", {"test.id" : "something.test_id"}));
+```
 
 # Expressions
 
@@ -406,11 +472,13 @@ implemented in version 0.0.6.
             dropIndex: true,
             createView: true,
             dropView: true,
+
             // Manimulating rows
             insert: false,
             update: false,
             replace: false,
             select: true,
+            union: true,
             set: false,
             deleteFrom: false,
         },
@@ -438,3 +506,4 @@ implemented in version 0.0.6.
     	}
     });    
 ```
+

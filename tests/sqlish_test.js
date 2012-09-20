@@ -354,12 +354,12 @@ harness.push({callback: function () {
         s,
         expected_s,
         threw_error = false,
-        sql2;
+        sql1, sql2;
 
     s = sql.expr({name: "George"});
     expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
+
     s = sql.expr({name: {$eq: "George"}});
     expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
@@ -515,22 +515,21 @@ harness.push({callback: function () {
     ]).from("personnel").orderBy("name").groupBy("building").toString();
     expected_s = "SELECT id AS building_id, name, building, COUNT() AS cnt FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    sql1 = new sqlish.Sql();
+    sql2 = new sqlish.Sql();
+    
+    sql1.select().from("test1");
+    sql2.select().from("test2");
+    s = sql.union(sql1, sql2).toString();
+    expected_s = "(SELECT * FROM test1) UNION (SELECT * FROM test2);";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
 
-    // values()
-    // update()
-
-    // select()
     // distinct()
-    // from()
-    // join()
-    // union()
-    // where()
     // having()
     // in()
     // with()
-    // groupBy()
-    // orderBy()
-    // limit()
     // offset()
 
     // transaction()

@@ -38,7 +38,8 @@
                 replace: true,
                 deleteFrom: true,
                 select: true,
-                set: true
+                set: true,
+                union: true
             },
             clauses: {
                 // Supporting clauses
@@ -315,7 +316,7 @@
                             return safely(v);
                         });
                     }
-                    return ["=", safely(obj[ky])].join(" ");
+                    return "= " + safely(obj[ky]);
                 case '$ne':
                     if (typeof obj[ky] === "object") {
                         return ["!=", expr(obj[ky])].join(" ");
@@ -430,41 +431,6 @@
         /*
          * Primary query methods - verbs and clauses 
          */
-
-        sql.deleteFrom = function (tableName) {
-            // Check to see if verb is available or over written
-            if (typeof this.verbs.deleteFrom === "function") {
-                return this.verbs.deleteFrom(tableName);
-            } else if (this.verbs.deleteFrom === false) {
-                throw "deleteFrom not supported by " + this.dialect;
-            }
-
-            if (tableName !== safeName(tableName)) {
-                throw "injection error: " + tableName;
-            }
-            this.sql = {};
-            this.sql.tableName = tableName;
-            this.sql.verb = "DELETE FROM";
-            return this;
-        };
-
-        sql.update = function (tableName) {
-            // Check to see if verb is available or over written
-            if (typeof this.verbs.update === "function") {
-                return this.verbs.update(tableName);
-            } else if (this.verbs.update === false) {
-                throw "update not supported by " + this.dialect;
-            }
-
-            if (tableName !== safeName(tableName)) {
-                throw "injection error: " + tableName;
-            }
-            this.sql = {};
-            this.sql.tableName = tableName;
-            this.sql.verb = "UPDATE";
-            return this;
-        };
-        
         sql.createTable = function (tableName, col_defs) {
             var ky;
 
@@ -642,6 +608,41 @@
             return this;
         };
     
+
+        sql.deleteFrom = function (tableName) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.deleteFrom === "function") {
+                return this.verbs.deleteFrom(tableName);
+            } else if (this.verbs.deleteFrom === false) {
+                throw "deleteFrom not supported by " + this.dialect;
+            }
+
+            if (tableName !== safeName(tableName)) {
+                throw "injection error: " + tableName;
+            }
+            this.sql = {};
+            this.sql.tableName = tableName;
+            this.sql.verb = "DELETE FROM";
+            return this;
+        };
+
+        sql.update = function (tableName) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.update === "function") {
+                return this.verbs.update(tableName);
+            } else if (this.verbs.update === false) {
+                throw "update not supported by " + this.dialect;
+            }
+
+            if (tableName !== safeName(tableName)) {
+                throw "injection error: " + tableName;
+            }
+            this.sql = {};
+            this.sql.tableName = tableName;
+            this.sql.verb = "UPDATE";
+            return this;
+        };
+        
         sql.replace = function (tableName, obj) {
             var fields = [], values = [], ky,
                 options = {period: true};
@@ -730,7 +731,27 @@
             this.sql.columns = cols;
             return this;
         };
-    
+
+        sql.union = function (sql1, sql2) {
+            // Check to see if verb is available or over written
+            if (typeof this.verbs.union === "function") {
+                return this.verbs.union(sql1, sql2);
+            } else if (this.verbs.union === false) {
+                throw "union not supported by " + this.dialect;
+            }
+            
+            if (isSafeSqlObj(sql1) === true &&
+                    isSafeSqlObj(sql2)) {
+                this.sql = {};
+                this.sql.verb = "UNION";
+                this.sql.sql1 = sql1;
+                this.sql.sql2 = sql2;
+            } else {
+                throw "injection error:" + JSON.stringify(sql1) + " " + JSON.stringify(sql2); 
+            }
+            return this;
+        };
+
         sql.from = function (tables) {
             var i;
 
@@ -1154,6 +1175,11 @@
                     }
                     src.push(vals.join(", "));
                 }
+                break;
+            case 'UNION':
+                src.push("(" + this.sql.sql1.toString("") + ")");
+                src.push("UNION");
+                src.push("(" + this.sql.sql2.toString("") + ")");
                 break;
             default:
                 throw "Don't know how to assemble SQL statement form " + this.sql.verb;
