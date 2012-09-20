@@ -67,6 +67,8 @@ generated.
 
 # SQL statements and clauses
 
+## Overview
+
 Chaining some sqlish functions together will let you 
 assemble an SQL statement rendered by toString().  
 sqlish groups SQL phrases into four general categories
@@ -78,16 +80,20 @@ the object to work on (e.g. _from()_) or filter results
 (e.g. _where()_) or effect ordering (e.g. _orderBy()_
 or _groupBy()_). Some
 
+## Details
+
 Verb phrases include SQL statements starting with _CREATE_,
 _ALTER_, _DROP_, _INSERT_, _UPDATE_, _REPLACE_, _DELETE_,
-_SELECT_, and _SET_. These generatally describe an action
+_SELECT_, and _SET_. These generalally describe an action
 you will take on a database, table or environment variable.
 Sqlish provides a corresponding set of functions to generate
 these phrases including - _createTable()_, _alterTable()_,
 _dropTable()_, _insert()_, _update()_, _replace()_, _deleteFrom()_,
-_select()_, and _set()_.  Where the SQL term would collide
-with a JavaScript keyword (e.g. delete, create) as similar
-compand word is used (e.g. deleteFrom, createTable).
+_select()_, _set()_ and _union()_.  Where the SQL term would collide
+with a JavaScript keyword (e.g. delete, create) a similar
+compound word is used (e.g. deleteFrom, createTable). To 
+keep a modicum of similarity compound words are used for all
+actions relating to table, index and view - 	
 
 
 Supporting clauses modify the action in some way. Sometimes
@@ -97,7 +103,7 @@ typically used after the verb phrase.  Supporting
 clauses include _FROM_, _INTO_, _JOIN_, _WHERE_, _ORDER BY_,
 _GROUP BY_, _LIMIT_, _OFFSET_, _HAVING_ and _SET_. You will
 see these defined later as _from()_, _into()_, _join()_, 
-_where()_, _orderBy()_, _groupBy()_, _limit()_, _offset()_, 
+_where()_, _order()_, _group()_, _limit()_, _offset()_, 
 _having()_ and _set()_
 
 
@@ -122,10 +128,10 @@ by those used in MongoDB. From the three previous examples-
     };
 ```
 
-If you need to group phrases in SQL to assert a precidence
-in evaluation you do so with parenthesis. Unfortunetly a simple
-wrapper of Parathasis will not work in JavaScript since that 
-deliniates a functions' parameters and functions can be assigned
+If you need to group phrases in SQL to assert a precedence
+in evaluation you do so with parenthesis. Unfortunately a simple
+wrapper of Parenthesis will not work in JavaScript since that 
+delineates a functions' parameters and functions can be assigned
 inside object literals.  To allow expression composition we
 a function named _P()_ (P is short for parenthesis).
 
