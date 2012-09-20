@@ -354,7 +354,8 @@ harness.push({callback: function () {
         s,
         expected_s,
         threw_error = false,
-        sql1, sql2;
+        sql1,
+        sql2;
 
     s = sql.expr({name: "George"});
     expected_s = 'name = "George"';
@@ -524,9 +525,16 @@ harness.push({callback: function () {
     s = sql.union(sql1, sql2).toString();
     expected_s = "(SELECT * FROM test1) UNION (SELECT * FROM test2);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-    
 
-    // distinct()
+    // distinct
+    sql = new sqlish.Sql();
+    s = sql.select(["id", "name"], {distinct: true})
+            .from("test").where({name: {$like: "friend"}}).toString();
+    expected_s = 'SELECT DISTINCT id, name FROM test WHERE name LIKE "friend";';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+}, label: "Test 0.0.5 features"});
+
+harness.push({callback: function () {
     // having()
     // in()
     // with()
@@ -539,7 +547,7 @@ harness.push({callback: function () {
     // releaseSavePoint()
     // begin()
     // end()
-}, label: "Test 0.0.5 features"});
+}, label: "Test 0.0.6 features"});
 
 if (require.main === module) {
     harness.RunIt(path.basename(module.filename), 10, true);

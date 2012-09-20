@@ -230,7 +230,7 @@
                     '"',
                     s.replace(/[\0\n\r\b\t\\\'\"\x1a]/g, function (c) {
                         switch (c) {
-                        case "\0":
+                        case /\0/:
                             return "\\0";
                         case "\n":
                             return "\\n";
@@ -683,11 +683,15 @@
         };
         
         // Select options.    
-        sql.select = function (fields) {
+        sql.select = function (fields, opt) {
             var i, cols,
                 colName,
                 asName,
                 options = {period: true, parenthesis: true, asterisk: true};
+            
+            if (opt === undefined) {
+                opt = {};
+            }
 
             // Check to see if verb is available or over written
             if (typeof this.verbs.select === "function") {
@@ -728,6 +732,13 @@
             // Reset this inner sql object since this is a verb
             this.sql = {};
             this.sql.verb = "SELECT";
+            if (opt.distinct === true) {
+                this.sql.verb = "SELECT DISTINCT";
+            }
+            if (opt.all === true) {
+                this.sql.verb = "SELECT ALL";
+            }
+
             this.sql.columns = cols;
             return this;
         };
@@ -747,7 +758,7 @@
                 this.sql.sql1 = sql1;
                 this.sql.sql2 = sql2;
             } else {
-                throw "injection error:" + JSON.stringify(sql1) + " " + JSON.stringify(sql2); 
+                throw "injection error:" + JSON.stringify(sql1) + " " + JSON.stringify(sql2);
             }
             return this;
         };
@@ -1098,6 +1109,8 @@
                 src.push(this.sql.viewName);
                 break;
             case 'SELECT':
+            case 'SELECT DISTINCT':
+            case 'SELECT ALL':
                 src.push(this.sql.verb);
                 // Need to handle AS cases.
                 vals = [];

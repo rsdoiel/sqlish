@@ -344,7 +344,7 @@ transaction block.
 Sets a marker amount the array of SQL statements in the
 transaction block.
 
-## rollback
+### rollback
 
 Sets a marker for rollback in the array of SQL statements
 in the transaction block.
