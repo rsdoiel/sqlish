@@ -397,6 +397,31 @@ Takes an expression as its parameter.
         .where({name: "fred"});
 ```
 
+If you are comparing two columns then you need to define some
+validation rules with the _on()_.
+
+```JavaScript
+	sql.on("test1", {
+		id: function (value) {
+			if (value === "test1.id" || parseInt(value, 10) === value) {
+				return value;
+			}
+			throw "injection error, test1.id: " + value; 
+		}
+	});
+	sql.on("test2", {
+		id: function (value) {
+			if (value === "test2.test_id" || parseInt(value, 10) === value) {
+				return value;
+			}
+			throw "injection error, test.test_id: " + value; 
+		}
+	});
+	sql.select([{"test1.id": "id"}, {"test1.name": "name"}, {"test2.id": "test2_id"}])
+		.from(["test1", "test2"])
+        .where({"test1.id": {$eq: "test2.test1_id"}});
+````
+
 ### into()
 
 Into is usually used with _select()_. It is not supported
