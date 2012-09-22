@@ -1,6 +1,6 @@
 {
 	"name" : "sqlish",
-	"version" : "0.0.5",
+	"version" : "0.0.6",
 	"description" : "A very small SQL generator for NodeJS, MongoDB shell or web browser.",
 	"main" : "./sqlish.js",
 	"repository" : {
