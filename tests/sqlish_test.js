@@ -23,7 +23,7 @@ harness.push({callback: function () {
         s,
         expected_s,
         now = new Date();
-    
+
     expected_s = now.getFullYear() + '-' +
         ("0" + (now.getMonth() + 1)).substr(-2) + '-' +
         ("0" + now.getDate()).substr(-2) + " " +
@@ -32,7 +32,7 @@ harness.push({callback: function () {
 		("0" + now.getSeconds()).substr(-2);
     s = Sql.sqlDate(now);
     assert.equal(s, expected_s);
-    
+
     s = Sql.insert("test1", {id: 1, name: "Fred", email: "fred@example.com"}).toString();
     expected_s =  'INSERT INTO test1 (id, name, email) VALUES (1, "Fred", "fred@example.com");';
     assert.equal(s, expected_s);
@@ -53,23 +53,23 @@ harness.push({callback: function () {
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).orderBy("name").toString();
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).order("name").toString();
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id:  1}).orderBy(["name", "email"]).toString();
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id:  1}).order(["name", "email"]).toString();
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 ORDER BY name, email;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email", "name"]).toString();
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).group(["email", "name"]).toString();
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email, name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy("email").toString();
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).group("email").toString();
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).groupBy(["email"]).orderBy(["email", "name"]).toString();
+    s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).group(["email"]).order(["email", "name"]).toString();
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 GROUP BY email ORDER BY email, name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
@@ -323,7 +323,7 @@ harness.push({callback: function () {
     try {
         s = sql.createView("myView;SELECT * FROM secrets;",
                 sql2.select(["id", "name"]).from("myTable")
-                    .orderBy("name"));
+                    .order("name"));
     } catch (err4) {
         threw_error = true;
     }
@@ -345,6 +345,34 @@ harness.push({callback: function () {
     s = sql.set({myVar: 'CONCAT(2, COUNT(3), " Jiminy Cricket")'}).toString();
     expected_s = 'SET @myVar = CONCAT(2, COUNT(3), " Jiminy Cricket");';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	
+	s = sql.expr({"test.profile_id": "profiles.profile_id"});
+	expected_s = "test.profile_id = profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+
+	s = sql.expr({"test.profile_id": {$eq: "profiles.profile_id"}});
+	expected_s = "test.profile_id != profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+
+	s = sql.expr({"test.profile_id": {$ne: "profiles.profile_id"}});
+	expected_s = "test.profile_id != profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+
+	s = sql.expr({"test.profile_id": {$gt: "profiles.profile_id"}});
+	expected_s = "test.profile_id > profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+
+	s = sql.expr({"test.profile_id": {$gte: "profiles.profile_id"}});
+	expected_s = "test.profile_id >= profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+
+	s = sql.expr({"test.profile_id": {$lt: "profiles.profile_id"}});
+	expected_s = "test.profile_id < profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+
+	s = sql.expr({"test.profile_id": {$lte: "profiles.profile_id"}});
+	expected_s = "test.profile_id <= profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
 }, label: "Test for injection in parameters."});
 
 
@@ -482,11 +510,11 @@ harness.push({callback: function () {
     expected_s = "DROP VIEW myView;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.select(["id", "name", "building"]).from("personnel").groupBy("building").orderBy("name").toString();
+    s = sql.select(["id", "name", "building"]).from("personnel").group("building").order("name").toString();
     expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    s = sql.select(["id", "name", "building"]).from("personnel").orderBy("name").groupBy("building").toString();
+    s = sql.select(["id", "name", "building"]).from("personnel").order("name").group("building").toString();
     expected_s = "SELECT id, name, building FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
@@ -513,7 +541,7 @@ harness.push({callback: function () {
         "name",
         "building",
         {"COUNT()": "cnt"}
-    ]).from("personnel").orderBy("name").groupBy("building").toString();
+    ]).from("personnel").order("name").group("building").toString();
     expected_s = "SELECT id AS building_id, name, building, COUNT() AS cnt FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
@@ -536,10 +564,17 @@ harness.push({callback: function () {
     sql = new sqlish.Sql();
     s = sql.select(["id", "name"], {distinct: true})
             .from("test").where({name: {$like: "friend"}})
-			.orderBy("name", -1).toString();
+			.order("name", -1).toString();
     expected_s = 'SELECT DISTINCT id, name FROM test WHERE name LIKE "friend" ORDER BY name DESC;';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
+    sql = new sqlish.Sql();
+    s = sql.select(["id", "name"], {distinct: false})
+            .from("test").join("profiles", {"test.id": "profiles.id"})
+			.where({name: {$like: "friend"}})
+			.order("name", -1).toString();
+    expected_s = 'SELECT id, name FROM test JOIN profiles ON (test.id = profiles.id) WHERE name LIKE "friend" ORDER BY name DESC;';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
 }, label: "Test 0.0.5 features"});
 

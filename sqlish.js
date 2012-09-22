@@ -39,12 +39,12 @@
 					// Supporting clauses
 					set: true,
 					from: true,
-					joinOn: true,
+					join: true,
 					where: true,
 					limit: true,
 					offset: true,
-					orderBy: true,
-					groupBy: true,
+					order: true,
+					group: true,
 					into: true
 				}
 			},
@@ -72,12 +72,12 @@
 					// Supporting clauses
 					set: true,
 					from: true,
-					joinOn: true,
+					join: true,
 					where: true,
 					limit: true,
 					offset: true,
-					orderBy: true,
-					groupBy: true,
+					order: true,
+					group: true,
 					into: false
 				}
 			},
@@ -105,12 +105,12 @@
 					// Supporting clauses
 					set: true,
 					from: true,
-					joinOn: true,
+					join: true,
 					where: true,
 					limit: true,
 					offset: true,
-					orderBy: true,
-					groupBy: true,
+					order: true,
+					group: true,
 					into: true
 				}
 			},
@@ -138,7 +138,7 @@
 					// Supporting clauses
 					set: true,
 					from: true,
-					joinOn: true,
+					join: true,
 					where: true,
 					limit: function (index, count) {
 						var i = 0, j = 0;
@@ -152,8 +152,8 @@
 						}
 					},
 					offset: true,
-					orderBy: true,
-					groupBy: true,
+					order: true,
+					group: true,
 					into: true
 				}
 			},
@@ -359,6 +359,11 @@
 		// Return s as a double quoted string
 		// safely escaped.
 		var safely = function (s) {
+			var options = {
+				at_sign: true,
+				period: true
+			};
+
 			if (typeof s === "undefined" || s === null) {
 				return 'NULL';
 			}
@@ -374,7 +379,7 @@
 			case 'string':
 				s = s.trim();
 				if (s.substr(0, 1) === '@') {
-					return safeName(s, {at_sign: true}).trim();
+					return safeName(s, options);
 				}
 				if (s === "" || s === '""') {
 					return '""';
@@ -450,6 +455,7 @@
 					period: true,
 					dollar_sign: true
 				},
+				clause,
 				ky = firstKey(obj),
 				vals,
 				i;
@@ -528,7 +534,7 @@
 					throw [ky, "not supported"].join(" ");
 				}
 			} else if (typeof obj[ky] === "object") {
-				var clause = expr(obj[ky]);
+				clause = expr(obj[ky]);
 
 				if (Array.isArray(clause)) {
 					return '(' + clause.map(function (v) {
@@ -933,21 +939,21 @@
 			return this;
 		};
 	
-		sql.joinOn = function (tables, expression) {
+		sql.join = function (tables, expression) {
 			var i;
 			
 			// Check to see if clause is available or over written
-			if (typeof this.dialect.clauses.joinOn === "function") {
-				return this.dialect.clauses.JoinOn(tables, expression);
-			} else if (this.dialect.clauses.joinOn === false) {
-				throw "joinOn clause not supported by " + this.dialect;
+			if (typeof this.dialect.clauses.join === "function") {
+				return this.dialect.clauses.Join(tables, expression);
+			} else if (this.dialect.clauses.join === false) {
+				throw "join clause not supported by " + this.dialect;
 			}
-
+			this.sql.join = {};
 			if (typeof tables === "string") {
 				if (safeName(tables) !== tables) {
 					throw ["injection error:", tables].join(" ");
 				}
-				this.sql.joinOn = " JOIN " + safeName(tables);
+				this.sql.join.tables = [safeName(tables)];
 			} else {
 				for (i = 0; i < tables.length; i += 1) {
 					if (safeName(tables[i]) !== tables[i]) {
@@ -955,9 +961,9 @@
 					}
 					tables[i] = safeName(tables[i]);
 				}
-				this.sql.joinOn = " JOIN " + tables.join(", ");
+				this.sql.join.tables = tables;
 			}
-			this.sql.joinOn += " ON " + expr(expression);
+			this.sql.join.on = expr(expression);
 			return this;
 		};
 
@@ -1010,22 +1016,22 @@
 			return this;
 		};
 
-		sql.orderBy = function (fields, direction) {
+		sql.order = function (fields, direction) {
 			var i, options = {period: true};
 
 			// Check to see if insert is available or over written
-			if (typeof this.dialect.clauses.orderBy === "function") {
-				return this.dialect.clauses.orderBy(fields, direction);
-			} else if (this.dialect.clauses.orderBy === false) {
-				throw "orderBy clause not supported by " + this.dialect;
+			if (typeof this.dialect.clauses.order === "function") {
+				return this.dialect.clauses.order(fields, direction);
+			} else if (this.dialect.clauses.order === false) {
+				throw "order clause not supported by " + this.dialect;
 			}
 
-			this.sql.orderBy = {fields: [], direction: null};
+			this.sql.order = {fields: [], direction: null};
 			if (typeof fields === "string") {
 				if (fields !== safeName(fields, options)) {
 					throw ["injection error:", fields].join(" ");
 				}
-				this.sql.orderBy.fields = [fields];
+				this.sql.order.fields = [fields];
 			} else {
 				for (i = 0; i < fields.length; i += 1) {
 					if (fields[i] !== safeName(fields[i], options)) {
@@ -1033,34 +1039,34 @@
 					}
 					fields[i] = safeName(fields[i], options);
 				}
-				this.sql.orderBy.fields = fields;
+				this.sql.order.fields = fields;
 			}
 			if (typeof direction === "undefined" || direction === null) {
 				return this;
 			}
 			if (direction >= 0) {
-				this.sql.orderBy.direction = 1;
+				this.sql.order.direction = 1;
 			} else if (direction < 0) {
-				this.sql.orderBy.direction += -1;
+				this.sql.order.direction += -1;
 			}
 			return this;
 		};
 	
-		sql.groupBy = function (fields) {
+		sql.group = function (fields) {
 			var i, options = {period: true};
 
 			// Check to see if insert is available or over written
-			if (typeof this.dialect.clauses.groupBy === "function") {
-				return this.dialect.clauses.groupBy(fields);
-			} else if (this.dialect.clauses.groupBy === false) {
-				throw "orderBy clause not supported by " + this.dialect;
+			if (typeof this.dialect.clauses.group === "function") {
+				return this.dialect.clauses.group(fields);
+			} else if (this.dialect.clauses.group === false) {
+				throw "order clause not supported by " + this.dialect;
 			}
 
 			if (typeof fields === "string") {
 				if (fields !== safeName(fields, options)) {
 					throw "injection error: " + fields;
 				}
-				this.sql.groupBy = [fields];
+				this.sql.group = [fields];
 			} else {
 				for (i = 0; i < fields.length; i += 1) {
 					if (fields[i] !== safeName(fields[i], options)) {
@@ -1068,7 +1074,7 @@
 					}
 					fields[i] = safeName(fields[i], options);
 				}
-				this.sql.groupBy = fields;
+				this.sql.group = fields;
 			}
 			return this;
 		};
@@ -1283,11 +1289,16 @@
 				}
 				src.push(vals.join(", "));
 
-				['from', 'joinOn', 'where', 'groupBy', 'orderBy', 'limit', 'offset', 'into'].forEach((function (elem) {
+				['from', 'join', 'where', 'group', 'order', 'limit', 'offset', 'into'].forEach((function (elem) {
 			
 					if (this.sql[elem] !== undefined) {
-						switch(elem) {
-						case 'orderBy':
+						switch (elem) {
+						case 'join':
+							src.push("JOIN " +
+									 this.sql[elem].tables.join(", ") +
+									 " ON (" + this.sql[elem].on + ")");
+							break;
+						case 'order':
 							if (this.sql[elem].direction === null) {
 								src.push("ORDER BY " + this.sql[elem].fields.join(", "));
 							} else if (this.sql[elem].direction >= 0) {
@@ -1300,7 +1311,7 @@
 									" DESC");
 							}
 							break;
-						case 'groupBy':
+						case 'group':
 							src.push("GROUP BY " + this.sql[elem].join(", "));
 							break;
 						default:

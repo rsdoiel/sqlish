@@ -77,8 +77,8 @@ The verbs always start the chain. Chaining two verbs
 together will cause the second verb to replace the first.
 Clauses refine the actions of the verb. They be describe
 the object to work on (e.g. _from()_) or filter results
-(e.g. _where()_) or effect ordering (e.g. _orderBy()_
-or _groupBy()_). Some
+(e.g. _where()_) or effect ordering (e.g. _order()_
+or _group()_). Some
 
 ## Details
 
