@@ -78,7 +78,7 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     s = Sql.select(["id", "name", "email"]).from("test1").where({id: 1}).limit(1, 1).toString();
-    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1,1;";
+    expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 LIMIT 1 OFFSET 1;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     s = Sql.select("id").from("test1").where({id: 1}).into("@id").toString();
@@ -531,7 +531,16 @@ harness.push({callback: function () {
     s = sql.select(["id", "name"], {distinct: true})
             .from("test").where({name: {$like: "friend"}}).toString();
     expected_s = 'SELECT DISTINCT id, name FROM test WHERE name LIKE "friend";';
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	
+    sql = new sqlish.Sql();
+    s = sql.select(["id", "name"], {distinct: true})
+            .from("test").where({name: {$like: "friend"}})
+			.orderBy("name", -1).toString();
+    expected_s = 'SELECT DISTINCT id, name FROM test WHERE name LIKE "friend" ORDER BY name DESC;';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	
+	
 }, label: "Test 0.0.5 features"});
 
 harness.push({callback: function () {

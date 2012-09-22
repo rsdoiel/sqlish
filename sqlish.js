@@ -15,20 +15,146 @@
 	"use strict";
 
 	var Dialect = {
-			dialects: {
-				SQL92: {
-					description: "SQL 1992",
-					verbs: {},
-					clauses: {}
+			SQL92: {
+				description: "SQL 1992",
+				verbs: {
+					// Defining schema
+					createTable: true,
+					dropTable: true,
+					createIndex: true,
+					dropIndex: true,
+					createView: true,
+					dropView: true,
+					
+					// Rows interaction
+					insert: true,
+					update: true,
+					replace: true,
+					deleteFrom: true,
+					select: true,
+					set: true,
+					union: true
 				},
-				MySQL55: {
-					description: "MySQL 5.5"
+				clauses: {
+					// Supporting clauses
+					set: true,
+					from: true,
+					joinOn: true,
+					where: true,
+					limit: true,
+					offset: true,
+					orderBy: true,
+					groupBy: true,
+					into: true
+				}
+			},
+			SQLite3: {
+				description: "SQLite 3",
+				verbs: {
+					// Defining schema
+					createTable: true,
+					dropTable: true,
+					createIndex: true,
+					dropIndex: true,
+					createView: true,
+					dropView: true,
+					
+					// Rows interaction
+					insert: true,
+					update: true,
+					replace: true,
+					deleteFrom: true,
+					select: true,
+					set: false,
+					union: true
 				},
-				PostgreSQL92: {
-					description: "PostgreSQL 9.2"
+				clauses: {
+					// Supporting clauses
+					set: true,
+					from: true,
+					joinOn: true,
+					where: true,
+					limit: true,
+					offset: true,
+					orderBy: true,
+					groupBy: true,
+					into: false
+				}
+			},
+			MySQL55: {
+				description: "MySQL 5.5",
+				verbs: {
+					// Defining schema
+					createTable: true,
+					dropTable: true,
+					createIndex: true,
+					dropIndex: true,
+					createView: true,
+					dropView: true,
+					
+					// Rows interaction
+					insert: true,
+					update: true,
+					replace: true,
+					deleteFrom: true,
+					select: true,
+					set: true,
+					union: true
 				},
-				SQLite3: {
-					description: "SQLite 3"
+				clauses: {
+					// Supporting clauses
+					set: true,
+					from: true,
+					joinOn: true,
+					where: true,
+					limit: true,
+					offset: true,
+					orderBy: true,
+					groupBy: true,
+					into: true
+				}
+			},
+			PostgreSQL92: {
+				description: "PostgreSQL 9.2",
+				verbs: {
+					// Defining schema
+					createTable: true,
+					dropTable: true,
+					createIndex: true,
+					dropIndex: true,
+					createView: true,
+					dropView: true,
+					
+					// Rows interaction
+					insert: true,
+					update: true,
+					replace: false,
+					deleteFrom: true,
+					select: true,
+					set: true,
+					union: true
+				},
+				clauses: {
+					// Supporting clauses
+					set: true,
+					from: true,
+					joinOn: true,
+					where: true,
+					limit: function (index, count) {
+						var i = 0, j = 0;
+						i = parseInt(index, 10);
+						if (count === undefined) {
+							this.sql.limit = i;
+						} else {
+							j = parseInt(count, j);
+							this.sql.limit = j;
+							this.sql.offset = i;
+						}
+					},
+					offset: true,
+					orderBy: true,
+					groupBy: true,
+					into: true
 				}
 			},
 
@@ -79,34 +205,6 @@
 		var sql = {
 			dialect: Dialect.SQL92,
 			use_UTC: false,
-			verbs: {
-				// Defining schema
-				createTable: true,
-				dropTable: true,
-				createIndex: true,
-				dropIndex: true,
-				createView: true,
-				dropView: true,
-				// Rows interaction
-				insert: true,
-				update: true,
-				replace: true,
-				deleteFrom: true,
-				select: true,
-				set: true,
-				union: true
-			},
-			clauses: {
-				// Supporting clauses
-				set: true,
-				from: true,
-				joinOn: true,
-				where: true,
-				limit: true,
-				orderBy: true,
-				groupBy: true,
-				into: true
-			},
 			sql: {},
 			eol: ";"
 		}, key;
@@ -119,7 +217,7 @@
 				}
 			}
 		}
-	
+
 
 		// Build an appropriate data string
 		// from a JavaScript Date object.
@@ -129,11 +227,11 @@
 			} else if (typeof d === "string") {
 				d = new Date(d);
 			}
-			
+
 			if (typeof use_UTC === "undefined") {
 				use_UTC = sql.use_UTC;
 			}
-			
+
 			if (use_UTC === true) {
 				if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 &&
 						d.getUTCSeconds() === 0 && d.getUTCMilliseconds() === 0) {
@@ -480,9 +578,9 @@
 			var ky;
 
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.createTable === "function") {
-				return this.verbs.createTable(tableName, col_defs);
-			} else if (this.verbs.createTable === false) {
+			if (typeof this.dialect.verbs.createTable === "function") {
+				return this.dialect.verbs.createTable(tableName, col_defs);
+			} else if (this.dialect.verbs.createTable === false) {
 				throw "createTable not supported by " + this.dialect;
 			}
 
@@ -507,9 +605,9 @@
 		
 		sql.dropTable = function (tableName) {
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.dropTable === "function") {
-				return this.verbs.dropTable(tableName);
-			} else if (this.verbs.dropTable === false) {
+			if (typeof this.dialect.verbs.dropTable === "function") {
+				return this.dialect.verbs.dropTable(tableName);
+			} else if (this.dialect.verbs.dropTable === false) {
 				throw "createTable not supported by " + this.dialect;
 			}
 
@@ -527,9 +625,9 @@
 			var i;
 
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.createIndex === "function") {
-				return this.verbs.createIndex(indexName, options);
-			} else if (this.verbs.createIndex === false) {
+			if (typeof this.dialect.verbs.createIndex === "function") {
+				return this.dialect.verbs.createIndex(indexName, options);
+			} else if (this.dialect.verbs.createIndex === false) {
 				throw "createIndex not supported by " + this.dialect;
 			}
 
@@ -559,9 +657,9 @@
 		
 		sql.dropIndex = function (indexName) {
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.dropIndex === "function") {
-				return this.verbs.dropIndex(indexName);
-			} else if (this.verbs.dropIndex === false) {
+			if (typeof this.dialect.verbs.dropIndex === "function") {
+				return this.dialect.verbs.dropIndex(indexName);
+			} else if (this.dialect.verbs.dropIndex === false) {
 				throw "dropIndex not supported by " + this.dialect;
 			}
 
@@ -576,9 +674,9 @@
 		
 		sql.createView = function (viewName, sql_obj) {
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.createView === "function") {
-				return this.verbs.createView(viewName, sql_obj);
-			} else if (this.verbs.createView === false) {
+			if (typeof this.dialect.verbs.createView === "function") {
+				return this.dialect.verbs.createView(viewName, sql_obj);
+			} else if (this.dialect.verbs.createView === false) {
 				throw "createView not supported by " + this.dialect;
 			}
 
@@ -602,9 +700,9 @@
 		
 		sql.dropView = function (viewName) {
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.dropView === "function") {
-				return this.verbs.dropView(viewName);
-			} else if (this.verbs.dropView === false) {
+			if (typeof this.dialect.verbs.dropView === "function") {
+				return this.dialect.verbs.dropView(viewName);
+			} else if (this.dialect.verbs.dropView === false) {
 				throw "dropView not supported by " + this.dialect;
 			}
 
@@ -622,9 +720,9 @@
 				options = {period: true};
 
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.insert === "function") {
-				return this.verbs.insert(tableName, obj);
-			} else if (this.verbs.insert === false) {
+			if (typeof this.dialect.verbs.insert === "function") {
+				return this.dialect.verbs.insert(tableName, obj);
+			} else if (this.dialect.verbs.insert === false) {
 				throw "insert not supported by " + this.dialect;
 			}
 			
@@ -656,9 +754,9 @@
 
 		sql.deleteFrom = function (tableName) {
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.deleteFrom === "function") {
-				return this.verbs.deleteFrom(tableName);
-			} else if (this.verbs.deleteFrom === false) {
+			if (typeof this.dialect.verbs.deleteFrom === "function") {
+				return this.dialect.verbs.deleteFrom(tableName);
+			} else if (this.dialect.verbs.deleteFrom === false) {
 				throw "deleteFrom not supported by " + this.dialect;
 			}
 
@@ -673,9 +771,9 @@
 
 		sql.update = function (tableName) {
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.update === "function") {
-				return this.verbs.update(tableName);
-			} else if (this.verbs.update === false) {
+			if (typeof this.dialect.verbs.update === "function") {
+				return this.dialect.verbs.update(tableName);
+			} else if (this.dialect.verbs.update === false) {
 				throw "update not supported by " + this.dialect;
 			}
 
@@ -693,9 +791,9 @@
 				options = {period: true};
 
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.replace === "function") {
-				return this.verbs.replace(tableName, obj);
-			} else if (this.verbs.replace === false) {
+			if (typeof this.dialect.verbs.replace === "function") {
+				return this.dialect.verbs.replace(tableName, obj);
+			} else if (this.dialect.verbs.replace === false) {
 				throw "replace not supported by " + this.dialect;
 			}
 			
@@ -739,9 +837,9 @@
 			}
 
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.select === "function") {
-				return this.verbs.select(fields);
-			} else if (this.verbs.select === false) {
+			if (typeof this.dialect.verbs.select === "function") {
+				return this.dialect.verbs.select(fields);
+			} else if (this.dialect.verbs.select === false) {
 				throw "select not supported by " + this.dialect;
 			}
 
@@ -790,9 +888,9 @@
 
 		sql.union = function (sql1, sql2) {
 			// Check to see if verb is available or over written
-			if (typeof this.verbs.union === "function") {
-				return this.verbs.union(sql1, sql2);
-			} else if (this.verbs.union === false) {
+			if (typeof this.dialect.verbs.union === "function") {
+				return this.dialect.verbs.union(sql1, sql2);
+			} else if (this.dialect.verbs.union === false) {
 				throw "union not supported by " + this.dialect;
 			}
 			
@@ -812,9 +910,9 @@
 			var i;
 
 			// Check to see if clause is available or over written
-			if (typeof this.clauses.from === "function") {
-				return this.clauses.from(tables);
-			} else if (this.clauses.from === false) {
+			if (typeof this.dialect.clauses.from === "function") {
+				return this.dialect.clauses.from(tables);
+			} else if (this.dialect.clauses.from === false) {
 				throw "from clause not supported by " + this.dialect;
 			}
 
@@ -822,7 +920,7 @@
 				if (safeName(tables) !== tables) {
 					throw ["injection error:", tables].join(" ");
 				}
-				this.sql.from = "FROM " + safeName(tables);
+				this.sql.from = safeName(tables);
 			} else {
 				for (i = 0; i < tables.length; i += 1) {
 					if (safeName(tables[i]) !== tables[i]) {
@@ -830,7 +928,7 @@
 					}
 					tables[i] = safeName(tables[i]);
 				}
-				this.sql.from = "FROM " + tables.join(", ");
+				this.sql.from = tables.join(", ");
 			}
 			return this;
 		};
@@ -839,9 +937,9 @@
 			var i;
 			
 			// Check to see if clause is available or over written
-			if (typeof this.clauses.joinOn === "function") {
-				return this.clauses.JoinOn(tables, expression);
-			} else if (this.clauses.joinOn === false) {
+			if (typeof this.dialect.clauses.joinOn === "function") {
+				return this.dialect.clauses.JoinOn(tables, expression);
+			} else if (this.dialect.clauses.joinOn === false) {
 				throw "joinOn clause not supported by " + this.dialect;
 			}
 
@@ -865,21 +963,21 @@
 
 		sql.where = function (expression) {
 			// Check to see if clause is available or over written
-			if (typeof this.clauses.where === "function") {
-				return this.clauses.where(expression);
-			} else if (this.clauses.where === false) {
+			if (typeof this.dialect.clauses.where === "function") {
+				return this.dialect.clauses.where(expression);
+			} else if (this.dialect.clauses.where === false) {
 				throw "where clause not supported by " + this.dialect;
 			}
 
-			this.sql.where = "WHERE " + sql.expr(expression);
+			this.sql.where = sql.expr(expression);
 			return this;
 		};
 
 		sql.limit = function (index, count) {
 			// Check to see if insert is available or over written
-			if (typeof this.clauses.limit === "function") {
-				return this.clauses.limit(index, count);
-			} else if (this.clauses.limit === false) {
+			if (typeof this.dialect.clauses.limit === "function") {
+				return this.dialect.clauses.limit(index, count);
+			} else if (this.dialect.clauses.limit === false) {
 				throw "limit clause not supported by " + this.dialect;
 			}
 
@@ -887,12 +985,27 @@
 				throw ["injection error:", index].join(" ");
 			}
 			if (count === undefined || count === null) {
-				this.sql.limit = "LIMIT " + index;
+				this.sql.limit = index;
 			} else {
 				if (typeof count !== "number") {
-					throw ["injection error:", count].join(" ");
+					throw "injection error: " + count;
 				}
-				this.sql.limit = "LIMIT " + index + "," + count;
+				this.sql.limit = count;
+				this.sql.offset = index;
+			}
+			return this;
+		};
+
+		sql.offset = function (index) {
+			// Check to see if insert is available or over written
+			if (typeof this.dialect.clauses.offset === "function") {
+				return this.dialect.clauses.offset(index);
+			} else if (this.dialect.clauses.offset === false) {
+				throw "limit clause not supported by " + this.dialect;
+			}
+
+			if (typeof index !== "number") {
+				throw ["injection error:", index].join(" ");
 			}
 			return this;
 		};
@@ -901,17 +1014,18 @@
 			var i, options = {period: true};
 
 			// Check to see if insert is available or over written
-			if (typeof this.clauses.orderBy === "function") {
-				return this.clauses.orderBy(fields, direction);
-			} else if (this.clauses.orderBy === false) {
+			if (typeof this.dialect.clauses.orderBy === "function") {
+				return this.dialect.clauses.orderBy(fields, direction);
+			} else if (this.dialect.clauses.orderBy === false) {
 				throw "orderBy clause not supported by " + this.dialect;
 			}
 
+			this.sql.orderBy = {fields: [], direction: null};
 			if (typeof fields === "string") {
 				if (fields !== safeName(fields, options)) {
 					throw ["injection error:", fields].join(" ");
 				}
-				this.sql.orderBy = "ORDER BY " + fields;
+				this.sql.orderBy.fields = [fields];
 			} else {
 				for (i = 0; i < fields.length; i += 1) {
 					if (fields[i] !== safeName(fields[i], options)) {
@@ -919,14 +1033,15 @@
 					}
 					fields[i] = safeName(fields[i], options);
 				}
-				this.sql.orderBy = "ORDER BY " + fields.join(", ");
+				this.sql.orderBy.fields = fields;
 			}
 			if (typeof direction === "undefined" || direction === null) {
 				return this;
-			} else if (direction.toUpperCase() === "ASC" || direction >= 0) {
-				this.sql.orderBy += " ASC";
-			} else if (direction.toUpperCase() === "DESC" || direction < 0) {
-				this.sql.orderBy += " DESC";
+			}
+			if (direction >= 0) {
+				this.sql.orderBy.direction = 1;
+			} else if (direction < 0) {
+				this.sql.orderBy.direction += -1;
 			}
 			return this;
 		};
@@ -935,25 +1050,25 @@
 			var i, options = {period: true};
 
 			// Check to see if insert is available or over written
-			if (typeof this.clauses.groupBy === "function") {
-				return this.clauses.groupBy(fields);
-			} else if (this.clauses.groupBy === false) {
+			if (typeof this.dialect.clauses.groupBy === "function") {
+				return this.dialect.clauses.groupBy(fields);
+			} else if (this.dialect.clauses.groupBy === false) {
 				throw "orderBy clause not supported by " + this.dialect;
 			}
 
 			if (typeof fields === "string") {
 				if (fields !== safeName(fields, options)) {
-					throw ["injection error:", fields].join(" ");
+					throw "injection error: " + fields;
 				}
-				this.sql.groupBy = "GROUP BY " + fields;
+				this.sql.groupBy = [fields];
 			} else {
 				for (i = 0; i < fields.length; i += 1) {
 					if (fields[i] !== safeName(fields[i], options)) {
-						throw ["injection error:", fields].join(" ");
+						throw "injection error: " + fields;
 					}
 					fields[i] = safeName(fields[i], options);
 				}
-				this.sql.groupBy = "GROUP BY " + fields.join(", ");
+				this.sql.groupBy = fields;
 			}
 			return this;
 		};
@@ -972,18 +1087,18 @@
 					throw Dialect.SQLite3 + " does not support SET and @varname constructs";
 				}
 				// Check to see if clause is available or over written
-				if (typeof this.clauses.set === "function") {
-					return this.clauses.set(nameOrObject, value);
-				} else if (this.clauses.set === false) {
+				if (typeof this.dialect.clauses.set === "function") {
+					return this.dialect.clauses.set(nameOrObject, value);
+				} else if (this.dialect.clauses.set === false) {
 					throw "set clause not supported by " + this.dialect;
 				}
 				this.sql = {};
 				this.sql.verb = "SET";
 			} else {
 				// Check to see if verb is available or over written
-				if (typeof this.verbs.set === "function") {
-					return this.verbs.set(nameOrObject, value);
-				} else if (this.verbs.set === false) {
+				if (typeof this.dialect.verbs.set === "function") {
+					return this.dialect.verbs.set(nameOrObject, value);
+				} else if (this.dialect.verbs.set === false) {
 					throw "set not supported by " + this.dialect;
 				}
 			}
@@ -1033,9 +1148,9 @@
 			var i, options = {period: true, at_sign: true};
 
 			// Check to see if clause is available or over written
-			if (typeof this.clauses.into === "function") {
-				return this.clauses.into(fields);
-			} else if (this.clauses.into === false) {
+			if (typeof this.dialect.clauses.into === "function") {
+				return this.dialect.clauses.into(fields);
+			} else if (this.dialect.clauses.into === false) {
 				throw "into clause not supported by " + this.dialect;
 			}
 
@@ -1047,7 +1162,7 @@
 				if (fields !== safeName(fields, options)) {
 					throw ["injection error:", fields].join(" ");
 				}
-				this.sql.into = "INTO " + fields;
+				this.sql.into = [fields];
 			} else {
 				for (i = 0; i < fields.length; i += 1) {
 					if (fields[i] !== safeName(fields[i], options)) {
@@ -1055,7 +1170,7 @@
 					}
 					fields[i] = safeName(fields[i], options);
 				}
-				this.sql.into = "INTO " + fields.join(", ");
+				this.sql.into = fields;
 			}
 			return this;
 		};
@@ -1169,10 +1284,35 @@
 				src.push(vals.join(", "));
 
 				['from', 'joinOn', 'where', 'groupBy', 'orderBy', 'limit', 'offset', 'into'].forEach((function (elem) {
-					if (typeof this.sql[elem] !== "undefined") {
-						src.push(this.sql[elem]);
+			
+					if (this.sql[elem] !== undefined) {
+						switch(elem) {
+						case 'orderBy':
+							if (this.sql[elem].direction === null) {
+								src.push("ORDER BY " + this.sql[elem].fields.join(", "));
+							} else if (this.sql[elem].direction >= 0) {
+								src.push("ORDER BY " +
+									this.sql[elem].fields.join(", ") +
+									" ASC");
+							} else if (this.sql[elem].direction < 0) {
+								src.push("ORDER BY " +
+									this.sql[elem].fields.join(", ") +
+									" DESC");
+							}
+							break;
+						case 'groupBy':
+							src.push("GROUP BY " + this.sql[elem].join(", "));
+							break;
+						default:
+							if (this.sql[elem].join === undefined) {
+								src.push(elem.toUpperCase() + " " + this.sql[elem]);
+							} else {
+								src.push(elem.toUpperCase() + " " + this.sql[elem].join(", "));
+							}
+							break;
+						}
 					}
-				}).bind(this)); 
+				}).bind(this));
 				break;
 			case 'INSERT INTO':
 			case 'REPLACE INTO':
@@ -1195,14 +1335,14 @@
 					src.push(vals.join(", "));
 				}
 				if (typeof this.sql.where !== "undefined") {
-					src.push(this.sql.where);
+					src.push("WHERE " + this.sql.where);
 				}
 				break;
 			case 'DELETE FROM':
 				src.push(this.sql.verb);
 				src.push(this.sql.tableName);
 				if (typeof this.sql.where !== "undefined") {
-					src.push(this.sql.where);
+					src.push("WHERE " + this.sql.where);
 				}
 				break;
 			case 'SET':
@@ -1233,7 +1373,7 @@
 			throw "execute not supported by " + this.dialect;
 		};
 
-return sql;
+		return sql;
 	};
 	
 	// If we're running under NodeJS then export objects
