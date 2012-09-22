@@ -347,32 +347,41 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
 	s = sql.expr({"test.profile_id": "profiles.profile_id"});
+	expected_s = "test.profile_id = \"profiles.profile_id\"";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	sql.setSchema("test", {profile_id: "INTEGER"});
+	sql.setSchema("profiles", {profile_id: "INTEGER"});
+	assert.equal(sql.isColumnDefined("test.profile_id"), true, "Should find column");
+	assert.equal(sql.isColumnDefined("profiles.profile_id"), true, "Should find column");
+	
+	s = sql.expr({"test.profile_id": "profiles.profile_id"});
 	expected_s = "test.profile_id = profiles.profile_id";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	s = sql.expr({"test.profile_id": {$eq: "profiles.profile_id"}});
-	expected_s = "test.profile_id != profiles.profile_id";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+	expected_s = "test.profile_id = profiles.profile_id";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	s = sql.expr({"test.profile_id": {$ne: "profiles.profile_id"}});
 	expected_s = "test.profile_id != profiles.profile_id";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	s = sql.expr({"test.profile_id": {$gt: "profiles.profile_id"}});
 	expected_s = "test.profile_id > profiles.profile_id";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	s = sql.expr({"test.profile_id": {$gte: "profiles.profile_id"}});
 	expected_s = "test.profile_id >= profiles.profile_id";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	s = sql.expr({"test.profile_id": {$lt: "profiles.profile_id"}});
 	expected_s = "test.profile_id < profiles.profile_id";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	s = sql.expr({"test.profile_id": {$lte: "profiles.profile_id"}});
 	expected_s = "test.profile_id <= profiles.profile_id";
-    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);	
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 }, label: "Test for injection in parameters."});
 
 

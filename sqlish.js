@@ -206,7 +206,8 @@
 			dialect: Dialect.SQL92,
 			use_UTC: false,
 			sql: {},
-			eol: ";"
+			eol: ";",
+			schemas: {}
 		}, key;
 
 		if (typeof config !== "undefined") {
@@ -216,8 +217,47 @@
 					sql[key] = config[key];
 				}
 			}
+			sql.schemas = {};
 		}
 
+		sql.setSchema = function (tableName, column_defs) {
+			if (this.schemas === undefined) {
+				this.schemas = {};
+			}
+			if (this.schemas[tableName] === undefined) {
+				this.schemas[tableName] = {};
+			}
+			this.schemas[tableName].schema = column_defs;
+			console.log("DEBUG", this.schemas);
+		};
+
+		// See if the column is defined in the schemas
+		sql.isColumnDefined = function (name) {
+			var parts, table, column;
+			if (this.schemas !== undefined) {
+				if (name.indexOf(".") > 0) {
+					parts = name.split(".", 2);
+					table = parts[0];
+					column = parts[1];
+					if (this.schemas[table] !== undefined &&
+							this.schemas[table].schema !== undefined &&
+							this.schemas[table].schema[column] !== undefined) {
+						return true;
+					}
+				} else {
+					for (table in sql.schemas) {
+						if (this.schemas.hasOwnProperty(table)) {
+							if (this.schemas[table] !== undefined &&
+									this.schemas[table].schema !== undefined &&
+									this.schemas[table].schema[column] !== undefined) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+			return false;
+		};
 
 		// Build an appropriate data string
 		// from a JavaScript Date object.
@@ -378,12 +418,16 @@
 				return s;
 			case 'string':
 				s = s.trim();
+				if (sql.isColumnDefined(s) === true) {
+					return s;
+				}
 				if (s.substr(0, 1) === '@') {
 					return safeName(s, options);
 				}
 				if (s === "" || s === '""') {
 					return '""';
 				}
+
 				return [
 					'"',
 					s.replace(/[\0\n\r\b\t\\\'\"\x1a]/g, function (c) {
@@ -552,23 +596,24 @@
 		};
 
 		var isSafeSqlObj = function (a_obj) {
-			var error = true;
-
-			['sql', 'sql.verb', 'sqlDate', 'safely', 'safeName', 'expr', 'P', 'toString'].forEach(function (elem) {
+			var result = true, expected_attributes = [
+				'sql', 'sqlDate', 'safely', 'safeName',
+				'expr', 'P', 'toString', 'onTable', 'isSafeSqlObj'
+			];
+			
+			expected_attributes.forEach(function (elem) {
 				var out = a_obj;
-
-				elem.split('.').forEach(function (key) {
-					out = out[key];
-				});
-
 				if (typeof out === 'undefined') {
-					error = false;
+					return false;
 				}
 			});
 
-			return error;
+			return true;
 		};
 
+
+		//sql.setSchema = setSchema;
+		//sql.isColumnDefined = isColumnDefined;
 		sql.sqlDate = sqlDate;
 		sql.safely = safely;
 		sql.safeName = safeName;
@@ -602,6 +647,10 @@
 				}
 			}
 
+			if (this.schemas[tableName] === undefined) {
+				this.schemas[tableName] = {};
+			}
+			this.schemas[tableName].schema = col_defs;
 			this.sql = {};
 			this.sql.tableName = tableName;
 			this.sql.verb = "CREATE TABLE";
@@ -679,6 +728,9 @@
 		};
 		
 		sql.createView = function (viewName, sql_obj) {
+			if (typeof sql_obj === "string") {
+				throw "injection error: " + viewName + " " + sql_obj;
+			}
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.createView === "function") {
 				return this.dialect.verbs.createView(viewName, sql_obj);
@@ -694,7 +746,7 @@
 			if (typeof sql_obj === "string" ||
 					sql_obj instanceof String ||
 					isSafeSqlObj(sql_obj) === false) {
-				throw "injection error: " + sql_obj;
+				throw "injection error: " + viewName + " " + sql_obj;
 			}
 			this.sql = {};
 			this.sql.viewName = viewName;
@@ -791,7 +843,7 @@
 			this.sql.verb = "UPDATE";
 			return this;
 		};
-		
+
 		sql.replace = function (tableName, obj) {
 			var fields = [], values = [], ky,
 				options = {period: true};
@@ -802,7 +854,7 @@
 			} else if (this.dialect.verbs.replace === false) {
 				throw "replace not supported by " + this.dialect;
 			}
-			
+
 			if (this.dialect === Dialect.PostgreSQL92) {
 				throw "PostpreSQL 9.2 does not support replace";
 			}
@@ -899,7 +951,7 @@
 			} else if (this.dialect.verbs.union === false) {
 				throw "union not supported by " + this.dialect;
 			}
-			
+
 			if (isSafeSqlObj(sql1) === true &&
 					isSafeSqlObj(sql2)) {
 				this.sql = {};
@@ -938,10 +990,10 @@
 			}
 			return this;
 		};
-	
+
 		sql.join = function (tables, expression) {
 			var i;
-			
+
 			// Check to see if clause is available or over written
 			if (typeof this.dialect.clauses.join === "function") {
 				return this.dialect.clauses.Join(tables, expression);
@@ -1051,7 +1103,7 @@
 			}
 			return this;
 		};
-	
+
 		sql.group = function (fields) {
 			var i, options = {period: true};
 
@@ -1078,7 +1130,7 @@
 			}
 			return this;
 		};
-		
+
 		// Do a MySQL SET, e.g. SET @my_count = 0;
 		// Or add a SET pharse to an UPDATE statement.
 		sql.set = function (nameOrObject, value) {
@@ -1180,11 +1232,11 @@
 			}
 			return this;
 		};
-		
+
 		sql.valueOf = function () {
 			return this.sql;
 		};
-		
+
 		var defColumns = function (column_defs) {
 			var ky, src = [], def, clause;
 			for (ky in column_defs) {
@@ -1290,7 +1342,6 @@
 				src.push(vals.join(", "));
 
 				['from', 'join', 'where', 'group', 'order', 'limit', 'offset', 'into'].forEach((function (elem) {
-			
 					if (this.sql[elem] !== undefined) {
 						switch (elem) {
 						case 'join':
@@ -1386,7 +1437,7 @@
 
 		return sql;
 	};
-	
+
 	// If we're running under NodeJS then export objects
 	self.Dialect = Dialect;
 	self.Sql = Sql;
