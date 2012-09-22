@@ -197,7 +197,7 @@ and properties of the column
 			not_null: true
 		},
 		tunnel_id: { 
-			type: integer, 
+			type: "integer",
 			not_null: true,
 			default: 100
 		},
@@ -252,7 +252,8 @@ toString().
 
 ```JavaScript
     sql_subquery = sqlish.Sql();
-    sql_subquery.select().from("my_test").limit(10);
+    sql_subquery.select(["email", "name"],
+    	{unique: true}).from("my_test").limit(10);
     sql.createView("my_view", sql_subquery);
 ```
 
@@ -311,18 +312,29 @@ a set() and where(). Update takes the table name as the only parameter.
 
 ### select()
 
-This creates the clause _SELECT *FIELD NAMES*_. Select
-takes either a string that is a single column identifier, an
-array of strings as a list of columns or number if you want
-the SQL wild card for all columns. A SQL function name supported
+This creates the clause _SELECT *FIELD NAMES*_, _SELECT UNIQUE *FIELD_NAMES*_
+or _SELECT ALL *FIELD_NAMES*_. The Select takes two parameter, the second
+is optional.  The first parameter accepts either a string that is a 
+single column identifier, an array of strings as a list of columns or number 
+if you want the SQL wild card for all columns. A SQL function name supported
 can also be used as a column identifier. Columns can be 
-aliased with the AS operator.
+aliased with the AS operator if they are in an array of of column names. The alias
+is specified with a name key/value object literal _{unique: true}_ would be
+used to generate _SELECT UNIQUE_.
 
 ```JavaScript
+	// SELECT myId
 	sql.select("myId");
+	// SELECT COUNT()
 	sql.select("COUNT()");
-    sql.select("COUNT() AS subtotal");
-    sql.select(["id", "name", "email"]).toString();
+	// SELECT COUNT() AS subtotal
+    sql.select([{"COUNT()": "subtotal"}]);
+    // SELECT id, name, email
+    sql.select(["id", "name", "email"]);
+    // SELECT UNIQUE email, name
+    sql.select(["email", "name"], {unique: true});
+    // SELECT ALL email, name
+    sql.select(["email", "name"], {all: true});    
 ```
 
 ### union()
@@ -397,7 +409,7 @@ or column names.
     sql.select(2).into("number");
 ```
 
-### joinOn()
+### join()
 
 Renders a JOIN clause. Takes two parameters the table to join to
 and the expression to join with.
@@ -467,21 +479,21 @@ Both take an erray literal as its value or the function _P()_.
 
 # Adding or modifying a dialect
 
-This is hypathetical at this point. Will deinately change before
-implemented in version 0.0.6.
+This is hypathetical psuedo code at this point. Will definately change before
+implemented.
 
 ```JavaScript
     // Just some sketches of what it might look like.
 
-    sql.define("ReadOnlySQL", {
+    sqlish.Dialect.define("ReadOnlySQL", {
     	verbs: {
             // Defining schema
-            createTable: true,
-            dropTable: true,
-            createIndex: true,
-            dropIndex: true,
-            createView: true,
-            dropView: true,
+            createTable: false,
+            dropTable: false,
+            createIndex: false,
+            dropIndex: false,
+            createView: false,
+            dropView: false,
 
             // Manimulating rows
             insert: false,
@@ -496,11 +508,11 @@ implemented in version 0.0.6.
             // Modifing a verb
             set: false,
             from: true,
-            joinOn: true,
+            join: true,
             where: true,
             limit: true,
-            orderBy: true,
-            groupBy: true,
+            order: true,
+            group: true,
             into: false
         },
     	// Replaces default toString()
@@ -514,6 +526,16 @@ implemented in version 0.0.6.
     	// no callback is provided
     	execute: function (...someArgs, callback) {
     	}
-    });    
+    }); 
+    
+    // Now set the dialect of a sql object.
+    sql = new sqlish.Sql({dialect: sqlish.Dialect.SQLReadOnly});
+    
+    // This is Ok in SQLReadOnly dialect
+    sql.select("id").from("test").where({id: 203});
+    // This will throw an error because
+    // SQLReadOnly does not support "deleteFrom", so 
+    // it will throw an error
+    sql.deleteFrom("test").where({id: 203});
 ```
 
