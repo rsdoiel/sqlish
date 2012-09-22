@@ -728,6 +728,7 @@
 		};
 		
 		sql.createView = function (viewName, sql_obj) {
+			console.log("DEBUG viewName", viewName, sql_obj);
 			if (typeof sql_obj === "string") {
 				throw "injection error: " + viewName + " " + sql_obj;
 			}
