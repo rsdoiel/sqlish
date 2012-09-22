@@ -35,7 +35,7 @@ harness.push({callback: function () {
 
     s = Sql.insert("test1", {id: 1, name: "Fred", email: "fred@example.com"}).toString();
     expected_s =  'INSERT INTO test1 (id, name, email) VALUES (1, "Fred", "fred@example.com");';
-    assert.equal(s, expected_s);
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     s = Sql.select("id").toString();
     expected_s = "SELECT id;";
@@ -258,7 +258,7 @@ harness.push({callback: function () {
         s,
         expected_s,
         sql2,
-        evil_injection;
+        evil_object_injection;
 
     s = sql.safely("George");
     expected_s = '"George"';
@@ -329,19 +329,19 @@ harness.push({callback: function () {
     }
     assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
 
-    evil_injection = {
+    evil_object_injection = {
         toString: function () {
             return "This is some random injected string";
         }
     };
     threw_error = false;
     try {
-        s = sql.createView("myView",
-            evil_injection);
+        s = sql.createView("myView", evil_object_injection);
     } catch (err5) {
         threw_error = true;
     }
-    assert.strictEqual(threw_error, true, "Should throw an injection error when String object is passed in second parameter.");
+    assert.strictEqual(threw_error, true,
+		"Should throw an injection error: " + evil_object_injection);
     s = sql.set({myVar: 'CONCAT(2, COUNT(3), " Jiminy Cricket")'}).toString();
     expected_s = 'SET @myVar = CONCAT(2, COUNT(3), " Jiminy Cricket");';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
@@ -350,10 +350,35 @@ harness.push({callback: function () {
 	expected_s = "test.profile_id = \"profiles.profile_id\"";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-	sql.setSchema("test", {profile_id: "INTEGER"});
-	sql.setSchema("profiles", {profile_id: "INTEGER"});
-	assert.equal(sql.isColumnDefined("test.profile_id"), true, "Should find column");
-	assert.equal(sql.isColumnDefined("profiles.profile_id"), true, "Should find column");
+	// Applies rules to detect if the value is what you expect.
+	// E.g. is it a number you expect a number back, if it is
+	// a column reference you expect the column reference back.
+	sql.on("test", {
+		profile_id: function (value) {
+			if (value === "profile_id" ||
+					value === "test.profile_id" ||
+					parseInt(value, 10) === value) {
+				return value;
+			}
+			throw "injection error, test.profile_id: " + value;
+		}
+	});
+	sql.on("profiles", {
+		profile_id: function (value) {
+			if (value === "profile_id" ||
+					value === "profiles.profile_id" ||
+					parseInt(value, 10) === value) {
+				return value;
+			}
+			throw "injection error, profiles.profile_id: " + value;
+		}
+	});
+	assert.equal(sql.safely("test.profile_id"),
+				 "test.profile_id",
+				 "Should find column: " + sql.isSafeColumn("test.profile_id"));
+	assert.equal(sql.safely("profiles.profile_id"),
+				 "profiles.profile_id",
+				 "Should find column: " + sql.isSafeColumn("profiles.profile_id"));
 	
 	s = sql.expr({"test.profile_id": "profiles.profile_id"});
 	expected_s = "test.profile_id = profiles.profile_id";
@@ -578,13 +603,32 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
     sql = new sqlish.Sql();
+	sql.on("test", {
+		id: function (value) {
+			if (value === "id" ||
+					value === "test.id" ||
+					parseInt(value, 10) === value) {
+				return value;
+			}
+			throw "injection error, test.id: " + value;
+		}
+	});
+	sql.on("profiles", {
+		id: function (value) {
+			if (value === "id" ||
+					value === "profiles.id" ||
+					parseInt(value, 10) === value) {
+				return value;
+			}
+			throw "injection error, profiles.profile_id: " + value;
+		}
+	});
     s = sql.select(["id", "name"], {distinct: false})
             .from("test").join("profiles", {"test.id": "profiles.id"})
 			.where({name: {$like: "friend"}})
 			.order("name", -1).toString();
     expected_s = 'SELECT id, name FROM test JOIN profiles ON (test.id = profiles.id) WHERE name LIKE "friend" ORDER BY name DESC;';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-	
 }, label: "Test 0.0.5 features"});
 
 harness.push({callback: function () {

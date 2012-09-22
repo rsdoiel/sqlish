@@ -207,7 +207,64 @@
 			use_UTC: false,
 			sql: {},
 			eol: ";",
-			schemas: {}
+			schemas: {},
+			isSqlObj: function (obj) {
+				var ky, self = this;
+				for (ky in self) {
+					if (self.hasOwnProperty(ky)) {
+						if (this.hasOwnProperty(ky)) {
+							if (obj[ky] === undefined) {
+								return false;
+							}
+						}
+					}
+				}
+				return true;
+			},
+			// Support applying validation functions to
+			// table's columns
+			on: function (tableName, column_def) {
+				if (this.schemas === undefined) {
+					this.schemas = {};
+				}
+				if (this.schemas[tableName] === undefined) {
+					this.schemas[tableName] = {};
+				}
+				this.schemas[tableName] = column_def;
+				return (this.schemas[tableName] === column_def);
+			},
+			applyOn: function (tableName, value) {
+				var column;
+
+				if (this.schemas[tableName] === undefined) {
+					throw "injection error: " + tableName + ", " + value;
+				}
+				for (column in this.schemas[tableName]) {
+					if (this.schemas[tableName].hasOwnProperty(column)) {
+						if (typeof this.schemas[tableName][column] === "function") {
+							return this.schemas[tableName][column](value);
+						}
+					}
+				}
+				throw "injection error: " + tableName + ", " + value;
+			},
+			// See if the column is defined in the schemas
+			isSafeColumn: function (value) {
+				var parts, tableName, column;
+
+				if (typeof value === "string") {
+					if (value.indexOf(".") > 0) {
+						tableName = value.substr(0, value.indexOf("."));
+						column = value.substr(value.indexOf(".") + 1);
+						if (this.schemas[tableName] === undefined ||
+								this.schemas[tableName][column] === undefined) {
+							return false;
+						}
+						return true;
+					}
+				}
+				return false;
+			}
 		}, key;
 
 		if (typeof config !== "undefined") {
@@ -219,45 +276,6 @@
 			}
 			sql.schemas = {};
 		}
-
-		sql.setSchema = function (tableName, column_defs) {
-			if (this.schemas === undefined) {
-				this.schemas = {};
-			}
-			if (this.schemas[tableName] === undefined) {
-				this.schemas[tableName] = {};
-			}
-			this.schemas[tableName].schema = column_defs;
-			console.log("DEBUG", this.schemas);
-		};
-
-		// See if the column is defined in the schemas
-		sql.isColumnDefined = function (name) {
-			var parts, table, column;
-			if (this.schemas !== undefined) {
-				if (name.indexOf(".") > 0) {
-					parts = name.split(".", 2);
-					table = parts[0];
-					column = parts[1];
-					if (this.schemas[table] !== undefined &&
-							this.schemas[table].schema !== undefined &&
-							this.schemas[table].schema[column] !== undefined) {
-						return true;
-					}
-				} else {
-					for (table in sql.schemas) {
-						if (this.schemas.hasOwnProperty(table)) {
-							if (this.schemas[table] !== undefined &&
-									this.schemas[table].schema !== undefined &&
-									this.schemas[table].schema[column] !== undefined) {
-								return true;
-							}
-						}
-					}
-				}
-			}
-			return false;
-		};
 
 		// Build an appropriate data string
 		// from a JavaScript Date object.
@@ -322,24 +340,24 @@
 		// Return s as a safe variable, table or coloumn name
 		var safeName = function (s, options) {
 			var re_terms = ["[", "^a-zA-Z0-9_"], re;
-			if (typeof options !== "undefined") {
-				if (typeof options.period !== "undefined" &&
+			if (options !== undefined) {
+				if (options.period !== undefined &&
 						options.period === true) {
 					re_terms.push("\\.");
 				}
-				if (typeof options.parenthesis !== "undefined" &&
+				if (options.parenthesis !== undefined &&
 						options.parenthesis === true) {
 					re_terms.push("\\(\\)");
 				}
-				if (typeof options.asterisk !== "undefined" &&
+				if (options.asterisk !== undefined &&
 						options.asterisk === true) {
 					re_terms.push("\\*");
 				}
-				if (typeof options.at_sign !== "undefined" &&
+				if (options.at_sign !== undefined &&
 						options.at_sign === true) {
 					re_terms.push("@");
 				}
-				if (typeof options.dollar_sign !== "undefined" &&
+				if (options.dollar_sign !== undefined &&
 						options.dollar_sign === true) {
 					re_terms.push("\\$");
 				}
@@ -396,8 +414,11 @@
 			return false;
 		};
 
+
+
 		// Return s as a double quoted string
-		// safely escaped.
+		// safely escaped, a JavaScript type or
+		// as a right hand expression column reference.
 		var safely = function (s) {
 			var options = {
 				at_sign: true,
@@ -418,7 +439,7 @@
 				return s;
 			case 'string':
 				s = s.trim();
-				if (sql.isColumnDefined(s) === true) {
+				if (sql.isSafeColumn(s) === true) {
 					return s;
 				}
 				if (s.substr(0, 1) === '@') {
@@ -595,32 +616,12 @@
 			return ["(", expr(expression), ")"].join("");
 		};
 
-		var isSafeSqlObj = function (a_obj) {
-			var result = true, expected_attributes = [
-				'sql', 'sqlDate', 'safely', 'safeName',
-				'expr', 'P', 'toString', 'onTable', 'isSafeSqlObj'
-			];
-			
-			expected_attributes.forEach(function (elem) {
-				var out = a_obj;
-				if (typeof out === 'undefined') {
-					return false;
-				}
-			});
-
-			return true;
-		};
-
-
-		//sql.setSchema = setSchema;
-		//sql.isColumnDefined = isColumnDefined;
 		sql.sqlDate = sqlDate;
 		sql.safely = safely;
 		sql.safeName = safeName;
 		sql.safeFunc = safeFunc;
 		sql.expr = expr;
 		sql.P = P;
-		sql.isSafeSqlObj = isSafeSqlObj;
 
 		/*
 		 * Primary query methods - verbs and clauses 
@@ -650,7 +651,6 @@
 			if (this.schemas[tableName] === undefined) {
 				this.schemas[tableName] = {};
 			}
-			this.schemas[tableName].schema = col_defs;
 			this.sql = {};
 			this.sql.tableName = tableName;
 			this.sql.verb = "CREATE TABLE";
@@ -728,10 +728,6 @@
 		};
 		
 		sql.createView = function (viewName, sql_obj) {
-			console.log("DEBUG viewName", viewName, sql_obj);
-			if (typeof sql_obj === "string") {
-				throw "injection error: " + viewName + " " + sql_obj;
-			}
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.createView === "function") {
 				return this.dialect.verbs.createView(viewName, sql_obj);
@@ -743,10 +739,13 @@
 				throw "injection error: " + viewName;
 			}
 
-			// Make sure sql_obj is a real sql_obj
-			if (typeof sql_obj === "string" ||
-					sql_obj instanceof String ||
-					isSafeSqlObj(sql_obj) === false) {
+			if (sql_obj instanceof String) {
+				throw "injection error: " + viewName + " " + sql_obj;
+			}
+			if (sql_obj === undefined) {
+				throw "injection error: " + viewName + " " + sql_obj;
+			}
+			if (this.isSqlObj(sql_obj) === false) {
 				throw "injection error: " + viewName + " " + sql_obj;
 			}
 			this.sql = {};
@@ -953,8 +952,8 @@
 				throw "union not supported by " + this.dialect;
 			}
 
-			if (isSafeSqlObj(sql1) === true &&
-					isSafeSqlObj(sql2)) {
+			if (this.isSqlObj(sql1) === true &&
+					this.isSqlObj(sql2)) {
 				this.sql = {};
 				this.sql.verb = "UNION";
 				this.sql.sql1 = sql1;
@@ -977,7 +976,7 @@
 
 			if (typeof tables === "string") {
 				if (safeName(tables) !== tables) {
-					throw ["injection error:", tables].join(" ");
+					throw "injection error: " + tables;
 				}
 				this.sql.from = safeName(tables);
 			} else {
