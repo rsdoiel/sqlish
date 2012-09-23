@@ -375,10 +375,10 @@ harness.push({callback: function () {
 	});
 	assert.equal(sql.safely("test.profile_id"),
 				 "test.profile_id",
-				 "Should find column: " + sql.isSafeColumn("test.profile_id"));
+				 "Should find column: " + sql.isColumnName("test.profile_id"));
 	assert.equal(sql.safely("profiles.profile_id"),
 				 "profiles.profile_id",
-				 "Should find column: " + sql.isSafeColumn("profiles.profile_id"));
+				 "Should find column: " + sql.isColumnName("profiles.profile_id"));
 	
 	s = sql.expr({"test.profile_id": "profiles.profile_id"});
 	expected_s = "test.profile_id = profiles.profile_id";
@@ -648,6 +648,8 @@ harness.push({callback: function () {
 
 if (require.main === module) {
     harness.RunIt(path.basename(module.filename), 10, true);
+} else if (require.main === "mongo") {
+	harness.RunInMongoShell(path.basename(module.filename));
 } else {
     exports.RunIt = harness.RunIt;
 }

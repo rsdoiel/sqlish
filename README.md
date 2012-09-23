@@ -2,7 +2,7 @@
 sqlish
 ======
 
-A small SQL generator
+A SQL generator for for NodeJS, Mongo Shell and web browsers.
 
 # Overview
 

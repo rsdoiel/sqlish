@@ -198,10 +198,9 @@
 				
 				this.dialects[dialect_name] = dialect;
 			}
-		},
-		Sql;
+		};
 
-	Sql = function (config) {
+	var Sql = function (config) {
 		var sql = {
 			dialect: Dialect.SQL92,
 			use_UTC: false,
@@ -249,7 +248,7 @@
 				throw "injection error: " + tableName + ", " + value;
 			},
 			// See if the column is defined in the schemas
-			isSafeColumn: function (value) {
+			isColumnName: function (value) {
 				var parts, tableName, column;
 
 				if (typeof value === "string") {
@@ -267,7 +266,7 @@
 			}
 		}, key;
 
-		if (typeof config !== "undefined") {
+		if (config !== undefined) {
 			// Mongo 2.2's shell doesn't support Object.keys()
 			for (key in config) {
 				if (config.hasOwnProperty(key) && typeof config[key] !== "function") {
@@ -280,13 +279,13 @@
 		// Build an appropriate data string
 		// from a JavaScript Date object.
 		var sqlDate = function (d, use_UTC) {
-			if (typeof d === "undefined") {
+			if (d === undefined) {
 				d = new Date();
 			} else if (typeof d === "string") {
 				d = new Date(d);
 			}
 
-			if (typeof use_UTC === "undefined") {
+			if (use_UTC === undefined) {
 				use_UTC = sql.use_UTC;
 			}
 
@@ -425,7 +424,7 @@
 				period: true
 			};
 
-			if (typeof s === "undefined" || s === null) {
+			if (s === undefined || s === null) {
 				return 'NULL';
 			}
 
@@ -439,7 +438,7 @@
 				return s;
 			case 'string':
 				s = s.trim();
-				if (sql.isSafeColumn(s) === true) {
+				if (sql.isColumnName(s) === true) {
 					return s;
 				}
 				if (s.substr(0, 1) === '@') {
@@ -568,7 +567,7 @@
 					return ["<=", safely(obj[ky])].join(" ");
 				case '$or':
 					vals = [];
-					if (typeof obj[ky].length === undefined) {
+					if (obj[ky].length === undefined) {
 						throw "$or takes an array of objects as the value";
 					}
 					for (i = 0; i < obj[ky].length; i += 1) {
@@ -577,7 +576,7 @@
 					return vals.join(" OR ");
 				case '$and':
 					vals = [];
-					if (typeof obj[ky].length === undefined) {
+					if (obj[ky].length === undefined) {
 						throw "$and takes an array of objects as the value";
 					}
 					for (i = 0; i < obj[ky].length; i += 1) {
@@ -691,13 +690,13 @@
 			}
 			this.sql = {};
 			this.sql.indexName = indexName;
-			if (typeof options.unique !== "undefined" && options.unique === true) {
+			if (options.unique !== undefined && options.unique === true) {
 				this.sql.verb = "CREATE UNIQUE INDEX";
 			} else {
 				this.sql.verb = "CREATE INDEX";
 			}
 			
-			if (typeof options.table === "undefined" || typeof options.columns === "undefined") {
+			if (options.table === undefined || options.columns === undefined) {
 				throw "Must define an index on something.";
 			} else {
 				this.sql.table = options.table;
@@ -890,7 +889,7 @@
 				asName,
 				options = {period: true, parenthesis: true, asterisk: true};
 			
-			if (typeof opt === "undefined") {
+			if (opt === undefined) {
 				opt = {};
 			}
 
@@ -901,7 +900,7 @@
 				throw "select not supported by " + this.dialect;
 			}
 
-			if (typeof fields === "undefined") {
+			if (fields === undefined) {
 				cols = ["*"];
 			} else if (typeof fields === "string") {
 				if (safeName(fields, options) !== fields &&
@@ -1093,7 +1092,7 @@
 				}
 				this.sql.order.fields = fields;
 			}
-			if (typeof direction === "undefined" || direction === null) {
+			if (direction === undefined || direction === null) {
 				return this;
 			}
 			if (direction >= 0) {
@@ -1259,7 +1258,7 @@
 						break;
 					case 'VARCHAR':
 					case 'CHAR':
-						if (typeof def.length !== "undefined") {
+						if (typeof def.length !== undefined) {
 							clause.push(def.type + "(" + def.length + ")");
 						}
 						break;
@@ -1294,7 +1293,7 @@
 		};
 
 		sql.toString = function (eol) {
-			var src = [], i, ky, vals;
+			var src = [], i, ky, vals, self = this;
 
 			switch (this.sql.verb) {
 			case 'CREATE TABLE':
@@ -1341,40 +1340,40 @@
 				}
 				src.push(vals.join(", "));
 
-				['from', 'join', 'where', 'group', 'order', 'limit', 'offset', 'into'].forEach((function (elem) {
-					if (this.sql[elem] !== undefined) {
+				['from', 'join', 'where', 'group', 'order', 'limit', 'offset', 'into'].forEach(function (elem) {
+					if (self.sql[elem] !== undefined) {
 						switch (elem) {
 						case 'join':
 							src.push("JOIN " +
-									 this.sql[elem].tables.join(", ") +
-									 " ON (" + this.sql[elem].on + ")");
+									 self.sql[elem].tables.join(", ") +
+									 " ON (" + self.sql[elem].on + ")");
 							break;
 						case 'order':
-							if (this.sql[elem].direction === null) {
-								src.push("ORDER BY " + this.sql[elem].fields.join(", "));
-							} else if (this.sql[elem].direction >= 0) {
+							if (self.sql[elem].direction === null) {
+								src.push("ORDER BY " + self.sql[elem].fields.join(", "));
+							} else if (self.sql[elem].direction >= 0) {
 								src.push("ORDER BY " +
-									this.sql[elem].fields.join(", ") +
+									self.sql[elem].fields.join(", ") +
 									" ASC");
-							} else if (this.sql[elem].direction < 0) {
+							} else if (self.sql[elem].direction < 0) {
 								src.push("ORDER BY " +
-									this.sql[elem].fields.join(", ") +
+									self.sql[elem].fields.join(", ") +
 									" DESC");
 							}
 							break;
 						case 'group':
-							src.push("GROUP BY " + this.sql[elem].join(", "));
+							src.push("GROUP BY " + self.sql[elem].join(", "));
 							break;
 						default:
-							if (this.sql[elem].join === undefined) {
-								src.push(elem.toUpperCase() + " " + this.sql[elem]);
+							if (self.sql[elem].join === undefined) {
+								src.push(elem.toUpperCase() + " " + self.sql[elem]);
 							} else {
-								src.push(elem.toUpperCase() + " " + this.sql[elem].join(", "));
+								src.push(elem.toUpperCase() + " " + self.sql[elem].join(", "));
 							}
 							break;
 						}
 					}
-				}).bind(this));
+				});
 				break;
 			case 'INSERT INTO':
 			case 'REPLACE INTO':
@@ -1387,7 +1386,7 @@
 			case 'UPDATE':
 				src.push(this.sql.verb);
 				src.push(this.sql.tableName);
-				if (typeof this.sql.values !== "undefined") {
+				if (this.sql.values !== undefined) {
 					vals = [];
 					src.push("SET");
 					for (i = 0; i < this.sql.values.length; i += 1) {
@@ -1396,20 +1395,20 @@
 					}
 					src.push(vals.join(", "));
 				}
-				if (typeof this.sql.where !== "undefined") {
+				if (this.sql.where !== undefined) {
 					src.push("WHERE " + this.sql.where);
 				}
 				break;
 			case 'DELETE FROM':
 				src.push(this.sql.verb);
 				src.push(this.sql.tableName);
-				if (typeof this.sql.where !== "undefined") {
+				if (this.sql.where !== undefined) {
 					src.push("WHERE " + this.sql.where);
 				}
 				break;
 			case 'SET':
 				src.push(this.sql.verb);
-				if (typeof this.sql.values !== "undefined") {
+				if (this.sql.values !== undefined) {
 					vals = [];
 					for (i = 0; i < this.sql.values.length; i += 1) {
 						vals.push(this.sql.values[i].key + " = " + this.sql.values[i].value);
@@ -1425,7 +1424,7 @@
 			default:
 				throw "Don't know how to assemble SQL statement form " + this.sql.verb;
 			}
-			if (typeof eol === "undefined") {
+			if (eol === undefined) {
 				return src.join(" ") + this.eol;
 			}
 			return src.join(" ") + eol;
@@ -1441,7 +1440,7 @@
 	// If we're running under NodeJS then export objects
 	self.Dialect = Dialect;
 	self.Sql = Sql;
-	if (typeof exports !== "undefined") {
+	if (exports !== undefined) {
 		exports.Dialect = Dialect;
 		exports.Sql = Sql;
 	}
