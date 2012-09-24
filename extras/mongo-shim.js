@@ -10,27 +10,18 @@
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 /*global print, load, pwd, assert, harness */
 (function (global) {
-    // Shim console.log(), console.error()
-    var Console = function () {
-        return {
-            log: function () {
-				var i, output = [];
-				for (i = 0; i < arguments.length; i += 1) {
-					if (typeof arguments[i] === "string") {
-						output.push(arguments[i]);
-					} else if (arguments[i].toString !== undefined) {
-						output.push(arguments[i].toString());
-					} else {
-						output.push(arguments[i].toSource());
-					}
-				}
-                print(output.join(" "));
-            },
-            error: function () {
-                print("ERROR: " + this.log(arguments));
-            }
-        };
-    }, console = new Console();
+	var items, working_directory = pwd();
+
+	// Set a default search location for Mongo modules
+	if (global.MONGO_LIBRARY_PATH === undefined) {
+		items = ls();
+		if (items.indexOf("./lib") >= 0) {
+			global.MONGO_LIBRARY_PATH = items[items.indexOf("./lib")];
+		} else {
+			global.MONGO_LIBRARY_PATH = working_directory;
+		}
+	}
+
 
     // Shim path module
     var Path = function () {
@@ -55,7 +46,7 @@
 					resolving_path = reduced_path.concat(resolving_path.substr(end_cut));
 					cur = resolving_path.indexOf("../");
 				}
-				return resolving_path;
+				return resolving_path.replace(/\/.\//g, '/');
             },
             basename: function (p) {
 				var basename;
@@ -68,6 +59,38 @@
             }
         };
     }, path = new Path();
+	
+    // Shim console.log(), console.error()
+    var Console = function () {
+        return {
+            log: function () {
+				var i, output = [];
+				for (i = 0; i < arguments.length; i += 1) {
+					if (typeof arguments[i] === "string") {
+						output.push(arguments[i]);
+					} else if (arguments[i].toString !== undefined) {
+						output.push(arguments[i].toString());
+					} else {
+						output.push(arguments[i].toSource());
+					}
+				}
+                print(output.join(" "));
+            },
+            error: function () {
+				var i, output = [];
+				for (i = 0; i < arguments.length; i += 1) {
+					if (typeof arguments[i] === "string") {
+						output.push(arguments[i]);
+					} else if (arguments[i].toString !== undefined) {
+						output.push(arguments[i].toString());
+					} else {
+						output.push(arguments[i].toSource());
+					}
+				}
+                print("ERROR: " + output.join(" "));
+            }
+        };
+    }, console = new Console();
 
 	var Require = function () {
 		return function (module) {
@@ -77,30 +100,20 @@
 				module_name = path.basename(module),
 				load_path = path.join(working_directory, module.concat(".js"));
 
-			console.log("trying to load", load_path, "as", module_name);
-
-			switch (module) {
+			//console.log("Loading", module_name);// DEBUG
+			switch (module_name) {
 			case "path":
 				return new Path();
 			case "assert":
-				load("lib/assert-this.js");
+				load(path.join(global.MONGO_LIBRARY_PATH, "assert-this.js"));
 				return assert;
-			case "harness":
-				load("lib/harness.js");
-				return harness;
 			}
 			this.exports = exports;
-			load(load_path);
-			//this[module_name] = exports;
-			// Check for exported things
-			for (ky in this[module_name]) {
-				console.log(module_name + "." + ky);
-			}
+			load(path.join(global.MONGO_LIBRARY_PATH, load_path));
 			return exports;
 		};
 	};
 		
     global.console = console;
 	global.require = new Require();
-	global.require.main = true;
 }(this));

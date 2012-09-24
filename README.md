@@ -7,7 +7,7 @@ A SQL generator for for NodeJS, Mongo Shell and web browsers.
 # Overview
 
 JavaScript's ability to chaining function calls provides an nice semantic
-for generating SQL statments. sqlish (Californian pronounciation: sk wil' ish)
+for generating SQL statements. sqlish (Californian pronunciation: sk wil' ish)
 takes this approach and attempts to be portable as well as simple to use.
 
 
