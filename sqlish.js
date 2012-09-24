@@ -1441,8 +1441,12 @@
 	};
 
 	// If we're running under NodeJS then export objects
-	self.Dialect = Dialect;
-	self.Sql = Sql;
+	//self.Dialect = Dialect;
+	//self.Sql = Sql;
+	self.sqlish = {
+		Dialect: Dialect,
+		Sql: Sql
+	};
 	if (exports !== undefined) {
 		exports.Dialect = Dialect;
 		exports.Sql = Sql;
