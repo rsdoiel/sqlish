@@ -584,7 +584,8 @@
 					}
 					return vals.join(" AND ");
 				case '$like':
-					if (typeof obj[ky] === "object") {
+					if (typeof obj[ky] === "object" || 
+							typeof obj[ky] === "function") {
 						if (obj[ky] instanceof RegExp) {
 							return "LIKE " +
 								safely(re2SQLWildcard(obj[ky]));
