@@ -498,6 +498,10 @@
 		
 		var re2SQLWildcard = function (re) {
 			var s = re.toString();
+			if (!(re instanceof RegExp)) {
+				throw "Not a RegExp object.";
+			}
+
 			// Trim the first and last slash
 			s = s.substr(1, s.length - 2);
 			// replace * with %
@@ -584,15 +588,13 @@
 					}
 					return vals.join(" AND ");
 				case '$like':
-					if (typeof obj[ky] === "object") {
+					// Mongo 2.2 shell returns RegExp as function instead of object.
+					if (typeof obj[ky] === "object" || typeof obj[ky] === "function") {
 						if (obj[ky] instanceof RegExp) {
-							return "LIKE " +
-								safely(re2SQLWildcard(obj[ky]));
-						} else {
-							throw "$like takes a value that is of type string or number";
+							return "LIKE " + safely(re2SQLWildcard(obj[ky]));
 						}
+						throw "$like takes a value that is of type String, Number or RegExp";
 					}
-
 					return "LIKE " + safely(obj[ky]);
 				default:
 					throw [ky, "not supported"].join(" ");
