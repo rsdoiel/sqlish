@@ -12,7 +12,7 @@ you've create an object called _sql_. E.g.
 	sql = new sqlish.Sql();
 ```
 
-# Listing
+# Sql() Listing
  
 ## createIndex(indexName, options)
 
@@ -382,4 +382,8 @@ supports a pseudo regular expression with either - leading _^_ for begins with, 
 	// SELECT name FROM profiles WHERE id < 3 OR id > 10;
 	sql.select("name").from("profiles").where({$or: [{id: {$lt: 3}}, {id: {$gt: 10}}]});	
 ```
+
+# Dialect support
+
+FIXME: add more documentation here.
 
