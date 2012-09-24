@@ -7,17 +7,13 @@
 //
 
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
-/*global load, print, Sql, sql */
-if (load === undefined) {
-	throw "Must support load()";
-}
+MONGO_MODULES.push(pwd());
 
-// Now that we have the objects methods we need, load sqlish
-load("../extras/mongo-shim.js");
-load("../sqlish.js");
+sqlish = require("sqlish");
 
 var item, sql = new Sql();
 
-print(sql.select(["id", "name", "email", "modified"]).from("myTable").toString());
+console.log(sql.select(["id", "name", "email", "modified"]).from("myTable").toString());
 item = {id: 1, name: "fred", email: "fred@example.com", modified: new Date()};
-print(sql.replace("myTable", item).toString());
+console.log(sql.replace("myTable", item).toString());
+

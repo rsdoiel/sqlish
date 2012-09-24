@@ -12,7 +12,6 @@
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 /*global load, assert, harness, sqlish, path, dialect, pwd */
 
-MONGO_MODULES.push(pwd() + "/tests");
 MONGO_MODULES.push(pwd());
 
 // Now that we have the objects methods we need, load sqlish
