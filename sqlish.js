@@ -625,12 +625,13 @@
 		/*
 		 * Primary query methods - verbs and clauses 
 		 */
-		sql.createTable = function (tableName, col_defs) {
+		sql.createTable = function (tableName, column_definitions) {
 			var ky;
 
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.createTable === "function") {
-				return this.dialect.verbs.createTable(tableName, col_defs);
+				return this.dialect.verbs.createTable(tableName,
+					column_definitions);
 			} else if (this.dialect.verbs.createTable === false) {
 				throw "createTable not supported by " + this.dialect;
 			}
@@ -639,10 +640,10 @@
 				throw "injection error: " + tableName;
 			}
 
-			for (ky in col_defs) {
-				if (col_defs.hasOwnProperty(ky)) {
+			for (ky in column_definitions) {
+				if (column_definitions.hasOwnProperty(ky)) {
 					if (ky !== safeName(ky)) {
-						throw "injection error:" + col_defs;
+						throw "injection error:" + column_definitions;
 					}
 				}
 			}
@@ -653,7 +654,7 @@
 			this.sql = {};
 			this.sql.tableName = tableName;
 			this.sql.verb = "CREATE TABLE";
-			this.sql.columns = col_defs;
+			this.sql.columns = column_definitions;
 			return this;
 		};
 		
@@ -1236,15 +1237,15 @@
 			return this.sql;
 		};
 
-		var defColumns = function (column_defs) {
+		var defColumns = function (column_definitions) {
 			var ky, src = [], def, clause;
-			for (ky in column_defs) {
-				if (column_defs.hasOwnProperty(ky)) {
+			for (ky in column_definitions) {
+				if (column_definitions.hasOwnProperty(ky)) {
 					if (ky !== safeName(ky)) {
-						throw "injection error: " + column_defs;
+						throw "injection error: " + column_definitions;
 					}
 					clause = [];
-					def = column_defs[ky];
+					def = column_definitions[ky];
 					switch (def.type.toUpperCase()) {
 					case 'INTEGER':
 					case 'INT':
