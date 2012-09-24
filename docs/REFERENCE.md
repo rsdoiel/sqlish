@@ -12,9 +12,32 @@ you've create an object called _sql_. E.g.
 	sql = new sqlish.Sql();
 ```
 
-# Sql() Listing
- 
-## createIndex(indexName, options)
+# Dialect methods
+
+The Dialect object is used to extend the behavior of the _sqlish.Sql()_ object.
+It has one public method - _define(dialect_name, definition)_. _dialect_name_ should be a valid variable name. It will be used as the Dialect object's
+property when defining a dialect. There are three major use cases for _Dialect_ with _sqlish_. The first is creating a whole new dialect (e.g. SQL 2003); the second is for restricting the behavior of an existing dialect (e.g. only allowing permitting read statements like _SELECT_ for MySQL 5.5); and the third would be to replace the adding a working _execute()_ function.
+
+## Defining a new dialect
+
+FIXME: explanation and example needed here.
+
+## Restricting the built-in dialect
+
+FIXME: explanation and example needed here.
+
+## Adding an execute method
+
+FIXME: explanation and example needed here.
+
+
+# Sql() methods
+
+## sql.applyOn(tableName, value)
+
+This is a method used to validate a column that was defined with _on()_.
+
+## sql.createIndex(indexName, options)
 
 This is used to generate a _CREATE INDEX_ statement. _options_ can contain
 the following attributes - _table_, _columns_ and _unique_.
@@ -24,7 +47,7 @@ the following attributes - _table_, _columns_ and _unique_.
 	sql.createIndex("myIndex", {table: "test1", columns: ["email"]});
 ```
 
-## createTable(tableName, column_definitions)
+## sql.createTable(tableName, column_definitions)
 
 This is used to generate a _CREATE TABLE_ statement.  _column_definitions_
 are JavaScript object where the attributes specify the details.
@@ -162,6 +185,16 @@ can be used with a _select()_ function to set session variables;
 		.where({id: 3}).into(["profile_id", "name", "email"]);
 ```
 
+## sql.isColumnName(value)
+
+This checks to see if a value matches a previously defined table's column's name. It returns true if column is defined, false otherwise.
+
+
+## sql.isSqlObj(obj)
+
+This checks to see if an object is like other _sqlish.Sql()_ objects.
+
+
 ## sql.join(tables, expression)
 
 This allows for joining tables. _expression_ is where you describe
@@ -230,6 +263,33 @@ This generates the _OFFSET_ clause. It can be combined with _limit()_.
 	sql.select(["name", "email"]).from("profiles").limit(25).offset(25);
 	// SELECT name, email FROM profiles LIMIT 25 OFFSET 50
 	sql.select(["name", "email"]).from("profiles").limit(25).offset(50);
+```
+
+## sql.on(tableName, column_definitions)
+
+This defines helper functions use when determining if a value is either a column name or an expected value.  This is useful when you're joining multiple
+tables or referencing multiple tables with a _where()_ clause. The tableName
+is a string. The _column_definitions_ is an object where the property name
+matches the column name for the table and the value is a callback function. The callback expects a single parameter to test. It should return itself if everything is OK, otherwise the function show throw an error.
+
+
+```JavaScript
+	sql.on("test1", { 
+		id: function (value) {
+			if (value === "id" || value === "test1.id" ||
+					value === parseInt(value, 10)) {
+				return value;
+			}
+			throw "id should be an integer.";
+		},
+		name: function (value) {
+			if (value === "name" || value === "test1.name" ||
+				value.match(/[A-z][a-z]+/)) {
+				return value;
+			}
+			throw "Not a name with capitalized first letter."
+		},
+	});
 ```
 
 ## sql.order(fields, direction)
@@ -382,8 +442,4 @@ supports a pseudo regular expression with either - leading _^_ for begins with, 
 	// SELECT name FROM profiles WHERE id < 3 OR id > 10;
 	sql.select("name").from("profiles").where({$or: [{id: {$lt: 3}}, {id: {$gt: 10}}]});	
 ```
-
-# Dialect support
-
-FIXME: add more documentation here.
 
