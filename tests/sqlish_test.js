@@ -649,13 +649,7 @@ harness.push({callback: function () {
   		};
 
 	assert.ok(sql.select("id").from("event").toString(), "select().from()");
-	try {
-		sql.select("id").from("event").where({$and: [{title: row.title}, 
-						{location: row.location}]});
-	} catch (err) {
-		console.error(sql.dialect, sql.sql);
-		throw err;
-	}
+	// BUG: by the time where() is called dialect was getting lost.
 	assert.ok(sql.select("id").from("event").where({$and: [{title: row.title}, 
 						{location: row.location}]}),
 						"select().from().where()" + util.inspect(sql));
