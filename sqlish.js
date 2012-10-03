@@ -201,7 +201,7 @@
 		};
 
 	var Sql = function (config) {
-		var sql = {
+		var SQL = {
 			dialect: Dialect.SQL92,
 			use_UTC: false,
 			sql: {},
@@ -270,10 +270,10 @@
 			// Mongo 2.2's shell doesn't support Object.keys()
 			for (key in config) {
 				if (config.hasOwnProperty(key) && typeof config[key] !== "function") {
-					sql[key] = config[key];
+					SQL[key] = config[key];
 				}
 			}
-			sql.schemas = {};
+			SQL.schemas = {};
 		}
 
 		// Build an appropriate data string
@@ -286,7 +286,7 @@
 			}
 
 			if (use_UTC === undefined) {
-				use_UTC = sql.use_UTC;
+				use_UTC = SQL.use_UTC;
 			}
 
 			if (use_UTC === true) {
@@ -418,7 +418,7 @@
 		// Return s as a double quoted string
 		// safely escaped, a JavaScript type or
 		// as a right hand expression column reference.
-		var safely = function (s) {
+		var safely = function (s, dialect) {
 			var options = {
 				at_sign: true,
 				period: true
@@ -438,7 +438,7 @@
 				return s;
 			case 'string':
 				s = s.trim();
-				if (sql.isColumnName(s) === true) {
+				if (SQL.isColumnName(s) === true) {
 					return s;
 				}
 				if (s.substr(0, 1) === '@') {
@@ -465,7 +465,8 @@
 						case "\x1a":
 							return "\\Z";
 						case "'":
-							if (this.dialect === Dialect.SQLite3) {
+							if (dialect.description ===
+									Dialect.SQLite3.description) {
 								// SQLite single-quote escaping.
 								return "''";
 							}
@@ -514,7 +515,7 @@
 			return s;
 		};
 		
-		var expr = function (obj) {
+		var expr = function (obj, dialect) {
 			var options = {
 					period: true,
 					dollar_sign: true
@@ -536,42 +537,42 @@
 				case '$eq':
 					if (Array.isArray(obj[ky])) {
 						return obj[ky].map(function (v) {
-							return safely(v);
+							return safely(v, dialect);
 						});
 					}
-					return "= " + safely(obj[ky]);
+					return "= " + safely(obj[ky], dialect);
 				case '$ne':
 					if (typeof obj[ky] === "object") {
-						return ["!=", expr(obj[ky])].join(" ");
+						return ["!=", expr(obj[ky], dialect)].join(" ");
 					}
-					return ["!=", safely(obj[ky])].join(" ");
+					return ["!=", safely(obj[ky], dialect)].join(" ");
 				case '$gt':
 					if (typeof obj[ky] === "object") {
-						return [">", expr(obj[ky])].join(" ");
+						return [">", expr(obj[ky], dialect)].join(" ");
 					}
-					return [">", safely(obj[ky])].join(" ");
+					return [">", safely(obj[ky], dialect)].join(" ");
 				case '$gte':
 					if (typeof obj[ky] === "object") {
-						return [">=", expr(obj[ky])].join(" ");
+						return [">=", expr(obj[ky], dialect)].join(" ");
 					}
-					return [">=", safely(obj[ky])].join(" ");
+					return [">=", safely(obj[ky], dialect)].join(" ");
 				case '$lt':
 					if (typeof obj[ky] === "object") {
-						return ["<", expr(obj[ky])].join(" ");
+						return ["<", expr(obj[ky], dialect)].join(" ");
 					}
-					return ["<", safely(obj[ky])].join(" ");
+					return ["<", safely(obj[ky], dialect)].join(" ");
 				case '$lte':
 					if (typeof obj[ky] === "object") {
-						return ["<=", expr(obj[ky])].join(" ");
+						return ["<=", expr(obj[ky], dialect)].join(" ");
 					}
-					return ["<=", safely(obj[ky])].join(" ");
+					return ["<=", safely(obj[ky], dialect)].join(" ");
 				case '$or':
 					vals = [];
 					if (obj[ky].length === undefined) {
 						throw "$or takes an array of objects as the value";
 					}
 					for (i = 0; i < obj[ky].length; i += 1) {
-						vals.push(expr(obj[ky][i]));
+						vals.push(expr(obj[ky][i], dialect));
 					}
 					return vals.join(" OR ");
 				case '$and':
@@ -580,7 +581,7 @@
 						throw "$and takes an array of objects as the value";
 					}
 					for (i = 0; i < obj[ky].length; i += 1) {
-						vals.push(expr(obj[ky][i]));
+						vals.push(expr(obj[ky][i], dialect));
 					}
 					return vals.join(" AND ");
 				case '$like':
@@ -588,18 +589,18 @@
 							typeof obj[ky] === "function") {
 						if (obj[ky] instanceof RegExp) {
 							return "LIKE " +
-								safely(re2SQLWildcard(obj[ky]));
+								safely(re2SQLWildcard(obj[ky]), dialect);
 						} else {
 							throw "$like takes a value that is of type string or number";
 						}
 					}
 
-					return "LIKE " + safely(obj[ky]);
+					return "LIKE " + safely(obj[ky], dialect);
 				default:
 					throw [ky, "not supported"].join(" ");
 				}
 			} else if (typeof obj[ky] === "object") {
-				clause = expr(obj[ky]);
+				clause = expr(obj[ky], dialect);
 
 				if (Array.isArray(clause)) {
 					return '(' + clause.map(function (v) {
@@ -607,26 +608,26 @@
 					}).join(" OR ") + ')';
 				}
 
-				return [ky, expr(obj[ky])].join(" ");
+				return [ky, expr(obj[ky], dialect)].join(" ");
 			}
-			return [ky, safely(obj[ky])].join(" = ");
+			return [ky, safely(obj[ky], dialect)].join(" = ");
 		};
 
-		var P = function (expression) {
-			return ["(", expr(expression), ")"].join("");
+		var P = function (expression, dialect) {
+			return ["(", expr(expression, dialect), ")"].join("");
 		};
 
-		sql.sqlDate = sqlDate;
-		sql.safely = safely;
-		sql.safeName = safeName;
-		sql.safeFunc = safeFunc;
-		sql.expr = expr;
-		sql.P = P;
+		SQL.safely = safely;
+		SQL.expr = expr;
+		SQL.sqlDate = sqlDate;
+		SQL.safeName = safeName;
+		SQL.safeFunc = safeFunc;
+		SQL.P = P;
 
 		/*
 		 * Primary query methods - verbs and clauses 
 		 */
-		sql.createTable = function (tableName, column_definitions) {
+		SQL.createTable = function (tableName, column_definitions) {
 			var ky;
 
 			// Check to see if verb is available or over written
@@ -659,7 +660,7 @@
 			return this;
 		};
 		
-		sql.dropTable = function (tableName) {
+		SQL.dropTable = function (tableName) {
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.dropTable === "function") {
 				return this.dialect.verbs.dropTable(tableName);
@@ -677,7 +678,7 @@
 			return this;
 		};
 		
-		sql.createIndex = function (indexName, options) {
+		SQL.createIndex = function (indexName, options) {
 			var i;
 
 			// Check to see if verb is available or over written
@@ -711,7 +712,7 @@
 			return this;
 		};
 		
-		sql.dropIndex = function (indexName) {
+		SQL.dropIndex = function (indexName) {
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.dropIndex === "function") {
 				return this.dialect.verbs.dropIndex(indexName);
@@ -728,7 +729,7 @@
 			return this;
 		};
 		
-		sql.createView = function (viewName, sql_obj) {
+		SQL.createView = function (viewName, sql_obj) {
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.createView === "function") {
 				return this.dialect.verbs.createView(viewName, sql_obj);
@@ -757,7 +758,7 @@
 			return this;
 		};
 		
-		sql.dropView = function (viewName) {
+		SQL.dropView = function (viewName) {
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.dropView === "function") {
 				return this.dialect.verbs.dropView(viewName);
@@ -774,7 +775,7 @@
 			return this;
 		};
  
-		sql.insert = function (tableName, obj) {
+		SQL.insert = function (tableName, obj) {
 			var fields = [], values = [], ky,
 				options = {period: true};
 
@@ -797,7 +798,7 @@
 					}
 					ky = safeName(ky, options);
 					fields.push(ky);
-					values.push(safely(obj[ky]));
+					values.push(safely(obj[ky], this.dialect));
 				}
 			}
 
@@ -811,7 +812,7 @@
 		};
 	
 
-		sql.deleteFrom = function (tableName) {
+		SQL.deleteFrom = function (tableName) {
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.deleteFrom === "function") {
 				return this.dialect.verbs.deleteFrom(tableName);
@@ -828,7 +829,7 @@
 			return this;
 		};
 
-		sql.update = function (tableName) {
+		SQL.update = function (tableName) {
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.update === "function") {
 				return this.dialect.verbs.update(tableName);
@@ -845,7 +846,7 @@
 			return this;
 		};
 
-		sql.replace = function (tableName, obj) {
+		SQL.replace = function (tableName, obj) {
 			var fields = [], values = [], ky,
 				options = {period: true};
 
@@ -856,7 +857,7 @@
 				throw "replace not supported by " + this.dialect;
 			}
 
-			if (this.dialect === Dialect.PostgreSQL92) {
+			if (this.dialect.description === Dialect.PostgreSQL92.description) {
 				throw "PostpreSQL 9.2 does not support replace";
 			}
 			if (tableName !== safeName(tableName)) {
@@ -871,7 +872,7 @@
 					}
 					ky = safeName(ky, options);
 					fields.push(ky);
-					values.push(safely(obj[ky]));
+					values.push(safely(obj[ky], this.dialect));
 				}
 			}
 
@@ -885,7 +886,7 @@
 		};
 		
 		// Select options.	
-		sql.select = function (fields, opt) {
+		SQL.select = function (fields, opt) {
 			var i, cols,
 				colName,
 				asName,
@@ -945,7 +946,7 @@
 			return this;
 		};
 
-		sql.union = function (sql1, sql2) {
+		SQL.union = function (sql1, sql2) {
 			// Check to see if verb is available or over written
 			if (typeof this.dialect.verbs.union === "function") {
 				return this.dialect.verbs.union(sql1, sql2);
@@ -965,7 +966,7 @@
 			return this;
 		};
 
-		sql.from = function (tables) {
+		SQL.from = function (tables) {
 			var i;
 
 			// Check to see if clause is available or over written
@@ -992,7 +993,7 @@
 			return this;
 		};
 
-		sql.join = function (tables, expression) {
+		SQL.join = function (tables, expression) {
 			var i;
 
 			// Check to see if clause is available or over written
@@ -1016,11 +1017,11 @@
 				}
 				this.sql.join.tables = tables;
 			}
-			this.sql.join.on = expr(expression);
+			this.sql.join.on = expr(expression, this.dialect);
 			return this;
 		};
 
-		sql.where = function (expression) {
+		SQL.where = function (expression) {
 			// Check to see if clause is available or over written
 			if (typeof this.dialect.clauses.where === "function") {
 				return this.dialect.clauses.where(expression);
@@ -1028,11 +1029,11 @@
 				throw "where clause not supported by " + this.dialect;
 			}
 
-			this.sql.where = sql.expr(expression);
+			this.sql.where = expr(expression, this.dialect);
 			return this;
 		};
 
-		sql.limit = function (index, count) {
+		SQL.limit = function (index, count) {
 			// Check to see if insert is available or over written
 			if (typeof this.dialect.clauses.limit === "function") {
 				return this.dialect.clauses.limit(index, count);
@@ -1055,7 +1056,7 @@
 			return this;
 		};
 
-		sql.offset = function (index) {
+		SQL.offset = function (index) {
 			// Check to see if insert is available or over written
 			if (typeof this.dialect.clauses.offset === "function") {
 				return this.dialect.clauses.offset(index);
@@ -1069,7 +1070,7 @@
 			return this;
 		};
 
-		sql.order = function (fields, direction) {
+		SQL.order = function (fields, direction) {
 			var i, options = {period: true};
 
 			// Check to see if insert is available or over written
@@ -1105,7 +1106,7 @@
 			return this;
 		};
 
-		sql.group = function (fields) {
+		SQL.group = function (fields) {
 			var i, options = {period: true};
 
 			// Check to see if insert is available or over written
@@ -1134,7 +1135,7 @@
 
 		// Do a MySQL SET, e.g. SET @my_count = 0;
 		// Or add a SET pharse to an UPDATE statement.
-		sql.set = function (nameOrObject, value) {
+		SQL.set = function (nameOrObject, value) {
 			var ky, i, name, val,
 				options = {
 					period: true,
@@ -1142,8 +1143,8 @@
 				};
 
 			if (this.sql.verb !== "UPDATE") {
-				if (this.dialect === Dialect.SQLite3) {
-					throw Dialect.SQLite3 + " does not support SET and @varname constructs";
+				if (this.dialect.description === Dialect.SQLite3.description) {
+					throw Dialect.SQLite3.description + " does not support SET and @varname constructs";
 				}
 				// Check to see if clause is available or over written
 				if (typeof this.dialect.clauses.set === "function") {
@@ -1166,7 +1167,8 @@
 				if (nameOrObject !== safeName(nameOrObject, {period: true})) {
 					throw "injection error: " + nameOrObject;
 				}
-				if (this.dialect === Dialect.MySQL55 && this.sql.verb === "SET") {
+				if (this.dialect.description === Dialect.MySQL55.description &&
+						this.sql.verb === "SET") {
 					name = "@" + nameOrObject;
 				} else {
 					name = nameOrObject;
@@ -1174,7 +1176,7 @@
 				if (value === safeFunc(value)) {
 					val = value;
 				} else {
-					val = safely(value);
+					val = safely(value, this.dialect);
 				}
 				this.sql.values = [{key: name, value: value}];
 			} else if (typeof nameOrObject === "object") {
@@ -1192,7 +1194,7 @@
 						if (nameOrObject[ky] === safeFunc(nameOrObject[ky])) {
 							val = nameOrObject[ky];
 						} else {
-							val = safely(nameOrObject[ky]);
+							val = safely(nameOrObject[ky], this.dialect);
 						}
 						this.sql.values.push({key: name, value: val});
 					}
@@ -1203,7 +1205,7 @@
 			return this;
 		};
 
-		sql.into = function (fields) {
+		SQL.into = function (fields) {
 			var i, options = {period: true, at_sign: true};
 
 			// Check to see if clause is available or over written
@@ -1214,7 +1216,7 @@
 			}
 
 			// support for generating SQLite dialect quoting
-			if (this.dialect === Dialect.SQLite3) {
+			if (this.dialect.description === Dialect.SQLite3.description) {
 				throw "INTO not supported by " + Dialect.SQLite3;
 			}
 			if (typeof fields === "string") {
@@ -1234,7 +1236,7 @@
 			return this;
 		};
 
-		sql.valueOf = function () {
+		SQL.valueOf = function () {
 			return this.sql;
 		};
 
@@ -1282,7 +1284,7 @@
 						throw ky + " of " + def.type + " not supported";
 					}
 					if (def["default"] === true) {
-						clause.push("DEFAULT " + safely(def["default"]));
+						clause.push("DEFAULT " + safely(def["default"], this.dialect));
 					}
 					if (def.not_null === true) {
 						clause.push("NOT NULL");
@@ -1294,7 +1296,7 @@
 			return src.join(", ");
 		};
 
-		sql.toString = function (eol) {
+		SQL.toString = function (eol) {
 			var src = [], i, ky, vals, self = this;
 
 			switch (this.sql.verb) {
@@ -1432,11 +1434,11 @@
 			return src.join(" ") + eol;
 		};
 
-		sql.execute = function (options) {
+		SQL.execute = function (options) {
 			throw "execute not supported by " + this.dialect;
 		};
 
-		return sql;
+		return SQL;
 	};
 
 	// If we're running under NodeJS then export objects
