@@ -11,6 +11,7 @@
 
 var path = require("path"),
     assert = require("assert"),
+    util = require("util"),
     sqlish = require("../sqlish"),
     dialect = sqlish.Dialect,
     harness = require("../lib/harness");
@@ -113,6 +114,7 @@ harness.push({callback: function () {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "Dialect SQLite3 should throw error on set()");
+    harness.completed("Basic SQL assemble tests.");
 }, label: "Basic SQL assemble tests."});
 
 // Setup some basic tests for SQLite support
@@ -138,6 +140,7 @@ harness.push({ callback: function () {
         wasThrown = true;
     }
     assert.ok(wasThrown, "Should have thrown an error for Sql.into(\"@myId\")");
+    harness.completed("SQLite specific tests.");
 }, label: "SQLite specific tests."});
 
 
@@ -148,6 +151,7 @@ harness.push({callback: function () {
     assert.equal(sql.eol, ";", "Should have eol equal to ;");
     assert.equal(sql.select("count()").toString(), "SELECT count();");
     assert.equal(sql.select("count()").toString(""), "SELECT count()");
+    harness.completed("Testing toString() terminiations");
 }, label: "Testing toString() terminiations"});
 
 
@@ -172,6 +176,7 @@ harness.push({callback: function () {
     s = sql.update("test").set({name: "George", email: "george@example.com"}).where({"test.id": 2}).toString();
     expected_s = 'UPDATE test SET name = "George", email = "george@example.com" WHERE test.id = 2;';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    harness.completed("Test 0.0.3 features.");
 }, label: "Test 0.0.3 features."});
 
 
@@ -248,6 +253,7 @@ harness.push({callback: function () {
     s = sql.safeFunc('CONCAT("Hello World!", COUNT())');
     expected_s = 'CONCAT("Hello World!", COUNT())';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    harness.completed("Test 0.0.4 features");
 }, label: "Test 0.0.4 features"});
 
 
@@ -407,6 +413,7 @@ harness.push({callback: function () {
 	s = sql.expr({"test.profile_id": {$lte: "profiles.profile_id"}});
 	expected_s = "test.profile_id <= profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    harness.completed("Test for injection in parameters.");
 }, label: "Test for injection in parameters."});
 
 
@@ -629,9 +636,23 @@ harness.push({callback: function () {
 			.order("name", -1).toString();
     expected_s = 'SELECT id, name FROM test JOIN profiles ON (test.id = profiles.id) WHERE name LIKE "friend" ORDER BY name DESC;';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	harness.completed("Test 0.0.5 features");
 }, label: "Test 0.0.5 features"});
 
 harness.push({callback: function () {
+	var sql = new sqlish.Sql({dialect: dialect.MySQL55}),
+		row = {
+			date: '12/02/12',
+			title: 'TBD',
+			location: 'McDonald\'s Swim Stadium',
+			time: 'TBA' 
+  		};
+
+	assert.ok(sql.select("id").from("event").toString(), "select().from()");
+	assert.ok(sql.select("id").from("event").where({$and: [{title: row.title}, 
+						{location: row.location}]}),
+						"select().from().where()" + util.inspect(sql));
+	
     // having()
     // in()
     // with()
@@ -644,7 +665,8 @@ harness.push({callback: function () {
     // releaseSavePoint()
     // begin()
     // end()
-}, label: "Test 0.0.6 features"});
+    harness.completed("Test 0.0.6 bugs");
+}, label: "Test 0.0.6 bugs"});
 
 if (require.main === module) {
     harness.RunIt(path.basename(module.filename), 10, true);
