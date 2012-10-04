@@ -499,6 +499,10 @@
 		
 		var re2SQLWildcard = function (re) {
 			var s = re.toString();
+			if (!(re instanceof RegExp)) {
+				throw "Not a RegExp object.";
+			}
+
 			// Trim the first and last slash
 			s = s.substr(1, s.length - 2);
 			// replace * with %
@@ -593,8 +597,8 @@
 						} else {
 							throw "$like takes a value that is of type string or number";
 						}
+						throw "$like takes a value that is of type String, Number or RegExp";
 					}
-
 					return "LIKE " + safely(obj[ky], dialect);
 				default:
 					throw [ky, "not supported"].join(" ");
@@ -1442,8 +1446,12 @@
 	};
 
 	// If we're running under NodeJS then export objects
-	self.Dialect = Dialect;
-	self.Sql = Sql;
+	//self.Dialect = Dialect;
+	//self.Sql = Sql;
+	self.sqlish = {
+		Dialect: Dialect,
+		Sql: Sql
+	};
 	if (exports !== undefined) {
 		exports.Dialect = Dialect;
 		exports.Sql = Sql;
