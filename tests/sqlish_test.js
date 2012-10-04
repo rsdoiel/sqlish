@@ -90,10 +90,10 @@ harness.push({callback: function () {
     expected_s = "SELECT id, name, email FROM test1 WHERE id = 1 INTO @id, @name, @email;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-/*    s = Sql.select(["id"]).from("test1").where({ id: { $eq: [1, 2, 3] } }).toString();
+	s = Sql.select(["id"]).from("test1").where({ id: { $eq: [1, 2, 3] } }).toString();
     expected_s = "SELECT id FROM test1 WHERE (id = 1 OR id = 2 OR id = 3);";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-*/
+
     // Check to make sure it PostgreSQL 9.2 friendly
     s = Sql.set("my_count", 1).toString();
     expected_s = "SET my_count = 1;";
