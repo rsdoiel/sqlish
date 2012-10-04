@@ -1,9 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 	<head>
-		<title>Browser sqlish tests</title>
+		<title>Browser tests for sqlish.js</title>
 	</head>
 	<body>
-		
+		<h1>Browser tests for sqlish.js</h1>
+		<p>Output from tests show up in your browser's console.</p>
+		<!-- Load browser friendly versions of assert and harness -->
+		<p>loading browser-shim.js<br />
+		<script src="../lib/browser_shim.js"></script>
+		loading assert_this.js<br />
+		<script src="../lib/assert_this.js"></script>
+		loading harness.js<br />
+		<script src="../lib/harness.js"></script>
+		<!-- Now load the tests to run -->
+		loading sqlish.js<br />
+		<script src="../sqlish.js"></script>
+		loading browser-sqlish_test.js<br />
+		<script src="browser-sqlish_test.js"></script>
 	</body>
 </html>
