@@ -14,7 +14,7 @@ var path = require("path"),
     util = require("util"),
     sqlish = require("../sqlish"),
     dialect = sqlish.Dialect,
-    harness = require("../lib/harness");
+    harness = require("harness");
 
 
 // Basic SQL assembly
