@@ -14,6 +14,7 @@ var module_filename = "browser-sqlish_test.js";
 // Basic SQL assembly
 harness.push({callback: function () {
     var Sql = new sqlish.Sql(),
+    	dialect = sqlish.Dialect,
         threw_error = false,
         s,
         expected_s,
@@ -113,7 +114,8 @@ harness.push({callback: function () {
 
 // Setup some basic tests for SQLite support
 harness.push({ callback: function () {
-    var wasThrown = false, Sql;
+    var wasThrown = false, Sql,
+    	dialect = sqlish.Dialect;
 
     Sql = new sqlish.Sql({
         dialect: dialect.SQLite3
@@ -414,6 +416,7 @@ harness.push({callback: function () {
 // Test for 0.0.5 feature set
 harness.push({callback: function () {
     var sql  = new sqlish.Sql(),
+    	dialect = sqlish.Dialect,
         s,
         expected_s,
         threw_error = false,
@@ -634,7 +637,8 @@ harness.push({callback: function () {
 }, label: "Test 0.0.5 features"});
 
 harness.push({callback: function () {
-	var sql = new sqlish.Sql({dialect: dialect.MySQL55}),
+	var dialect = sqlish.Dialect,
+		sql = new sqlish.Sql({dialect: dialect.MySQL55}),
 		row = {
 			date: '12/02/12',
 			title: 'TBD',

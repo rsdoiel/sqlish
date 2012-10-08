@@ -10,7 +10,7 @@
 // See: http://opensource.org/licenses/bsd-license.php
 //
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
-/*global load, assert, harness, sqlish, path, dialect, pwd */
+/*global load, assert, harness, sqlish, path, dialect, pwd, MONGO_MODULES */
 
 MONGO_MODULES.push(pwd());
 
@@ -501,27 +501,27 @@ harness.push({callback: function () {
     }
     assert.strictEqual(threw_error, true, "$like should not accept an object as an argument.");
 
-    s = sql.expr({name: {$like: /Albert/}});
+    s = sql.expr({name: {$like: new RegExp("Albert")}});
     expected_s = 'name LIKE "%Albert%"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert/}});
+    s = sql.expr({name: {$like: new RegExp("^Albert")}});
     expected_s = 'name LIKE "Albert%"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /Albert$/}});
+    s = sql.expr({name: {$like: new RegExp("Albert$")}});
     expected_s = 'name LIKE "%Albert"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert$/}});
+    s = sql.expr({name: {$like: new RegExp("^Albert$")}});
     expected_s = 'name LIKE "Albert"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert*Carrots/}});
+    s = sql.expr({name: {$like: new RegExp("^Albert*Carrots")}});
     expected_s = 'name LIKE "Albert%Carrots%"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert*Carrots*bricks$/}});
+    s = sql.expr({name: {$like: new RegExp("^Albert*Carrots*bricks$")}});
     expected_s = 'name LIKE "Albert%Carrots%bricks"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 

@@ -151,8 +151,8 @@ harness.push({callback: function () {
     assert.equal(sql.eol, ";", "Should have eol equal to ;");
     assert.equal(sql.select("count()").toString(), "SELECT count();");
     assert.equal(sql.select("count()").toString(""), "SELECT count()");
-    harness.completed("Testing toString() terminiations");
-}, label: "Testing toString() terminiations"});
+    harness.completed("Testing toString() terminations");
+}, label: "Testing toString() terminations"});
 
 
 // Test 0.0.3 feature set
