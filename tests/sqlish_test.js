@@ -8,6 +8,7 @@
 // See: http://opensource.org/licenses/bsd-license.php
 //
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
+/*global require, exports */
 
 var path = require("path"),
     assert = require("assert"),
@@ -19,7 +20,7 @@ var path = require("path"),
 
 // Basic SQL assembly
 harness.push({callback: function () {
-    var Sql = new sqlish.Sql(),
+    var Sql = sqlish.Sqlish(),
         threw_error = false,
         s,
         expected_s,
@@ -31,6 +32,7 @@ harness.push({callback: function () {
 		("0" + now.getHours()).substr(-2) + ':' +
 		("0" + now.getMinutes()).substr(-2) + ':' +
 		("0" + now.getSeconds()).substr(-2);
+
     s = Sql.sqlDate(now);
     assert.equal(s, expected_s);
 
@@ -100,13 +102,28 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "#5\n" + s + "\n" + expected_s);
 
     // Check MySQL 5.5 variation
-    Sql.dialect = dialect.MySQL55;
-    s = Sql.set("my_count", 1).toString();
+    Sql = new sqlish.Sqlish("MySQL 5.5");
+    s = Sql.set("@my_count", 1).toString();
     expected_s = "SET @my_count = 1;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
+    // Check that PostgreSQL 9.2
+    Sql = new sqlish.Sqlish("PostgreSQL 9.2");
+    threw_error = false;
+    try {
+    	Sql.replace("test", {});
+    } catch (err) {
+    	threw_error = true;
+    }
+    assert.strictEqual(threw_error, true, "PostgreSQL 9.2 should throw an error on REPLACE");
+
+    
+    s = Sql.update("test").set("my_count", 0).toString();
+    expected_s = "UPDATE test SET my_count = 0;";
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
     // Check that SQLite3 throws error
-    Sql.dialect = dialect.SQLite3;
+    Sql = new sqlish.Sqlish("SQLite 3");
     threw_error = false;
     try {
         s = Sql.set("my_count", 1);
@@ -121,9 +138,7 @@ harness.push({callback: function () {
 harness.push({ callback: function () {
     var wasThrown = false, Sql;
 
-    Sql = new sqlish.Sql({
-        dialect: dialect.SQLite3
-    });
+    Sql = new sqlish.Sqlish("SQLite 3");
     
     wasThrown = false;
     try {
@@ -146,7 +161,7 @@ harness.push({ callback: function () {
 
 //Testing toString() terminations
 harness.push({callback: function () {
-    var sql = new sqlish.Sql();
+    var sql = new sqlish.Sqlish();
     
     assert.equal(sql.eol, ";", "Should have eol equal to ;");
     assert.equal(sql.select("count()").toString(), "SELECT count();");
@@ -157,7 +172,7 @@ harness.push({callback: function () {
 
 // Test 0.0.3 feature set
 harness.push({callback: function () {
-    var sql = new sqlish.Sql(),
+    var sql = new sqlish.Sqlish(),
         s,
         expected_s;
     
@@ -182,7 +197,7 @@ harness.push({callback: function () {
 
 // Test 0.0.4 feature set
 harness.push({callback: function () {
-    var sql = new sqlish.Sql(),
+    var sql = new sqlish.Sqlish(),
         s,
         expected_s;
 
@@ -259,14 +274,14 @@ harness.push({callback: function () {
 
 // Tests for injection vulnerabilities
 harness.push({callback: function () {
-    var sql = new sqlish.Sql(),
+    var sql = new sqlish.Sqlish(),
         threw_error = false,
         s,
         expected_s,
         sql2,
         evil_object_injection;
 
-    s = sql.safely("George", dialect.MySQL55);
+    s = sql.safely("George");
     expected_s = '"George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
@@ -324,7 +339,7 @@ harness.push({callback: function () {
     }
     assert.strictEqual(threw_error, true, "Should throw an error when injection attempted on tableName parameter.");
 
-    sql2 = new sqlish.Sql();
+    sql2 = new sqlish.Sqlish();
     threw_error = false;
     try {
         s = sql.createView("myView;SELECT * FROM secrets;",
@@ -348,17 +363,19 @@ harness.push({callback: function () {
     }
     assert.strictEqual(threw_error, true,
 		"Should throw an injection error: " + evil_object_injection);
-    s = sql.set({myVar: 'CONCAT(2, COUNT(3), " Jiminy Cricket")'}).toString();
+    s = sql.set({"@myVar": 'CONCAT(2, COUNT(3), " Jiminy Cricket")'}).toString();
     expected_s = 'SET @myVar = CONCAT(2, COUNT(3), " Jiminy Cricket");';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
-	s = sql.expr({"test.profile_id": "profiles.profile_id"}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": "profiles.profile_id"});
 	expected_s = "test.profile_id = \"profiles.profile_id\"";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	// Applies rules to detect if the value is what you expect.
 	// E.g. is it a number you expect a number back, if it is
 	// a column reference you expect the column reference back.
+	sql = new sqlish.Sqlish();
+	assert.notEqual(sql.schemas, undefined, "Should have schemes defined");
 	sql.on("test", {
 		profile_id: function (value) {
 			if (value === "profile_id" ||
@@ -369,6 +386,7 @@ harness.push({callback: function () {
 			throw "injection error, test.profile_id: " + value;
 		}
 	});
+	assert.notEqual(sql.schemas.test, undefined, "Should have sql.schemas.test defined");
 	sql.on("profiles", {
 		profile_id: function (value) {
 			if (value === "profile_id" ||
@@ -379,38 +397,40 @@ harness.push({callback: function () {
 			throw "injection error, profiles.profile_id: " + value;
 		}
 	});
-	assert.equal(sql.safely("test.profile_id", dialect.MySQL55),
+	assert.notEqual(sql.schemas.profiles, undefined, "Should have sql.schemas.profiles defined.");
+
+	assert.equal(sql.safely("test.profile_id", sql.schemas),
 				 "test.profile_id",
-				 "Should find column: " + sql.isColumnName("test.profile_id"));
-	assert.equal(sql.safely("profiles.profile_id", dialect.MySQL55),
+				 "Should find column: " + sql.isColumnName("test.profile_id", sql.schemas));
+	assert.equal(sql.safely("profiles.profile_id", sql.schemas),
 				 "profiles.profile_id",
-				 "Should find column: " + sql.isColumnName("profiles.profile_id"));
+				 "Should find column: " + sql.isColumnName("profiles.profile_id", sql.schemas));
 	
-	s = sql.expr({"test.profile_id": "profiles.profile_id"}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": "profiles.profile_id"}, sql.schemas);
 	expected_s = "test.profile_id = profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-	s = sql.expr({"test.profile_id": {$eq: "profiles.profile_id"}}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": {$eq: "profiles.profile_id"}}, sql.schemas);
 	expected_s = "test.profile_id = profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-	s = sql.expr({"test.profile_id": {$ne: "profiles.profile_id"}}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": {$ne: "profiles.profile_id"}}, sql.schemas);
 	expected_s = "test.profile_id != profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-	s = sql.expr({"test.profile_id": {$gt: "profiles.profile_id"}}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": {$gt: "profiles.profile_id"}}, sql.schemas);
 	expected_s = "test.profile_id > profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-	s = sql.expr({"test.profile_id": {$gte: "profiles.profile_id"}}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": {$gte: "profiles.profile_id"}}, sql.schemas);
 	expected_s = "test.profile_id >= profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-	s = sql.expr({"test.profile_id": {$lt: "profiles.profile_id"}}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": {$lt: "profiles.profile_id"}}, sql.schemas);
 	expected_s = "test.profile_id < profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-	s = sql.expr({"test.profile_id": {$lte: "profiles.profile_id"}}, dialect.MySQL55);
+	s = sql.expr({"test.profile_id": {$lte: "profiles.profile_id"}}, sql.schemas);
 	expected_s = "test.profile_id <= profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     harness.completed("Test for injection in parameters.");
@@ -419,109 +439,109 @@ harness.push({callback: function () {
 
 // Test for 0.0.5 feature set
 harness.push({callback: function () {
-    var sql  = new sqlish.Sql(),
+    var sql  = new sqlish.Sqlish(),
         s,
         expected_s,
         threw_error = false,
         sql1,
         sql2;
 
-    s = sql.expr({name: "George"}, dialect.MySQL55);
+    s = sql.expr({name: "George"});
     expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$eq: "George"}}, dialect.MySQL55);
+    s = sql.expr({name: {$eq: "George"}});
     expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({$or: [{name: "George"}, {name: "Georgia"}]}, dialect.MySQL55);
+    s = sql.expr({$or: [{name: "George"}, {name: "Georgia"}]});
     expected_s = 'name = "George" OR name = "Georgia"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({$or: [{name: "George"}, {name: "Georgia"}, {name: "Wilma"}]}, dialect.MySQL55);
+    s = sql.expr({$or: [{name: "George"}, {name: "Georgia"}, {name: "Wilma"}]});
     expected_s = 'name = "George" OR name = "Georgia" OR name = "Wilma"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({$and: [{name: "George"}, {name: "Georgia"}]}, dialect.MySQL55);
+    s = sql.expr({$and: [{name: "George"}, {name: "Georgia"}]});
     expected_s = 'name = "George" AND name = "Georgia"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({$and: [{name: "George"}, {name: "Georgia"}, {name: "Wilma"}]}, dialect.MySQL55);
+    s = sql.expr({$and: [{name: "George"}, {name: "Georgia"}, {name: "Wilma"}]});
     expected_s = 'name = "George" AND name = "Georgia" AND name = "Wilma"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({cnt: 3}, dialect.MySQL55);
+    s = sql.expr({cnt: 3});
     expected_s = "cnt = 3";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({cnt: {$eq: 3}}, dialect.MySQL55);
+    s = sql.expr({cnt: {$eq: 3}});
     expected_s = "cnt = 3";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({cnt: {$gt: 3}}, dialect.MySQL55);
+    s = sql.expr({cnt: {$gt: 3}});
     expected_s = "cnt > 3";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({cnt: {$gte: 3}}, dialect.MySQL55);
+    s = sql.expr({cnt: {$gte: 3}});
     expected_s = "cnt >= 3";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({cnt: {$lt: 3}}, dialect.MySQL55);
+    s = sql.expr({cnt: {$lt: 3}});
     expected_s = "cnt < 3";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({cnt: {$lte: 3}}, dialect.MySQL55);
+    s = sql.expr({cnt: {$lte: 3}});
     expected_s = "cnt <= 3";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.P({cnt: 3}, dialect.MySQL55);
+    s = sql.P({cnt: 3});
     expected_s = "(cnt = 3)";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.P({name: {$like: "John"}}, dialect.MySQL55);
+    s = sql.P({name: {$like: "John"}});
     expected_s = '(name LIKE "John")';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.P({name: {$like: 5}}, dialect.MySQL55);
+    s = sql.P({name: {$like: 5}});
     expected_s = '(name LIKE 5)';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     threw_error = false;
     try {
-        s = sql.P({name: {$like: {name: "some object"}}}, dialect.MySQL55);
+        s = sql.P({name: {$like: {name: "some object"}}});
         expected_s = '(name LIKE 5)';
     } catch (err) {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "$like should not accept an object as an argument.");
 
-    s = sql.expr({name: {$like: /Albert/}}, dialect.MySQL55);
+    s = sql.expr({name: {$like: /Albert/}});
     expected_s = 'name LIKE "%Albert%"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert/}}, dialect.MySQL55);
+    s = sql.expr({name: {$like: /^Albert/}});
     expected_s = 'name LIKE "Albert%"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /Albert$/}}, dialect.MySQL55);
+    s = sql.expr({name: {$like: /Albert$/}});
     expected_s = 'name LIKE "%Albert"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert$/}}, dialect.MySQL55);
+    s = sql.expr({name: {$like: /^Albert$/}});
     expected_s = 'name LIKE "Albert"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert*Carrots/}}, dialect.MySQL55);
+    s = sql.expr({name: {$like: /^Albert*Carrots/}});
     expected_s = 'name LIKE "Albert%Carrots%"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
-    s = sql.expr({name: {$like: /^Albert*Carrots*bricks$/}}, dialect.MySQL55);
+    s = sql.expr({name: {$like: /^Albert*Carrots*bricks$/}});
     expected_s = 'name LIKE "Albert%Carrots%bricks"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     
     // replace() /* PostgreSQL 9.2 doesn't support replace() */
-    sql.dialect = dialect.PostgreSQL92;
+    sql = new sqlish.Sqlish("PostgreSQL 9.2");
     threw_error = false;
     try {
         sql.replace("test", {id: 3, name: "fred"});
@@ -529,10 +549,11 @@ harness.push({callback: function () {
         threw_error = true;
     }
     assert.strictEqual(threw_error, true, "dialect of PostgreSQL should throw error when replace() is called.");
-    sql.dialect = dialect.SQL92;
+    
+    sql = new sqlish.Sqlish();
 
     // createView()
-    sql2 = new sqlish.Sql();
+    sql2 = new sqlish.Sqlish();
     s = sql.createView("myView",
             sql2.select(["id", "name", "email"]).from("profiles")).toString();
     expected_s = "CREATE VIEW myView AS SELECT id, name, email FROM profiles;";
@@ -586,8 +607,8 @@ harness.push({callback: function () {
     expected_s = "SELECT id AS building_id, name, building, COUNT() AS cnt FROM personnel GROUP BY building ORDER BY name;";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
     
-    sql1 = new sqlish.Sql();
-    sql2 = new sqlish.Sql();
+    sql1 = new sqlish.Sqlish();
+    sql2 = new sqlish.Sqlish();
     
     sql1.select().from("test1");
     sql2.select().from("test2");
@@ -596,20 +617,20 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
     // distinct
-    sql = new sqlish.Sql();
+    sql = new sqlish.Sqlish();
     s = sql.select(["id", "name"], {distinct: true})
             .from("test").where({name: {$like: "friend"}}).toString();
     expected_s = 'SELECT DISTINCT id, name FROM test WHERE name LIKE "friend";';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
-    sql = new sqlish.Sql();
+    sql = new sqlish.Sqlish();
     s = sql.select(["id", "name"], {distinct: true})
             .from("test").where({name: {$like: "friend"}})
 			.order("name", -1).toString();
     expected_s = 'SELECT DISTINCT id, name FROM test WHERE name LIKE "friend" ORDER BY name DESC;';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
-    sql = new sqlish.Sql();
+    sql = new sqlish.Sqlish();
 	sql.on("test", {
 		id: function (value) {
 			if (value === "id" ||
@@ -640,7 +661,7 @@ harness.push({callback: function () {
 }, label: "Test 0.0.5 features"});
 
 harness.push({callback: function () {
-	var sql = new sqlish.Sql({dialect: dialect.MySQL55}),
+	var sql = new sqlish.Sqlish("MySQL 5.5"),
 		row = {
 			date: '12/02/12',
 			title: 'TBD',
