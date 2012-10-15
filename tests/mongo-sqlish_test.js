@@ -12,11 +12,10 @@
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
 /*global load, assert, harness, sqlish, path, dialect, pwd, MONGO_MODULES */
 
-MONGO_MODULES.push(pwd());
-
 // Now that we have the objects methods we need, load sqlish
 var assert = require("assert"),
 	path = require("path"),
+	util = require("util"),
 	harness = require("harness"),
 	sqlish = require("sqlish"),
 	dialect = sqlish.Dialect,
@@ -679,7 +678,7 @@ harness.push({callback: function () {
 	// BUG: by the time where() is called dialect was getting lost.
 	assert.ok(sql.select("id").from("event").where({$and: [{title: row.title}, 
 						{location: row.location}]}),
-						"select().from().where()" + sql.toSource());
+						"select().from().where()" + util.inspect(sql));
 	
     // having()
     // in()

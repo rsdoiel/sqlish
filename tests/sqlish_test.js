@@ -690,10 +690,4 @@ harness.push({callback: function () {
     harness.completed("Test 0.0.6 bugs");
 }, label: "Test 0.0.6 bugs"});
 
-if (require.main === module) {
-    harness.RunIt(path.basename(module.filename), 10, true);
-} else if (require.main === "mongo") {
-	harness.RunInMongoShell(path.basename(module.filename));
-} else {
-    exports.RunIt = harness.RunIt;
-}
+harness.RunIt(path.basename(module.filename), 10);
