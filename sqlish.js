@@ -1275,11 +1275,15 @@
 		return new Sql();
 	};
 
-	if (global.require === undefined) {
-		global.Dialects = Dialects;
-		global.Sqlish = Sqlish;
-	}
+	global.sqlish = {
+		Dialects: Dialects,
+		Sqlish: Sqlish
+	};
 
-	exports.Dialects = Dialects;
-	exports.Sqlish = Sqlish;
+	if (exports !== undefined) {
+		exports.Dialects = Dialects;
+		exports.Sqlish = Sqlish;
+	}
+	
+	return global;
 }(this));

@@ -13,4 +13,9 @@
 	global.exports = {};
 	global.require = { main: true };
 	global.module = true;
+	global.util = {
+		inspect: function (obj) {
+			return JSON.stringify(obj);
+		}
+	}
 }(this));
