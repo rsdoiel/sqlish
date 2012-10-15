@@ -38,7 +38,7 @@ To use with NodeJS install via npm.
 ```JavaScript
 	var sqlish = require("sqlish"),
 		dialect = sqlish.Dialect,
-		Sql = new sqlish.Sql({dialect: dialect.MySQL55, use_UTC: false}),
+		Sql = new sqlish.Sqlish("MySQL 5.5),
 		message = {
 			id: 0,
 			name: "fred",
@@ -46,6 +46,8 @@ To use with NodeJS install via npm.
 			messages: 'He Said, "Hello World"',
 			sent: new Date("09/01/2012 14:15:00")
 		};
+
+	Sql.use_UTC = false;	
 	
 	// Output:
 	// INSERT INTO messages (name, email, msg, sent) VALUES (
@@ -81,7 +83,7 @@ string (including the empty string) as a paramater to toString().
 
 ```JavaScript
 	var sqlish = require("sqlish"),
-		Sql = new sqlish.Sql();
+		Sql = new sqlish.Sqlish();
     
     // No trailing semi-colon
     console.log(sql.select("count()").toString(""));
@@ -102,7 +104,9 @@ can do so when overwriting Sql.eol at time of object creation or before calling 
 
 ```
 	var sqlish = require("sqlish"),
-		Sql = new sqlish.Sql({eol: ";\n\n"});
+		Sql = new sqlish.Sqlish();
+		
+	Sql.eol = ";\n\n";
     
     // No trailing semi-colon
     console.log(sql.select("count()").toString(""));

@@ -7,11 +7,9 @@
 //
 
 /*jslint devel: true, node: true, maxerr: 50, indent: 4, vars: true, sloppy: true */
-MONGO_MODULES.push(pwd());
-
 sqlish = require("sqlish");
 
-var item, sql = new Sql();
+var item, sql = new sqlish.Sqlish();
 
 console.log(sql.select(["id", "name", "email", "modified"]).from("myTable").toString());
 item = {id: 1, name: "fred", email: "fred@example.com", modified: new Date()};

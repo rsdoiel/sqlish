@@ -2,7 +2,7 @@
 // Simple example of using sqlish with NodeJS
 //
 var sqlish = require("../sqlish"),
-	Sql = new sqlish.Sql({dialect: sqlish.MySQL, use_UTC: false}),
+	Sql = new sqlish.Sqlish("MySQL 5.5"),
 	message = {
 		id: 0,
 		name: "fred",
@@ -21,7 +21,7 @@ console.log(Sql.insert("test", message).toString());
 // SELECT id, name, email, msg, sent FROM messages 
 //	WHERE email LIKE "%@example.com"
 console.log(Sql.select(Object.keys(message))
-		.from("messages"
+		.from("messages")
 		.where({email: {$like: "%@example.com"}}).toString());
 
 // Output:

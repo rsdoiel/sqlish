@@ -9,14 +9,18 @@ you've create an object called _sql_. E.g.
 ```JavaScript
 	var sqlish = require("sqlish");
 
-	sql = new sqlish.Sql();
+	sql = new sqlish.Sqlish();
 ```
 
-# Dialect methods
+# Dialects methods
 
-The Dialect object is used to extend the behavior of the _sqlish.Sql()_ object.
-It has one public method - _define(dialect_name, definition)_. _dialect_name_ should be a valid variable name. It will be used as the Dialect object's
+The Dialects object is used to extend the behavior of the _sqlish.Sqlish()_ factory.
+
+It has two public method - _define(dialect_name, definitions)_. _dialect_name_ should be a valid variable name. It will be used as the Dialect object's
 property when defining a dialect. There are three major use cases for _Dialect_ with _sqlish_. The first is creating a whole new dialect (e.g. SQL 2003); the second is for restricting the behavior of an existing dialect (e.g. only allowing permitting read statements like _SELECT_ for MySQL 5.5); and the third would be to replace the adding a working _execute()_ function.
+
+The second method lists the names of defined dialect - _sqlish.Dialect.supported()_. It returns a array of strings with the names of the dialects defined.
+
 
 ## Defining a new dialect
 
@@ -31,7 +35,7 @@ FIXME: explanation and example needed here.
 FIXME: explanation and example needed here.
 
 
-# Sql() methods
+# Sqlish() methods
 
 ## sql.applyOn(tableName, value)
 
@@ -64,8 +68,8 @@ This is used to generate a _CREATE VIEW_ statement. _sql_obj_ is another
 _sql_, usually a _SELECT_ obj.
 
 ```JavaScript
-	var sql = sqlish.Sql(),
-		sql_view = sqlish.Sql();
+	var sql = new sqlish.Sqlish(),
+		sql_view = new sqlish.Sqlish();
 
 	// CREATE VIEW alpha_by_name AS SELECT profile_id, name, email 
 	//	FROM profiles ORDER BY name	ASC;
@@ -176,8 +180,7 @@ can be used with a _select()_ function to set session variables;
 
 ```JavaScript
 	var sqlish = require("sqlish"),
-		Dialect = sqlish.Dialect,
-		sql = sqlish.Sql({dialect: Dialect.MySQL55});
+		sql = new sqlish.Sqlish("MySQL 5.5");
 		
 	// SELECT id, name, email FROM profiles WHERE id = 3 
 	//	INTO @profile_id, @name, @email;
@@ -192,7 +195,7 @@ This checks to see if a value matches a previously defined table's column's name
 
 ## sql.isSqlObj(obj)
 
-This checks to see if an object is like other _sqlish.Sql()_ objects.
+This checks to see if an object is like other _sqlish.Sqlish()_ objects.
 
 
 ## sql.join(tables, expression)
@@ -381,12 +384,12 @@ is used instead of the semi-colon.
 ## sql.union(sql1, sql2)
 
 This will generate a _UNION_ statement. _sql1_ and _sql2_ will be
-wrapped in parenthesis. Both need to be of type _sqlish.Sql()_.
+wrapped in parenthesis. Both need to be of type _sqlish.Sqlish()_.
 
 ```JavaScript
-	var sql = sqlish.Sql(),
-		sql1 = sqlish.Sql(),
-		sql2 = sqlish.Sql();
+	var sql = new sqlish.Sqlish(),
+		sql1 = new sqlish.Sqlish(),
+		sql2 = new sqlish.Sqlish();
 		
 	sql1.select(["name", "email"]).from("profiles1");
 	sql2.select(["name", "email"]).from("profiles2");

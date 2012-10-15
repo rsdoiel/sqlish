@@ -17,7 +17,7 @@ Now let's write that with sqlish running under NodeJS-
 ```JavaScript
     // Create an sql object
     var sqlish = require("sqlish"),
-        sql = new sqlish.Sql();
+        sql = new sqlish.Sqlish();
     
     sql.select(["id", "name", "email"]).from("email_list").toString();
 ```
@@ -37,7 +37,7 @@ as the load script in this example).
     var exports;
     load("./sqlish.js");
     
-    var sql = new Sql();
+    var sql = new sqlish.Sqlish();
     
     sql.select(["id", "name", "email"]).from("test").toString();
 ```
@@ -57,11 +57,9 @@ which will be used by toString() to terminate the SQL statement
 generated.
 
 ```JavaScript
-    var sql = new sqlish.Sql({
-    	dialect: sqlish.Dialect.PostgreSQL92,
-		use_UTC: true,
-		eol: ";\n"
-	});
+    var sql = new sqlish.Sqlish("PostgreSQL 9.2");
+    sql.use_UTC = true;
+    sql.eol = ";\n";
 ```
 
 
@@ -251,7 +249,7 @@ a view name and a SQL object that will be rendered with
 toString().
 
 ```JavaScript
-    sql_subquery = sqlish.Sql();
+    sql_subquery = sqlish.Sqlish();
     sql_subquery.select(["email", "name"],
     	{unique: true}).from("my_test").limit(10);
     sql.createView("my_view", sql_subquery);
@@ -343,8 +341,8 @@ Render a union clause. Takes one parameters each an Sql object. Not supported
 in SQLite3.
 
 ```JavaScript
-sql1 = sqlish.Sql();
-sql2 = sqlish.Sql();
+sql1 = sqlish.Sqlish();
+sql2 = sqlish.Sqlish();
 
 sql1.select().from("test1");
 sql2.select().from("test2");
@@ -554,7 +552,38 @@ implemented.
     }); 
     
     // Now set the dialect of a sql object.
-    sql = new sqlish.Sql({dialect: sqlish.Dialect.SQLReadOnly});
+    sql = new sqlish.Sqlish("SQL Read Only", {
+    	createTable: function () {
+    		throw "createTable not supported"
+    	},
+    	createIndex: function () {
+    		throw "createIndex not supported"
+    	},
+    	createView: function () {
+    		throw "createView not supported"
+    	},
+    	dropTable: function () {
+    		throw "dropTable not supported"
+    	},
+    	dropIndex: function () {
+    		throw "dropIndex not supported"
+    	},
+    	dropView: function () {
+    		throw "dropView not supported"
+    	},
+    	deleteFrom: function () {
+    		throw "deleteFrom not supported"
+    	},
+    	insert: function () {
+    		throw "insert not supported"
+    	},
+    	update: function () {
+    		throw "update not supported"
+    	},
+    	replace: function () {
+    		throw "replace not supported"
+    	}
+    });
     
     // This is Ok in SQLReadOnly dialect
     sql.select("id").from("test").where({id: 203});
