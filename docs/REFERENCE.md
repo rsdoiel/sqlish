@@ -403,7 +403,7 @@ This generates an _UPDATE_ clause. It is used with _set()_ and often _where()_.
 ```JavaScript
 	// UPDATE profiles SET name = "Fred", email = "fred@example.com"
 	//	WHERE id = 3;
-	sql.update("profiles").set([{name: "Fred"}, {email: "fred@example.com"}])
+	sql.update("profiles").set({name: "Fred", email: "fred@example.com"})
 		.where({id: 3});
 ```
 
