@@ -950,7 +950,7 @@
 					break;
 				case 'VARCHAR':
 				case 'CHAR':
-					if (typeof typeof def.length !== 'undefined') {
+					if (typeof def.length !== 'undefined') {
 						clause.push(def.type + "(" + def.length + ")");
 					}
 					break;
