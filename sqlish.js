@@ -94,24 +94,24 @@
 	// @return save variable name as string
 	var safeName = function (s, options) {
 		var re_terms = ["[", "^a-zA-Z0-9_"], re;
-		if (options !== undefined) {
-			if (options.period !== undefined &&
+		if (typeof options !== 'undefined') {
+			if (typeof options.period !== 'undefined' &&
 					options.period === true) {
 				re_terms.push("\\.");
 			}
-			if (options.parenthesis !== undefined &&
+			if (typeof options.parenthesis !== 'undefined' &&
 					options.parenthesis === true) {
 				re_terms.push("\\(\\)");
 			}
-			if (options.asterisk !== undefined &&
+			if (typeof options.asterisk !== 'undefined' &&
 					options.asterisk === true) {
 				re_terms.push("\\*");
 			}
-			if (options.at_sign !== undefined &&
+			if (typeof options.at_sign !== 'undefined' &&
 					options.at_sign === true) {
 				re_terms.push("@");
 			}
-			if (options.dollar_sign !== undefined &&
+			if (typeof options.dollar_sign !== 'undefined' &&
 					options.dollar_sign === true) {
 				re_terms.push("\\$");
 			}
@@ -510,7 +510,7 @@
 		}
 		this.sql = {};
 		this.sql.indexName = indexName;
-		if (options.unique !== undefined && options.unique === true) {
+		if (typeof options.unique !== 'undefined' && options.unique === true) {
 			this.sql.verb = "CREATE UNIQUE INDEX";
 		} else {
 			this.sql.verb = "CREATE INDEX";
@@ -950,7 +950,7 @@
 					break;
 				case 'VARCHAR':
 				case 'CHAR':
-					if (typeof def.length !== undefined) {
+					if (typeof typeof def.length !== 'undefined') {
 						clause.push(def.type + "(" + def.length + ")");
 					}
 					break;
@@ -1033,7 +1033,7 @@
 			src.push(vals.join(", "));
 
 			['from', 'join', 'where', 'group', 'order', 'limit', 'offset', 'into'].forEach(function (elem) {
-				if (self.sql[elem] !== undefined) {
+				if (typeof self.sql[elem] !== 'undefined') {
 					switch (elem) {
 					case 'join':
 						src.push("JOIN " +
@@ -1078,7 +1078,7 @@
 		case 'UPDATE':
 			src.push(this.sql.verb);
 			src.push(this.sql.tableName);
-			if (this.sql.values !== undefined) {
+			if (typeof this.sql.values !== 'undefined') {
 				vals = [];
 				src.push("SET");
 				for (i = 0; i < this.sql.values.length; i += 1) {
@@ -1087,20 +1087,20 @@
 				}
 				src.push(vals.join(", "));
 			}
-			if (this.sql.where !== undefined) {
+			if (typeof this.sql.where !== 'undefined') {
 				src.push("WHERE " + this.sql.where);
 			}
 			break;
 		case 'DELETE FROM':
 			src.push(this.sql.verb);
 			src.push(this.sql.tableName);
-			if (this.sql.where !== undefined) {
+			if (typeof this.sql.where !== 'undefined') {
 				src.push("WHERE " + this.sql.where);
 			}
 			break;
 		case 'SET':
 			src.push(this.sql.verb);
-			if (this.sql.values !== undefined) {
+			if (typeof this.sql.values !== 'undefined') {
 				vals = [];
 				for (i = 0; i < this.sql.values.length; i += 1) {
 					vals.push(this.sql.values[i].key + " = " + this.sql.values[i].value);
@@ -1251,7 +1251,7 @@
 		Sql.prototype.into = into;
 
 		// If a dialect is defined, modify our definitions.
-		if (Dialects[dialect_name] !== undefined) {
+		if (typeof Dialects[dialect_name] !== 'undefined') {
 			// Mongo 2.2 shell doesn't support Object.keys()
 			for (ky in Dialects[dialect_name]) {
 				if (Dialects[dialect_name].hasOwnProperty(ky)) {
@@ -1262,7 +1262,7 @@
 
 		// If we're extending a dialect then update with
 		// new functions.
-		if (function_collection !== undefined) {
+		if (typeof function_collection !== 'undefined') {
 			for (ky in function_collection) {
 				if (function_collection.hasOwnProperty(ky)) {
 					Sql.prototype[ky] = function_collection[ky];
@@ -1277,7 +1277,7 @@
 		Sqlish: Sqlish
 	};
 
-	if (exports !== undefined) {
+	if (typeof exports !== 'undefined') {
 		exports.Dialects = Dialects;
 		exports.Sqlish = Sqlish;
 	}
