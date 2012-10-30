@@ -516,7 +516,7 @@
 			this.sql.verb = "CREATE INDEX";
 		}
 		
-		if (typeof options.table === undefined || options.columns === 'undefined') {
+		if (typeof options.table === 'undefined' || typeof options.columns === 'undefined') {
 			throw "Must define an index on something.";
 		} else {
 			this.sql.table = options.table;
