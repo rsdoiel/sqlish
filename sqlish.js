@@ -214,10 +214,7 @@
 
 		switch (typeof s) {
 		case 'boolean':
-			if (s === true) {
-				return 'true';
-			}
-			return 'false';
+      return s.toString();	
 		case 'number':
 			return s;
 		case 'string':
