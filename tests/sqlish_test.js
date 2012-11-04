@@ -690,4 +690,70 @@ harness.push({callback: function () {
     harness.completed("Test 0.0.6 bugs");
 }, label: "Test 0.0.6 bugs"});
 
+harness.push({callback: function (test_label) {
+	var sql = new sqlish.Sqlish("MySQL 5.5");
+
+	expected_s = 'REPLACE INTO wp_posts (ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count) VALUES (0, 0, "2012-11-04 08:53:03", "2012-11-04 16:53:3", "", "test.png", "Test Caption", "inherit", "closed", "closed", "", "2012/08/28/test.png", "", "", "2012-11-04 08:53:03", "2012-11-04 16:53:03", "", @parent_id, "http://localhost/2012/08/28/test.png", 0, "attachment", "image/png", 0);'
+		
+	s = sql.replace("wp_posts", {
+		ID: 0,
+		post_author: 0,
+		post_date: "2012-11-04 08:53:03",
+		post_date_gmt: "2012-11-04 16:53:3",
+		post_content: "",
+		post_title: "test.png",
+		post_excerpt: "Test Caption",
+		post_status: "inherit",
+		comment_status: "closed",
+		ping_status: "closed",
+		post_password: "",
+		post_name: "2012/08/28/test.png",
+		to_ping: "",
+		pinged: "",
+		post_modified: "2012-11-04 08:53:03",
+		post_modified_gmt: "2012-11-04 16:53:03",
+		post_content_filtered: "",
+		post_parent: "@parent_id",
+		guid: "http://localhost/2012/08/28/test.png",
+		menu_order: 0,
+		post_type: "attachment",
+		post_mime_type: "image/png",
+		comment_count: 0
+	}).toString();
+	
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	expected_s = 'REPLACE INTO wp_posts (ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count) VALUES (0, 0, "2012-11-04 08:53:03", "2012-11-04 16:53:3", "", "test.png", "Test Caption", "inherit", "closed", "closed", "", "2012/08/28/test.png", "", "", "2012-11-04 08:53:03", "2012-11-04 16:53:03", "", @parent_id, "http://localhost/2012/08/28/test.png", 0, "attachment", "image/png", 0)';
+
+	s = sql.replace("wp_posts", {
+		ID: 0,
+		post_author: 0,
+		post_date: "2012-11-04 08:53:03",
+		post_date_gmt: "2012-11-04 16:53:3",
+		post_content: "",
+		post_title: "test.png",
+		post_excerpt: "Test Caption",
+		post_status: "inherit",
+		comment_status: "closed",
+		ping_status: "closed",
+		post_password: "",
+		post_name: "2012/08/28/test.png",
+		to_ping: "",
+		pinged: "",
+		post_modified: "2012-11-04 08:53:03",
+		post_modified_gmt: "2012-11-04 16:53:03",
+		post_content_filtered: "",
+		post_parent: "@parent_id",
+		guid: "http://localhost/2012/08/28/test.png",
+		menu_order: 0,
+		post_type: "attachment",
+		post_mime_type: "image/png",
+		comment_count: 0
+	}).toString("");
+	
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+       
+	harness.completed(test_label);
+}, label: "Test 0.0.8 bugs"});
+
 harness.RunIt(path.basename(module.filename), 10);
