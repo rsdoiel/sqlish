@@ -31,13 +31,13 @@
 	// @param use_UTC - boolean, true means use GMT otherwise local time.
 	// @return a string formatted as YYYY-MM-DD HH:II:SS
 	var sqlDate = function (d, use_UTC) {
-		if (d === undefined) {
+		if (typeof d === "undefined") {
 			d = new Date();
 		} else if (typeof d === "string") {
 			d = new Date(d);
 		}
 
-		if (use_UTC === undefined) {
+		if (typeof use_UTC === "undefined") {
 			use_UTC = this.use_UTC;
 		}
 
@@ -214,7 +214,7 @@
 	var isColumnName = function (value, schemas) {
 		var tableName, column;
 
-		if (schemas === undefined) {
+		if (typeof schemas === "undefined") {
 			return false;
 		}
 
@@ -222,8 +222,8 @@
 			if (value.indexOf(".") > 0) {
 				tableName = value.substr(0, value.indexOf("."));
 				column = value.substr(value.indexOf(".") + 1);
-				if (schemas[tableName] === undefined ||
-						schemas[tableName][column] === undefined) {
+				if (typeof schemas[tableName] === "undefined" ||
+						typeof schemas[tableName][column] === "undefined") {
 					return false;
 				}
 				return true;
@@ -245,7 +245,7 @@
 			period: true
 		};
 
-		if (s === undefined || s === null) {
+		if (typeof s === "undefined" || s === null) {
 			return 'NULL';
 		}
 
@@ -408,7 +408,7 @@
 				return ["<=", safely(obj[ky], schemas)].join(" ");
 			case '$or':
 				vals = [];
-				if (obj[ky].length === undefined) {
+				if (typeof obj[ky].length === "undefined") {
 					throw "$or takes an array of objects as the value";
 				}
 				for (i = 0; i < obj[ky].length; i += 1) {
@@ -417,7 +417,7 @@
 				return vals.join(" OR ");
 			case '$and':
 				vals = [];
-				if (obj[ky].length === undefined) {
+				if (typeof obj[ky].length === "undefined") {
 					throw "$and takes an array of objects as the value";
 				}
 				for (i = 0; i < obj[ky].length; i += 1) {
@@ -465,10 +465,10 @@
 	// @param column_def - the definition of the column in the table as RegExp.
 	// @return boolean, comparing table name and definition
 	var on = function (tableName, column_def) {
-		if (this.schemas === undefined) {
+		if (typeof this.schemas === "undefined") {
 			this.schemas = {};
 		}
-		if (this.schemas[tableName] === undefined) {
+		if (typeof this.schemas[tableName] === "undefined") {
 			this.schemas[tableName] = {};
 		}
 		this.schemas[tableName] = column_def;
@@ -482,7 +482,7 @@
 	var applyOn = function (tableName, value) {
 		var column;
 
-		if (this.schemas[tableName] === undefined) {
+		if (typeof this.schemas[tableName] === "undefined") {
 			throw "injection error: " + tableName + ", " + value;
 		}
 		for (column in this.schemas[tableName]) {
@@ -519,7 +519,7 @@
 		this.sql.verb = "CREATE TABLE";
 		this.sql.columns = column_definitions;
 		// FIXME: Define schema based on column definitions provided
-		if (this.schemas[tableName] === undefined) {
+		if (typeof this.schemas[tableName] === "undefined") {
 			this.schemas[tableName] = {};
 		}
 		return this;
@@ -556,7 +556,8 @@
 			this.sql.verb = "CREATE INDEX";
 		}
 		
-		if (options.table === undefined || options.columns === undefined) {
+		if (typeof options.table === "undefined" ||
+				typeof options.columns === "undefined") {
 			throw "Must define an index on something.";
 		} else {
 			this.sql.table = options.table;
@@ -593,7 +594,7 @@
 		if (sql_obj instanceof String) {
 			throw "injection error: " + viewName + " " + sql_obj;
 		}
-		if (sql_obj === undefined) {
+		if (typeof sql_obj === "undefined") {
 			throw "injection error: " + viewName + " " + sql_obj;
 		}
 		if (this.isSqlObj(sql_obj) === false) {
@@ -715,11 +716,11 @@
 			asName,
 			options = {period: true, parenthesis: true, asterisk: true};
 		
-		if (opt === undefined) {
+		if (typeof opt === "undefined") {
 			opt = {};
 		}
 
-		if (fields === undefined) {
+		if (typeof fields === "undefined") {
 			cols = ["*"];
 		} else if (typeof fields === "string") {
 			if (safeName(fields, options) !== fields &&
@@ -827,7 +828,7 @@
 		if (typeof index !== "number") {
 			throw ["injection error:", index].join(" ");
 		}
-		if (count === undefined || count === null) {
+		if (typeof count === "undefined" || count === null) {
 			this.sql.limit = index;
 		} else {
 			if (typeof count !== "number") {
@@ -865,7 +866,7 @@
 			}
 			this.sql.order.fields = fields;
 		}
-		if (direction === undefined || direction === null) {
+		if (typeof direction === "undefined" || direction === null) {
 			return this;
 		}
 		if (direction >= 0) {
@@ -1098,7 +1099,7 @@
 						src.push("GROUP BY " + self.sql[elem].join(", "));
 						break;
 					default:
-						if (self.sql[elem].join === undefined) {
+						if (typeof self.sql[elem].join === "undefined") {
 							src.push(elem.toUpperCase() + " " + self.sql[elem]);
 						} else {
 							src.push(elem.toUpperCase() + " " + self.sql[elem].join(", "));
@@ -1157,7 +1158,7 @@
 		default:
 			throw "Don't know how to assemble SQL statement form " + this.sql.verb;
 		}
-		if (eol === undefined) {
+		if (typeof eol === "undefined") {
 			return src.join(" ") + this.eol;
 		}
 		return src.join(" ") + eol;
@@ -1191,7 +1192,7 @@
 	Dialects.define = function (dialect_name, function_collection) {
 		var ky;
 		
-		if (this[dialect_name] === undefined) {
+		if (typeof this[dialect_name] === "undefined") {
 			this[dialect_name] = {};
 			for (ky in function_collection) {
 				if (function_collection.hasOwnProperty(ky)) {
