@@ -752,7 +752,25 @@ harness.push({callback: function (test_label) {
 	}).toString("");
 	
 	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
-       
+     
+    expected_s = 'REPLACE INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (@parent_id, "_wp_attached_file", "2012/08/28/test.png");'
+    s = sql.replace("wp_postmeta", {
+    	post_id: "@parent_id",
+    	meta_key: "_wp_attached_file",
+    	meta_value: "2012/08/28/test.png"
+    });
+
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+ 
+    expected_s = 'REPLACE INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (@parent_id, "_wp_attached_file", "\\"2012/08/28/test.png\\"");'
+    s = sql.replace("wp_postmeta", {
+    	post_id: "@parent_id",
+    	meta_key: "_wp_attached_file",
+    	meta_value: sql.safely("2012/08/28/test.png")
+    });
+    
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
 	harness.completed(test_label);
 }, label: "Test 0.0.8 bugs"});
 
