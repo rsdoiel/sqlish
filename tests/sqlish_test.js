@@ -691,7 +691,8 @@ harness.push({callback: function () {
 }, label: "Test 0.0.6 bugs"});
 
 harness.push({callback: function (test_label) {
-	var sql = new sqlish.Sqlish("MySQL 5.5");
+	var sql = new sqlish.Sqlish("MySQL 5.5"),
+		threw_error = false;
 
 	expected_s = 'REPLACE INTO wp_posts (ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count) VALUES (0, 0, "2012-11-04 08:53:03", "2012-11-04 16:53:3", "", "test.png", "Test Caption", "inherit", "closed", "closed", "", "2012/08/28/test.png", "", "", "2012-11-04 08:53:03", "2012-11-04 16:53:03", "", @parent_id, "http://localhost/2012/08/28/test.png", 0, "attachment", "image/png", 0);'
 		
@@ -768,9 +769,67 @@ harness.push({callback: function (test_label) {
     	meta_key: "_wp_attached_file",
     	meta_value: sql.safely("2012/08/28/test.png")
     });
+
+	threw_error = false;
+	expected_s = false;
+	try {
+		s = sql.safeExpr("'fred';'");
+	} catch (err) {
+		assert.ok(err, "Should have throw injection error ->" + err);
+		threw_error = true;
+	}
+	assert.strictEqual(threw_error, true, "Should have thrown an error on " + expected_s);
+	assert.notEqual(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	threw_error = false;
+	expected_s = false;
+	try {
+		s = sql.safeExpr("'fred''");
+	} catch (err) {
+		assert.ok(err, "Should have throw injection error ->" + err);
+		threw_error = true;
+	}
+	assert.strictEqual(threw_error, true, "Should have thrown an error on " + expected_s);	
+	assert.notEqual(s, expected_s, "\n" + s + "\n" + expected_s);
+	 
+	expected_s = "'fred'";
+	try {
+		s = sql.safeExpr("'fred'");
+	} catch (err) {
+		throw "Should NOT have throw injection error -> " + err;
+	}
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	 
+
+	expected_s = "(count + 1)";
+	s = sql.safeExpr("(count + 1)");
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+
     
 	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
+	expected_s = 'SELECT term_taxonomy_id, (count + 1)';
+	try {
+		s = sql.select(["term_taxonomy_id", "(count + 1)"]).toString("");
+    } catch (err) {
+    	throw "Should not have thrown -> " + err + "\nfor " + expected_s;
+    }
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	expected_s = 'SELECT term_taxonomy_id, (count + 1) FROM wp_term_taxonomy WHERE slug = "test" INTO @term_taxonomy_id, @count';
+	try {
+		s = sql.select(["term_taxonomy_id", "(count + 1)"])
+            .from("wp_term_taxonomy")
+            .where({slug: "test"})
+            .into(["@term_taxonomy_id", "@count"])
+            .toString("");
+    } catch (err) {
+    	throw "Should not have thrown -> " + err;
+    }
+    
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+       
 	harness.completed(test_label);
 }, label: "Test 0.0.8 bugs"});
 

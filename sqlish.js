@@ -171,6 +171,43 @@
 		return false;
 	};
 
+	// safeExpr - evaluate an expression and see if it make sense
+	// @param a string representation of the expression.
+	// @return a safe expr string or throw an error otherwise
+	var safeExpr = function (expr) {
+		var toks = [],
+			safe_outside_string = ['a', 'b', 'c',
+				'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+				'l', 'm', 'n', 'o', 'p', 'q', 'r',
+				's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+				'0', '1', '2', '3', '4', '5', '6', '7',
+				'8', '9', '=', '+', '-', '/', '*',
+				'(', ')', ' '],
+			i = 0,
+			in_string = false;
+			
+		toks = expr.toLowerCase().split("");
+		for (i = 0; i < toks.length; i += 1) {
+			if (toks[i] === '"' || toks[i] === "'") {
+				if (in_string === false) {
+					in_string = true;
+				} else {
+					// FIXME: We've finished a string, see if it is safe
+					in_string = false;
+				}
+			} else if (in_string === false) {				
+				if (safe_outside_string.indexOf(toks[i]) < 0) {
+					throw "injection error for expr: " + expr;
+				}
+			}
+		}
+		// We should be outside a quoted string
+		if (in_string === true) {
+			throw "injection error, open ended string for: " + expr;
+		}
+		return expr;
+	};
+
 	// isColumnName - verify column name against a schema
 	// @param value
 	// @return boolean
@@ -687,7 +724,7 @@
 		} else if (typeof fields === "string") {
 			if (safeName(fields, options) !== fields &&
 					safeFunc(fields) !== fields) {
-				throw ["injection error: ", fields].join("");
+				throw ["injection error (0): ", fields].join("");
 			}
 			cols = [fields];
 		} else {
@@ -698,14 +735,15 @@
 					asName = fields[i][colName];
 					if (colName !== safeName(colName) &&
 							colName !== safeFunc(colName)) {
-						throw "injection error: " + JSON.stringify(fields[i]);
+						throw "injection error (1): " + JSON.stringify(fields[i]);
 					}
 					if (asName !== safeName(asName)) {
-						throw "injection error: " + JSON.stringify(fields[i]);
+						throw "injection error (2): " + JSON.stringify(fields[i]);
 					}
 				} else if (safeName(fields[i], options) !== fields[i] &&
-						safeFunc(fields[i]) !== fields[i]) {
-					throw "injection error: " + JSON.stringify(fields[i]);
+						safeFunc(fields[i]) !== fields[i] &&
+						safeExpr(fields[i]) !== fields[i]) {
+					throw "injection error (3): " + JSON.stringify(fields[i]);
 				}
 			}
 			cols = fields;
@@ -1219,6 +1257,7 @@
 		Sql.prototype.sqlDate = sqlDate;
 		Sql.prototype.safeName = safeName;
 		Sql.prototype.safeFunc = safeFunc;
+		Sql.prototype.safeExpr = safeExpr;
 		Sql.prototype.defColumns = defColumns;
 		Sql.prototype.isColumnName = isColumnName;
 		Sql.prototype.P = P;
