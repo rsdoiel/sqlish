@@ -12,7 +12,7 @@
 /*global exports */
 (function (global) {
 	//
-	// Utility functions that are availble across objects.
+	// Utility functions that are available across objects.
 	//
 	var isSqlObj = function (obj) {
 		var ky;
@@ -88,7 +88,7 @@
 		].join("");
 	};
 	
-	// Return s as a safe variable, table or coloumn name
+	// Return s as a safe variable, table or column name
 	// @param s - A string to sanitize
 	// @param options - an object setting allowable characters.
 	// @return save variable name as string
@@ -97,6 +97,14 @@
 		if (options !== undefined) {
 			if (options.period !== undefined &&
 					options.period === true) {
+				if (typeof s === "string") {
+					if (s.indexOf(".") === 0) {
+						s = s.substr(1);
+					}
+					if (s.lastIndexOf(".") === (s.length - 1)) {
+						s = s.substr(-1);
+					}
+				}
 				re_terms.push("\\.");
 			}
 			if (options.parenthesis !== undefined &&
@@ -118,7 +126,9 @@
 		}
 		re_terms.push("]");
 		re = new RegExp(re_terms.join(""), "g");
-		return String(s).replace(new RegExp(re_terms.join(""), "g"), "");
+		// We should not have a leading trailing period
+		// options.period set.
+		return String(s).replace(re, "");
 	};
 	
 	// safeFunc - evaluate a SQL function reference for safe input
@@ -138,7 +148,7 @@
 		m2 = String(s).match(re2);
 		if (m2) {
 			// Scan the string to make sure quoted content is
-			// propertly escaped.
+			// properly escaped.
 			quot = null;
 			parens = 1;
 			for (i = m2[0].length; i < s.length; i += 1) {
@@ -173,7 +183,7 @@
 
 	// safeExpr - evaluate an expression and see if it make sense
 	// @param a string representation of the expression.
-	// @return a safe expr string or throw an error otherwise
+	// @return the safe expr string or throw an error otherwise
 	var safeExpr = function (expr) {
 		var toks = [],
 			safe_outside_string = ['a', 'b', 'c',
@@ -182,7 +192,7 @@
 				's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 				'0', '1', '2', '3', '4', '5', '6', '7',
 				'8', '9', '=', '+', '-', '/', '*',
-				'(', ')', ' ', '@', '.', '_'],
+				'(', ')', ' ', '@', '.', '_', '.'],
 			i = 0,
 			in_string = false;
 			
@@ -192,7 +202,8 @@
 				if (in_string === false) {
 					in_string = true;
 				} else {
-					// FIXME: We've finished a string, see if it is safe
+					// FIXME: We've finished a string, 
+					// see if it is safe string
 					in_string = false;
 				}
 			} else if (in_string === false) {				
@@ -286,7 +297,8 @@
 					case "\x1a":
 						return "\\Z";
 					case "'":
-						// FIXME: this should not co-mingle dialect specific in common
+						// FIXME: this should not co-mingle dialect 
+						// specific in common
 						// function.
 						/*
 						if (dialect.description ===
@@ -358,7 +370,8 @@
 	var expr = function (obj, schemas) {
 		var options = {
 				period: true,
-				dollar_sign: true
+				dollar_sign: true,
+				at_sign: true
 			},
 			clause,
 			ky = firstKey(obj),
@@ -449,6 +462,12 @@
 			}
 
 			return [ky, expr(obj[ky], schemas)].join(" ");
+		}
+		// Handle case where right side is a proper table.column_name
+		if (obj[ky] === safeName(obj[ky], {period: true}) &&
+			obj[ky].indexOf(".") > -1 &&
+			obj[ky].indexOf(".") === obj[ky].lastIndexOf(".")) {
+			return [ky, safeName(obj[ky], {period: true})].join(" = ");	
 		}
 		return [ky, safely(obj[ky], schemas)].join(" = ");
 	};
@@ -734,7 +753,7 @@
 					// Unpack and "AS" sub clause
 					colName = firstKey(fields[i]);
 					asName = fields[i][colName];
-					if (colName !== safeName(colName) &&
+					if (colName !== safeName(colName, {period: true}) &&
 							colName !== safeFunc(colName)) {
 						throw "injection error (1): " + JSON.stringify(fields[i]);
 					}
@@ -799,7 +818,6 @@
 
 	var join = function (tables, expression) {
 		var i;
-
 		this.sql.join = {};
 		if (typeof tables === "string") {
 			if (safeName(tables) !== tables) {
@@ -1074,13 +1092,24 @@
 			}
 			src.push(vals.join(", "));
 
-			['from', 'join', 'where', 'group', 'order', 'limit', 'offset', 'into'].forEach(function (elem) {
+			[
+				'from', 'join',
+				'where', 'group',
+				'order', 'limit',
+				'offset', 'into'
+			].forEach(function (elem) {
 				if (self.sql[elem] !== undefined) {
 					switch (elem) {
 					case 'join':
-						src.push("JOIN " +
-								 self.sql[elem].tables.join(", ") +
-								 " ON (" + self.sql[elem].on + ")");
+						if (self.sql[elem].tables.length > 1) {
+							src.push("JOIN (" +
+									 self.sql[elem].tables.join(", ") +
+									 ") ON (" + self.sql[elem].on + ")");
+						} else {
+							src.push("JOIN " +
+									 self.sql[elem].tables.join(", ") +
+									 " ON (" + self.sql[elem].on + ")");
+						}
 						break;
 					case 'order':
 						if (self.sql[elem].direction === null) {

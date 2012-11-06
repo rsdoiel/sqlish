@@ -368,7 +368,7 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
 	s = sql.expr({"test.profile_id": "profiles.profile_id"});
-	expected_s = "test.profile_id = \"profiles.profile_id\"";
+	expected_s = "test.profile_id = profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	// Applies rules to detect if the value is what you expect.
@@ -449,6 +449,22 @@ harness.push({callback: function () {
     s = sql.expr({name: "George"});
     expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.expr({name: "George Jr."});
+    expected_s = 'name = "George Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+
+    s = sql.expr({name: ".George Jr."});
+    expected_s = 'name = ".George Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+
+    s = sql.expr({name: "Jr."});
+    expected_s = 'name = "Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+
+    s = sql.expr({name: ".George Jr."});
+    expected_s = 'name = ".George Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
 
     s = sql.expr({name: {$eq: "George"}});
     expected_s = 'name = "George"';
@@ -832,5 +848,63 @@ harness.push({callback: function (test_label) {
        
 	harness.completed(test_label);
 }, label: "Test 0.0.8 bugs"});
+
+harness.push({callback: function (test_label) {
+	var blog_id = 59,
+		post_id = 43587,
+		sql = new sqlish.Sqlish("MySQL 5.5"),
+		s,
+		expected_s;
+
+	var tableName = function (blog_id, suffix) {
+		return ["uvh1", blog_id, suffix].join("_");
+	};
+	
+	var dotName = function (blog_id, table_suffix, column_name) {
+		return [tableName(blog_id, table_suffix), column_name].join(".");
+	};
+
+	var terms_term_id = {},
+		relationships_taxonomy_rel = {},
+		terms_taxonomy_rel = {},
+		object_id_post_id = {};
+
+	terms_term_id[dotName(blog_id, "terms", "term_id")] = "term_id";
+
+	relationships_taxonomy_rel[dotName(blog_id, "term_relationships", "term_taxonomy_id")] = dotName(blog_id, "term_taxonomy", "term_taxonomy_id");
+
+	terms_taxonomy_rel[dotName(blog_id, "terms", "term_id")] = dotName(blog_id, "term_taxonomy", "term_id");
+
+	object_id_post_id[dotName(59, "term_relationships", "object_id")] = post_id;
+
+	s = sql.safeName(dotName(59, "terms", "term_id"), {period: true});
+	expected_s = dotName(59, "terms", "term_id");
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	
+	qry = sql.select([
+		terms_term_id,
+		"slug", 
+		{name: "title"},
+		"taxonomy",
+		"description",
+		"parent",
+		{count: "post_count"}])
+		.from(tableName(blog_id, "term_relationships"))
+		.join([
+			tableName(blog_id, "term_taxonomy"),
+			tableName(blog_id, "terms")
+		], {$and: [
+			relationships_taxonomy_rel,
+			terms_taxonomy_rel
+			]})
+		.where(object_id_post_id)
+		.toString();
+
+	expected_s = "SELECT uvh1_59_terms.term_id AS term_id, slug, name AS title, taxonomy, description, parent, count AS post_count FROM uvh1_59_term_relationships JOIN (uvh1_59_term_taxonomy, uvh1_59_terms) ON (uvh1_59_term_relationships.term_taxonomy_id = uvh1_59_term_taxonomy.term_taxonomy_id AND uvh1_59_terms.term_id = uvh1_59_term_taxonomy.term_id) WHERE uvh1_59_term_relationships.object_id = 43587;";
+	s = sql.toString();
+	
+	harness.completed(test_label);
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+}, label: "Complex join"});
 
 harness.RunIt(path.basename(module.filename), 10);
