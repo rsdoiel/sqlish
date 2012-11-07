@@ -368,7 +368,7 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
 	s = sql.expr({"test.profile_id": "profiles.profile_id"});
-	expected_s = "test.profile_id = \"profiles.profile_id\"";
+	expected_s = "test.profile_id = profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	// Applies rules to detect if the value is what you expect.
@@ -449,6 +449,22 @@ harness.push({callback: function () {
     s = sql.expr({name: "George"});
     expected_s = 'name = "George"';
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+    
+    s = sql.expr({name: "George Jr."});
+    expected_s = 'name = "George Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+
+    s = sql.expr({name: ".George Jr."});
+    expected_s = 'name = ".George Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+
+    s = sql.expr({name: "Jr."});
+    expected_s = 'name = "Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
+
+    s = sql.expr({name: ".George Jr."});
+    expected_s = 'name = ".George Jr."';
+    assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);    
 
     s = sql.expr({name: {$eq: "George"}});
     expected_s = 'name = "George"';
@@ -689,5 +705,220 @@ harness.push({callback: function () {
     // end()
     harness.completed("Test 0.0.6 bugs");
 }, label: "Test 0.0.6 bugs"});
+
+harness.push({callback: function (test_label) {
+	var sql = new sqlish.Sqlish("MySQL 5.5"),
+		threw_error = false;
+
+	expected_s = 'REPLACE INTO wp_posts (ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count) VALUES (0, 0, "2012-11-04 08:53:03", "2012-11-04 16:53:3", "", "test.png", "Test Caption", "inherit", "closed", "closed", "", "2012/08/28/test.png", "", "", "2012-11-04 08:53:03", "2012-11-04 16:53:03", "", @parent_id, "http://localhost/2012/08/28/test.png", 0, "attachment", "image/png", 0);'
+		
+	s = sql.replace("wp_posts", {
+		ID: 0,
+		post_author: 0,
+		post_date: "2012-11-04 08:53:03",
+		post_date_gmt: "2012-11-04 16:53:3",
+		post_content: "",
+		post_title: "test.png",
+		post_excerpt: "Test Caption",
+		post_status: "inherit",
+		comment_status: "closed",
+		ping_status: "closed",
+		post_password: "",
+		post_name: "2012/08/28/test.png",
+		to_ping: "",
+		pinged: "",
+		post_modified: "2012-11-04 08:53:03",
+		post_modified_gmt: "2012-11-04 16:53:03",
+		post_content_filtered: "",
+		post_parent: "@parent_id",
+		guid: "http://localhost/2012/08/28/test.png",
+		menu_order: 0,
+		post_type: "attachment",
+		post_mime_type: "image/png",
+		comment_count: 0
+	}).toString();
+	
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	expected_s = 'REPLACE INTO wp_posts (ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count) VALUES (0, 0, "2012-11-04 08:53:03", "2012-11-04 16:53:3", "", "test.png", "Test Caption", "inherit", "closed", "closed", "", "2012/08/28/test.png", "", "", "2012-11-04 08:53:03", "2012-11-04 16:53:03", "", @parent_id, "http://localhost/2012/08/28/test.png", 0, "attachment", "image/png", 0)';
+
+	s = sql.replace("wp_posts", {
+		ID: 0,
+		post_author: 0,
+		post_date: "2012-11-04 08:53:03",
+		post_date_gmt: "2012-11-04 16:53:3",
+		post_content: "",
+		post_title: "test.png",
+		post_excerpt: "Test Caption",
+		post_status: "inherit",
+		comment_status: "closed",
+		ping_status: "closed",
+		post_password: "",
+		post_name: "2012/08/28/test.png",
+		to_ping: "",
+		pinged: "",
+		post_modified: "2012-11-04 08:53:03",
+		post_modified_gmt: "2012-11-04 16:53:03",
+		post_content_filtered: "",
+		post_parent: "@parent_id",
+		guid: "http://localhost/2012/08/28/test.png",
+		menu_order: 0,
+		post_type: "attachment",
+		post_mime_type: "image/png",
+		comment_count: 0
+	}).toString("");
+	
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+     
+    expected_s = 'REPLACE INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (@parent_id, "_wp_attached_file", "2012/08/28/test.png");'
+    s = sql.replace("wp_postmeta", {
+    	post_id: "@parent_id",
+    	meta_key: "_wp_attached_file",
+    	meta_value: "2012/08/28/test.png"
+    });
+
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+ 
+    expected_s = 'REPLACE INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (@parent_id, "_wp_attached_file", "\\"2012/08/28/test.png\\"");'
+    s = sql.replace("wp_postmeta", {
+    	post_id: "@parent_id",
+    	meta_key: "_wp_attached_file",
+    	meta_value: sql.safely("2012/08/28/test.png")
+    });
+
+	threw_error = false;
+	expected_s = false;
+	try {
+		s = sql.safeExpr("'fred';'");
+	} catch (err) {
+		assert.ok(err, "Should have throw injection error ->" + err);
+		threw_error = true;
+	}
+	assert.strictEqual(threw_error, true, "Should have thrown an error on " + expected_s);
+	assert.notEqual(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	threw_error = false;
+	expected_s = false;
+	try {
+		s = sql.safeExpr("'fred''");
+	} catch (err) {
+		assert.ok(err, "Should have throw injection error ->" + err);
+		threw_error = true;
+	}
+	assert.strictEqual(threw_error, true, "Should have thrown an error on " + expected_s);	
+	assert.notEqual(s, expected_s, "\n" + s + "\n" + expected_s);
+	 
+	expected_s = "'fred'";
+	try {
+		s = sql.safeExpr("'fred'");
+	} catch (err) {
+		throw "Should NOT have throw injection error -> " + err;
+	}
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	 
+
+	expected_s = "(count + 1)";
+	s = sql.safeExpr("(count + 1)");
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+
+    
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	expected_s = 'SELECT term_taxonomy_id, (count + 1)';
+	try {
+		s = sql.select(["term_taxonomy_id", "(count + 1)"]).toString("");
+    } catch (err) {
+    	throw "Should not have thrown -> " + err + "\nfor " + expected_s;
+    }
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	expected_s = 'SELECT term_taxonomy_id, (count + 1) FROM wp_term_taxonomy WHERE slug = "test" INTO @term_taxonomy_id, @count';
+	try {
+		s = sql.select(["term_taxonomy_id", "(count + 1)"])
+            .from("wp_term_taxonomy")
+            .where({slug: "test"})
+            .into(["@term_taxonomy_id", "@count"])
+            .toString("");
+    } catch (err) {
+    	throw "Should not have thrown -> " + err;
+    }
+    
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+       
+	harness.completed(test_label);
+}, label: "Test 0.0.8 bugs"});
+
+harness.push({callback: function (test_label) {
+	var blog_id = 59,
+		post_id = 43587,
+		sql = new sqlish.Sqlish("MySQL 5.5"),
+		s,
+		expected_s;
+
+	var tableName = function (blog_id, suffix) {
+		return ["uvh1", blog_id, suffix].join("_");
+	};
+	
+	var dotName = function (blog_id, table_suffix, column_name) {
+		return [tableName(blog_id, table_suffix), column_name].join(".");
+	};
+
+	var terms_term_id = {},
+		relationships_taxonomy_rel = {},
+		terms_taxonomy_rel = {},
+		object_id_post_id = {};
+
+	terms_term_id[dotName(blog_id, "terms", "term_id")] = "term_id";
+
+	relationships_taxonomy_rel[dotName(blog_id, "term_relationships", "term_taxonomy_id")] = dotName(blog_id, "term_taxonomy", "term_taxonomy_id");
+
+	terms_taxonomy_rel[dotName(blog_id, "terms", "term_id")] = dotName(blog_id, "term_taxonomy", "term_id");
+
+	object_id_post_id[dotName(59, "term_relationships", "object_id")] = post_id;
+
+	s = sql.safeName(dotName(59, "terms", "term_id"), {period: true});
+	expected_s = dotName(59, "terms", "term_id");
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+	
+	qry = sql.select([
+		terms_term_id,
+		"slug", 
+		{name: "title"},
+		"taxonomy",
+		"description",
+		"parent",
+		{count: "post_count"}])
+		.from(tableName(blog_id, "term_relationships"))
+		.join([
+			tableName(blog_id, "term_taxonomy"),
+			tableName(blog_id, "terms")
+		], {$and: [
+			relationships_taxonomy_rel,
+			terms_taxonomy_rel
+			]})
+		.where(object_id_post_id)
+		.toString();
+
+	expected_s = "SELECT uvh1_59_terms.term_id AS term_id, slug, name AS title, taxonomy, description, parent, count AS post_count FROM uvh1_59_term_relationships JOIN (uvh1_59_term_taxonomy, uvh1_59_terms) ON (uvh1_59_term_relationships.term_taxonomy_id = uvh1_59_term_taxonomy.term_taxonomy_id AND uvh1_59_terms.term_id = uvh1_59_term_taxonomy.term_id) WHERE uvh1_59_term_relationships.object_id = 43587;";
+	s = sql.toString();
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	expected_s = "test = 3 AND (one = 1 OR two = 2 OR three = 3)";
+	s = sql.expr({
+			$and: [
+				{test: 3},
+				{$p:
+					{$or: [
+						{one: 1}, {two: 2}, {three: 3}
+						]}
+				}
+			]
+		})
+		.toString();
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	harness.completed(test_label);
+}, label: "Complex join"});
 
 harness.RunIt(path.basename(module.filename), 10);

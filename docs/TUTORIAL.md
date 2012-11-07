@@ -131,32 +131,58 @@ in evaluation you do so with parenthesis. Unfortunately a simple
 wrapper of Parenthesis will not work in JavaScript since that 
 delineates a functions' parameters and functions can be assigned
 inside object literals.  To allow expression composition we
-a function named _P()_ (P is short for parenthesis).
+a the _$p_ operator (p is short for parenthesis).
 
-A sqlish's object literal integrating _P()_ -
+A sqlish's object literal integrating -
 
 ```JavaScript
-    orExpression = sql.P({
-        or: [
-            sql.P({
-                and: [
-                    {tag_count: {$gt: 5}},
-                    {tag_count: {$lt: 10}}
-                ],
-            }),
-            sql.P({modified: {$gte: "2012-01-01"}})
-        ]
-    });
+    // generating something like:
+    // order_id > 3 AND (cnt = 2 OR name = "fred")
+    nestedOrExpression = {$and: [
+        {user_id: {$gt: 3}},
+        {$p: 
+            {$or: [
+                {cnt: 2},
+                {name: "fred"}
+             ]}
+        }
+    ]};
 ```
 
-Here's the SQL expression rendered by toString() -
+Here's the SQL expression rendered -
 
 ```SQL
-    ((tag_count > 5 AND tag_count < 10) OR (modified >= "2012-01-01"))
+    order_id > 3 AND (cnt = 2 OR name = "fred")
 ```
 
-The downside of this approach is you type more code in JavaScript than
-hand writing the SQL. The upside is that sqlish will attempt to prevent
+Here's putting that statement into action with in a where clause -
+
+```JavaScript
+    var sql = new sqlish.Sqlish("MySQL 5.5"),
+        qry;
+    
+    qry = sql.select()
+        .from("mytable")
+        .where({$and: [
+        {user_id: {$gt: 3}},
+        {$p: 
+            {$or: [
+                {cnt: 2},
+                {name: "fred"}
+             ]}
+        }
+    ]}).toString();
+    console.log(qry);
+```
+
+This would output something like -
+
+```SQL
+    SELECT * FROM mytable WHERE order_id > 3 (cnt = 2 OR name = "fred");
+```
+
+The downside of the Sqlish approach is sometimes you'll type more JavaScript/JSON
+than raw the SQL. The upside is that Sqlish is that it will attempt to prevent
 SQL injection by apply quoting and escaping to values and restricting the
 characters used for SQL function names, table names, column names
 and environment variable references.

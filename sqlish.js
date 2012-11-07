@@ -9,10 +9,9 @@
 //
 //
 /*jslint devel: true, node: true, maxerr: 50, vars: true, sloppy: true */
-/*global exports */
 (function (global) {
 	//
-	// Utility functions that are availble across objects.
+	// Utility functions that are available across objects.
 	//
 	var isSqlObj = function (obj) {
 		var ky;
@@ -31,13 +30,13 @@
 	// @param use_UTC - boolean, true means use GMT otherwise local time.
 	// @return a string formatted as YYYY-MM-DD HH:II:SS
 	var sqlDate = function (d, use_UTC) {
-		if (typeof d === 'undefined') {
+		if (typeof d === "undefined") {
 			d = new Date();
 		} else if (typeof d === "string") {
 			d = new Date(d);
 		}
 
-		if (typeof use_UTC === 'undefined') {
+		if (typeof use_UTC === "undefined") {
 			use_UTC = this.use_UTC;
 		}
 
@@ -88,7 +87,7 @@
 		].join("");
 	};
 	
-	// Return s as a safe variable, table or coloumn name
+	// Return s as a safe variable, table or column name
 	// @param s - A string to sanitize
 	// @param options - an object setting allowable characters.
 	// @return save variable name as string
@@ -97,6 +96,14 @@
 		if (typeof options !== 'undefined') {
 			if (typeof options.period !== 'undefined' &&
 					options.period === true) {
+				if (typeof s === "string") {
+					if (s.indexOf(".") === 0) {
+						s = s.substr(1);
+					}
+					if (s.lastIndexOf(".") === (s.length - 1)) {
+						s = s.substr(-1);
+					}
+				}
 				re_terms.push("\\.");
 			}
 			if (typeof options.parenthesis !== 'undefined' &&
@@ -118,7 +125,9 @@
 		}
 		re_terms.push("]");
 		re = new RegExp(re_terms.join(""), "g");
-		return String(s).replace(new RegExp(re_terms.join(""), "g"), "");
+		// We should not have a leading trailing period
+		// options.period set.
+		return String(s).replace(re, "");
 	};
 	
 	// safeFunc - evaluate a SQL function reference for safe input
@@ -138,7 +147,7 @@
 		m2 = String(s).match(re2);
 		if (m2) {
 			// Scan the string to make sure quoted content is
-			// propertly escaped.
+			// properly escaped.
 			quot = null;
 			parens = 1;
 			for (i = m2[0].length; i < s.length; i += 1) {
@@ -169,6 +178,44 @@
 			}
 		}
 		return false;
+	};
+
+	// safeExpr - evaluate an expression and see if it make sense
+	// @param a string representation of the expression.
+	// @return the safe expr string or throw an error otherwise
+	var safeExpr = function (expr) {
+		var toks = [],
+			safe_outside_string = ['a', 'b', 'c',
+				'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+				'l', 'm', 'n', 'o', 'p', 'q', 'r',
+				's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+				'0', '1', '2', '3', '4', '5', '6', '7',
+				'8', '9', '=', '+', '-', '/', '*',
+				'(', ')', ' ', '@', '.', '_', '.'],
+			i = 0,
+			in_string = false;
+			
+		toks = expr.toLowerCase().split("");
+		for (i = 0; i < toks.length; i += 1) {
+			if (toks[i] === '"' || toks[i] === "'") {
+				if (in_string === false) {
+					in_string = true;
+				} else {
+					// FIXME: We've finished a string, 
+					// see if it is safe string
+					in_string = false;
+				}
+			} else if (in_string === false) {				
+				if (safe_outside_string.indexOf(toks[i]) < 0) {
+					throw "injection error for expr: " + expr;
+				}
+			}
+		}
+		// We should be outside a quoted string
+		if (in_string === true) {
+			throw "injection error, open ended string for: " + expr;
+		}
+		return expr;
 	};
 
 	// isColumnName - verify column name against a schema
@@ -246,7 +293,8 @@
 					case "\x1a":
 						return "\\Z";
 					case "'":
-						// FIXME: this should not co-mingle dialect specific in common
+						// FIXME: this should not co-mingle dialect 
+						// specific in common
 						// function.
 						/*
 						if (dialect.description ===
@@ -318,7 +366,8 @@
 	var expr = function (obj, schemas) {
 		var options = {
 				period: true,
-				dollar_sign: true
+				dollar_sign: true,
+				at_sign: true
 			},
 			clause,
 			ky = firstKey(obj),
@@ -366,6 +415,8 @@
 					return ["<=", expr(obj[ky], schemas)].join(" ");
 				}
 				return ["<=", safely(obj[ky], schemas)].join(" ");
+			case '$p':
+				return "(" + expr(obj[ky], schemas) + ")";
 			case '$or':
 				vals = [];
 				if (typeof obj[ky].length === 'undefined') {
@@ -409,6 +460,12 @@
 			}
 
 			return [ky, expr(obj[ky], schemas)].join(" ");
+		}
+		// Handle case where right side is a proper table.column_name
+		if (obj[ky] === safeName(obj[ky], {period: true}) &&
+			obj[ky].indexOf(".") > -1 &&
+			obj[ky].indexOf(".") === obj[ky].lastIndexOf(".")) {
+			return [ky, safeName(obj[ky], {period: true})].join(" = ");	
 		}
 		return [ky, safely(obj[ky], schemas)].join(" = ");
 	};
@@ -510,13 +567,15 @@
 		}
 		this.sql = {};
 		this.sql.indexName = indexName;
-		if (typeof options.unique !== 'undefined' && options.unique === true) {
+		if (typeof options.unique !== 'undefined' &&
+				options.unique === true) {
 			this.sql.verb = "CREATE UNIQUE INDEX";
 		} else {
 			this.sql.verb = "CREATE INDEX";
 		}
 		
-		if (typeof options.table === 'undefined' || typeof options.columns === 'undefined') {
+		if (typeof options.table === "undefined" ||
+				typeof options.columns === "undefined") {
 			throw "Must define an index on something.";
 		} else {
 			this.sql.table = options.table;
@@ -675,16 +734,16 @@
 			asName,
 			options = {period: true, parenthesis: true, asterisk: true};
 		
-		if (typeof opt === 'undefined') {
+		if (typeof opt === "undefined") {
 			opt = {};
 		}
 
-		if (typeof fields === 'undefined') {
+		if (typeof fields === "undefined") {
 			cols = ["*"];
 		} else if (typeof fields === "string") {
 			if (safeName(fields, options) !== fields &&
 					safeFunc(fields) !== fields) {
-				throw ["injection error: ", fields].join("");
+				throw ["injection error (0): ", fields].join("");
 			}
 			cols = [fields];
 		} else {
@@ -693,16 +752,17 @@
 					// Unpack and "AS" sub clause
 					colName = firstKey(fields[i]);
 					asName = fields[i][colName];
-					if (colName !== safeName(colName) &&
+					if (colName !== safeName(colName, {period: true}) &&
 							colName !== safeFunc(colName)) {
-						throw "injection error: " + JSON.stringify(fields[i]);
+						throw "injection error (1): " + JSON.stringify(fields[i]);
 					}
 					if (asName !== safeName(asName)) {
-						throw "injection error: " + JSON.stringify(fields[i]);
+						throw "injection error (2): " + JSON.stringify(fields[i]);
 					}
 				} else if (safeName(fields[i], options) !== fields[i] &&
-						safeFunc(fields[i]) !== fields[i]) {
-					throw "injection error: " + JSON.stringify(fields[i]);
+						safeFunc(fields[i]) !== fields[i] &&
+						safeExpr(fields[i]) !== fields[i]) {
+					throw "injection error (3): " + JSON.stringify(fields[i]);
 				}
 			}
 			cols = fields;
@@ -757,7 +817,6 @@
 
 	var join = function (tables, expression) {
 		var i;
-
 		this.sql.join = {};
 		if (typeof tables === "string") {
 			if (safeName(tables) !== tables) {
@@ -824,7 +883,7 @@
 			}
 			this.sql.order.fields = fields;
 		}
-		if (typeof direction === 'undefined' || direction === null) {
+		if (typeof direction === "undefined" || direction === null) {
 			return this;
 		}
 		if (direction >= 0) {
@@ -1032,13 +1091,24 @@
 			}
 			src.push(vals.join(", "));
 
-			['from', 'join', 'where', 'group', 'order', 'limit', 'offset', 'into'].forEach(function (elem) {
-				if (typeof self.sql[elem] !== 'undefined') {
+			[
+				'from', 'join',
+				'where', 'group',
+				'order', 'limit',
+				'offset', 'into'
+			].forEach(function (elem) {
+				if (self.sql[elem] !== undefined) {
 					switch (elem) {
 					case 'join':
-						src.push("JOIN " +
-								 self.sql[elem].tables.join(", ") +
-								 " ON (" + self.sql[elem].on + ")");
+						if (self.sql[elem].tables.length > 1) {
+							src.push("JOIN (" +
+									 self.sql[elem].tables.join(", ") +
+									 ") ON (" + self.sql[elem].on + ")");
+						} else {
+							src.push("JOIN " +
+									 self.sql[elem].tables.join(", ") +
+									 " ON (" + self.sql[elem].on + ")");
+						}
 						break;
 					case 'order':
 						if (self.sql[elem].direction === null) {
@@ -1058,6 +1128,7 @@
 						break;
 					default:
 						if (typeof self.sql[elem].join === 'undefined') {
+						if (typeof self.sql[elem].join === "undefined") {
 							src.push(elem.toUpperCase() + " " + self.sql[elem]);
 						} else {
 							src.push(elem.toUpperCase() + " " + self.sql[elem].join(", "));
@@ -1116,7 +1187,7 @@
 		default:
 			throw "Don't know how to assemble SQL statement form " + this.sql.verb;
 		}
-		if (typeof eol === 'undefined') {
+		if (typeof eol === "undefined") {
 			return src.join(" ") + this.eol;
 		}
 		return src.join(" ") + eol;
@@ -1149,8 +1220,8 @@
 	
 	Dialects.define = function (dialect_name, function_collection) {
 		var ky;
-		
-		if (typeof this[dialect_name] === 'undefined') {
+
+		if (typeof this[dialect_name] === "undefined") {
 			this[dialect_name] = {};
 			for (ky in function_collection) {
 				if (function_collection.hasOwnProperty(ky)) {
@@ -1216,6 +1287,7 @@
 		Sql.prototype.sqlDate = sqlDate;
 		Sql.prototype.safeName = safeName;
 		Sql.prototype.safeFunc = safeFunc;
+		Sql.prototype.safeExpr = safeExpr;
 		Sql.prototype.defColumns = defColumns;
 		Sql.prototype.isColumnName = isColumnName;
 		Sql.prototype.P = P;
