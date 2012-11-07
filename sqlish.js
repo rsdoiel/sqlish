@@ -1127,7 +1127,6 @@
 						src.push("GROUP BY " + self.sql[elem].join(", "));
 						break;
 					default:
-						if (typeof self.sql[elem].join === 'undefined') {
 						if (typeof self.sql[elem].join === "undefined") {
 							src.push(elem.toUpperCase() + " " + self.sql[elem]);
 						} else {
