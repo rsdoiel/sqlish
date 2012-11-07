@@ -419,6 +419,8 @@
 					return ["<=", expr(obj[ky], schemas)].join(" ");
 				}
 				return ["<=", safely(obj[ky], schemas)].join(" ");
+			case '$p':
+				return "(" + expr(obj[ky], schemas) + ")";
 			case '$or':
 				vals = [];
 				if (typeof obj[ky].length === "undefined") {

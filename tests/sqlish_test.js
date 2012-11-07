@@ -902,9 +902,23 @@ harness.push({callback: function (test_label) {
 
 	expected_s = "SELECT uvh1_59_terms.term_id AS term_id, slug, name AS title, taxonomy, description, parent, count AS post_count FROM uvh1_59_term_relationships JOIN (uvh1_59_term_taxonomy, uvh1_59_terms) ON (uvh1_59_term_relationships.term_taxonomy_id = uvh1_59_term_taxonomy.term_taxonomy_id AND uvh1_59_terms.term_id = uvh1_59_term_taxonomy.term_id) WHERE uvh1_59_term_relationships.object_id = 43587;";
 	s = sql.toString();
-	
-	harness.completed(test_label);
 	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	expected_s = "test = 3 AND (one = 1 OR two = 2 OR three = 3)";
+	s = sql.expr({
+			$and: [
+				{test: 3},
+				{$p:
+					{$or: [
+						{one: 1}, {two: 2}, {three: 3}
+						]}
+				}
+			]
+		})
+		.toString();
+	assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
+
+	harness.completed(test_label);
 }, label: "Complex join"});
 
 harness.RunIt(path.basename(module.filename), 10);
