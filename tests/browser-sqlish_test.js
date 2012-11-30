@@ -361,7 +361,7 @@ harness.push({callback: function () {
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 	
 	s = sql.expr({"test.profile_id": "profiles.profile_id"});
-	expected_s = "test.profile_id = \"profiles.profile_id\"";
+	expected_s = "test.profile_id = profiles.profile_id";
     assert.equal(s, expected_s, "\n" + s + "\n" + expected_s);
 
 	// Applies rules to detect if the value is what you expect.
