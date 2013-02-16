@@ -1238,7 +1238,7 @@
 		if (this.sql.verb !== "UPDATE") {
 			throw "SQL doesn't support SET except in UPDATE";
 		}
-		set(nameOrObject, value);
+		set.call(this, nameOrObject, value);
 		return this;
 	};
 	Dialects["SQLite 3"].into = function () {
