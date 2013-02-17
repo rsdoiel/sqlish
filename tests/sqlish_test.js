@@ -921,11 +921,12 @@ harness.push({callback: function (test_label) {
 	harness.completed(test_label);
 }, label: "Complex join"});
 
-harness.push({callback: function () {
+harness.push({callback: function (test_label) {
 	var sql = sqlish.Sqlish("SQLite3");
 
 	s = sql.safely("O'Malley's");
 	assert.equal(s, "\"O''Malley''s\"", "Should have SQLite3 escaping, s was " + s);
+	harness.completed(test_label);
 }, label: "SQLite3 escaping"});
 
 harness.RunIt(path.basename(module.filename), 10);
