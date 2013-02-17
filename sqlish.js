@@ -249,8 +249,9 @@
 	// @param s - A string to sanitize
 	// @param schemas - a database schema used to detect
 	// what is a column or table name versus value.
+	// @param escape_sequence - overrides the default \' type escape sequence on quotes.
 	// @return safe version of string
-	var safely = function (s, schemas) {
+	var safely = function (s, schemas, escape_sequence) {
 		var options = {
 			at_sign: true,
 			period: true
@@ -297,9 +298,9 @@
 						// FIXME: this should not co-mingle dialect 
 						// specific in common
 						// function.
-						if (typeof this.escape_sequence !== "undefined") {
+						if (typeof escape_sequence !== "undefined") {
 							// E.g. SQLite3 uses "''"
-							return this.escape_sequence;
+							return escape_sequence;
 						}
 						return "\\" + c;
 					default:
@@ -1264,7 +1265,7 @@
 	// to generate code for
 	// @param function_collection - A collection of functions
 	// to generate a dialect's code.
-	// @param escape_sequence - define the escape sequence to use (e.g. SQLite3 uses '')
+	// @param escape_sequence - define an alternate escape sequence (e.g. SQLite3 uses '')
 	// @return a new Sqlish object.
 	var Sqlish = function (dialect_name, function_collection, escape_sequence) {
 		var ky, Sql;
@@ -1278,13 +1279,22 @@
 			if (typeof escape_sequence !== "undefined") {
 				this.escape_sequence = escape_sequence;
 			}
+			if (typeof dialect_name !== "undefined" &&
+				dialect_name.match(/sqlite[2-3]/i)) {
+				this.escape_sequence = "''";
+			}
 			return this;
 		};
 
 		// Here's the default functions available to all objects
 		// regardless of dialect.
 		Sql.prototype.isSqlObj = isSqlObj;
-		Sql.prototype.safely = safely;
+		// This is ugly and a kludge. When I rewrite I
+		// should prevent this sort of thing from being required.
+		Sql.prototype.safely = function (s, schemas) {
+			var escape_sequence = this.escape_sequence;
+			return safely(s, schemas, escape_sequence);
+		};
 		Sql.prototype.expr = expr;
 		Sql.prototype.sqlDate = sqlDate;
 		Sql.prototype.safeName = safeName;
