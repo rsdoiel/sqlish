@@ -19,6 +19,9 @@
 	"contributors": [{
 		"name": "Yawn",
 		"url": "https://github.com/yawnt"
+	},
+		"name": "Stoke",
+		"url": "https://github.com/stoke"
 	}],
 	"engines" : {
 		"node" : ">= 0.8",
