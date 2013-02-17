@@ -247,7 +247,8 @@
 	// safely escaped, a JavaScript type or
 	// as a right hand expression column reference.
 	// @param s - A string to sanitize
-	// @param dialect - an object setting allowable characters.
+	// @param schemas - a database schema used to detect
+	// what is a column or table name versus value.
 	// @return safe version of string
 	var safely = function (s, schemas) {
 		var options = {
@@ -296,13 +297,10 @@
 						// FIXME: this should not co-mingle dialect 
 						// specific in common
 						// function.
-						/**/
-						if (dialect.description ===
-								Dialect.SQLite3.description) {
-							// SQLite single-quote escaping.
-							return "''";
+						if (typeof this.escape_sequence !== "undefined") {
+							// E.g. SQLite3 uses "''"
+							return this.escape_sequence;
 						}
-						/**/
 						return "\\" + c;
 					default:
 						return "\\" + c;
@@ -472,6 +470,7 @@
 
 	// P - parenthesis
 	// @param expression
+	// @param schema - the database schema to guide validation
 	// @return parenthesis enclosed string
 	var P = function (expression, schemas) {
 		return ["(", expr(expression, schemas), ")"].join("");
@@ -1265,8 +1264,9 @@
 	// to generate code for
 	// @param function_collection - A collection of functions
 	// to generate a dialect's code.
+	// @param escape_sequence - define the escape sequence to use (e.g. SQLite3 uses '')
 	// @return a new Sqlish object.
-	var Sqlish = function (dialect_name, function_collection) {
+	var Sqlish = function (dialect_name, function_collection, escape_sequence) {
 		var ky, Sql;
 		
 		Sql = function () {
@@ -1275,6 +1275,9 @@
 			this.sql = {};
 			this.eol = ";";
 			this.schemas = {};
+			if (typeof escape_sequence !== "undefined") {
+				this.escape_sequence = escape_sequence;
+			}
 			return this;
 		};
 
