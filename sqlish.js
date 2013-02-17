@@ -296,13 +296,13 @@
 						// FIXME: this should not co-mingle dialect 
 						// specific in common
 						// function.
-						/*
+						/**/
 						if (dialect.description ===
 								Dialect.SQLite3.description) {
 							// SQLite single-quote escaping.
 							return "''";
 						}
-						*/
+						/**/
 						return "\\" + c;
 					default:
 						return "\\" + c;
