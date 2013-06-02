@@ -1,6 +1,6 @@
 {
 	"name" : "sqlish",
-	"version" : "0.0.11",
+	"version" : "0.0.12",
 	"description" : "A small SQL generator for NodeJS, MongoDB shell or web browser.",
 	"main" : "./sqlish.js",
 	"repository" : {
@@ -30,7 +30,7 @@
 	"scripts" : {
 		"test" : "node tests/sqlish_test.js"
 	},
-	"dependencies": {
+	"devDependencies": {
 		"harness": ">= 0.0.6"
 	},
 	"bugs": {
