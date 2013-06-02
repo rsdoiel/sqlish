@@ -31,7 +31,7 @@
 		"test" : "node tests/sqlish_test.js"
 	},
 	"devDependencies": {
-		"harness": ">= 0.0.6"
+		"yui": "3.10.x"
 	},
 	"bugs": {
 		"url": "http://github.com/rsdoiel/sqlish/issues"
